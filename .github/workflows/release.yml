@@ -50,3 +50,43 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ github.ref_name }}
         run: gh release edit "$TAG" --draft=false
+
+  # Regenerates the Homebrew formula from the published checksums and pushes
+  # it to igorlino/homebrew-tap.
+  homebrew:
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Update the Homebrew tap
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          version="${TAG#v}"
+          gh release download "$TAG" --pattern '*-checksums.txt' --dir "$RUNNER_TEMP"
+          sh scripts/render-formula.sh "$version" "$RUNNER_TEMP/justz-$version-checksums.txt" > "$RUNNER_TEMP/justz.rb"
+
+          # Pass the token through the environment, never on a command line.
+          basic="$(printf 'x-access-token:%s' "$TAP_TOKEN" | base64 -w0)"
+          export GIT_CONFIG_COUNT=1
+          export GIT_CONFIG_KEY_0="http.https://github.com/.extraheader"
+          export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $basic"
+
+          git clone --depth 1 https://github.com/igorlino/homebrew-tap.git "$RUNNER_TEMP/tap"
+          mkdir -p "$RUNNER_TEMP/tap/Formula"
+          cp "$RUNNER_TEMP/justz.rb" "$RUNNER_TEMP/tap/Formula/justz.rb"
+          cd "$RUNNER_TEMP/tap"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Formula/justz.rb
+          if git diff --cached --quiet; then
+            echo "Formula is already up to date"
+            exit 0
+          fi
+          git commit -m "justz $version"
+          git push origin HEAD:main
