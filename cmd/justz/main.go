@@ -19,6 +19,7 @@ Usage:
 Commands:
   doctor        Check that justz can do its job (is just installed?)
   fmt [path]    Rewrite the command registry in its canonical order
+  generate      Build the personal .just-local-rich.json from a justfile
   resolve NAME  Print the group path a bare command name stands for
   shim add      Register a shim for a project (from any directory)
   shim list     List registered shims
@@ -97,6 +98,8 @@ func run(args []string, e env) int {
 		return 0
 	case "--as":
 		return runAs(args[1:], e)
+	case "generate":
+		return runGenerate(args[1:], e)
 	case "resolve":
 		return runResolve(args[1:], e)
 	case "doctor":
