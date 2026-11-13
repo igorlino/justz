@@ -1,0 +1,9 @@
+
+  dm tool doctor
+  ────────────────────────────────────────────────────────────────────────────────────────────────
+  Check that this checkout can run
+
+  Options
+    --fix  Try to fix what is broken
+
+[exit 0]

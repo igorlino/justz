@@ -1,0 +1,2 @@
+no group or command matches 'tool nope'. Try: dm help -b
+[exit 2]

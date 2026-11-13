@@ -1,0 +1,17 @@
+
+  [1mbuild · Build[0m
+
+  [1mUsage:[0m dm build <command> [options]
+
+  [1mCommands:[0m
+    [32mdocker                      [0m [2m#[0m Build the container image
+      [36m<tag>                       [0m [2mImage tag[0m
+      [36m--push                      [0m [2mPush the image after building[0m
+    [32mrelease                     [0m [2m#[0m Build release artifacts
+      [36m--level                     [0m [2mHow strict to be (low|medium|high)[0m
+
+  [1mExamples:[0m
+    [32mdm build release [36m--level[32m high[0m   [2m#[0m Strictest release build
+  [2mSee also: dm deploy[0m
+
+[exit 0]

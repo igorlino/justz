@@ -1,0 +1,12 @@
+
+  deploy · Deploy
+
+  Usage: dm deploy <command> [options]
+
+  Commands:
+    production                   # Deploy to production (requires approval)
+    staging                      # Deploy to the staging environment
+      <branch>                     Branch to deploy
+  See also: dm build
+
+[exit 0]

@@ -1,0 +1,19 @@
+{
+  "path": "tool",
+  "invoke": "dm tool",
+  "label": "Tools",
+  "desc": "",
+  "commands": [
+    {
+      "name": "clean",
+      "desc": "Remove build output and caches"
+    },
+    {
+      "name": "doctor",
+      "desc": "Check that this checkout can run"
+    }
+  ],
+  "examples": [],
+  "seeAlso": []
+}
+[exit 0]

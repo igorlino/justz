@@ -1,0 +1,13 @@
+{
+  "path": "tool doctor",
+  "invoke": "dm tool doctor",
+  "desc": "Check that this checkout can run",
+  "args": [
+    {
+      "name": "--fix",
+      "desc": "Try to fix what is broken"
+    }
+  ],
+  "examples": []
+}
+[exit 0]

@@ -1,0 +1,17 @@
+
+  [1m[36mdemo[0m
+
+  [1mCore[0m
+    [32mbuild              [0m [2m#[0m Compile the project
+    [32mci                 [0m [2m#[0m Full pre-push pipeline: lint, build, test
+    [32mtest               [0m [2m#[0m Run the test suite
+    [32mhelp               [0m [2m#[0m Full expanded command reference
+
+  [1mCommands[0m  [2m(run without args to see sub-commands)[0m
+    [32mbuild              [0m [2m#[0m Build
+    [32mdeploy             [0m [2m#[0m Deploy
+    [32mtool               [0m [2m#[0m Tools
+
+  [2mRun [32mdm help[0m[2m for the full expanded command reference.[0m
+
+[exit 0]
