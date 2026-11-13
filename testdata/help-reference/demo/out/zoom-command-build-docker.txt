@@ -1,0 +1,12 @@
+
+  dm build docker
+  ────────────────────────────────────────────────────────────────────────────────────────────────
+  Build the container image
+
+  Options
+    <tag>   Image tag
+    --push  Push the image after building
+
+  See also: dm deploy
+
+[exit 0]

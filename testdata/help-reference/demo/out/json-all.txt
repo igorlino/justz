@@ -1,0 +1,26 @@
+{
+  "cli": "dm",
+  "groups": [
+    {
+      "name": "build",
+      "label": "Build",
+      "commands": 2
+    },
+    {
+      "name": "deploy",
+      "label": "Deploy",
+      "commands": 2
+    },
+    {
+      "name": "tool",
+      "label": "Tools",
+      "commands": 2
+    }
+  ],
+  "core": [
+    "build",
+    "ci",
+    "test"
+  ]
+}
+[exit 0]

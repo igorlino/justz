@@ -1,0 +1,91 @@
+{
+  "cli": "dm",
+  "name": "demo",
+  "tiers": [
+    {
+      "label": "Commands",
+      "hint": "run without args to see sub-commands",
+      "groups": ["build", "deploy", "tool"]
+    }
+  ],
+  "groups": {
+    "core": {
+      "label": "Core",
+      "title": "Everyday commands",
+      "commands": {
+        "build": {
+          "desc": "Compile the project"
+        },
+        "ci": {
+          "desc": "Full pre-push pipeline: lint, build, test"
+        },
+        "test": {
+          "desc": "Run the test suite",
+          "args": [
+            { "name": "-k <pattern>", "desc": "Filter tests by name pattern" },
+            { "name": "-w, --watch", "desc": "Re-run on file changes" }
+          ]
+        }
+      },
+      "examples": [
+        { "cmd": "just test -w", "desc": "Re-run tests on every save" },
+        { "cmd": "just ci", "desc": "Run everything before you push" }
+      ]
+    },
+    "build": {
+      "label": "Build",
+      "title": "Build and package",
+      "desc": "Compile and package the project for each target.",
+      "commands": {
+        "docker": {
+          "desc": "Build the container image",
+          "args": [
+            { "name": "<tag>", "desc": "Image tag" },
+            { "name": "--push", "desc": "Push the image after building" }
+          ]
+        },
+        "release": {
+          "desc": "Build release artifacts",
+          "args": [
+            { "name": "--level", "desc": "How strict to be", "type": "enum", "values": ["low", "medium", "high"] }
+          ]
+        }
+      },
+      "examples": [
+        { "cmd": "just build release --level high", "desc": "Strictest release build" }
+      ],
+      "seeAlso": ["deploy"]
+    },
+    "deploy": {
+      "label": "Deploy",
+      "title": "Deploy and release",
+      "commands": {
+        "production": {
+          "desc": "Deploy to production (requires approval)"
+        },
+        "staging": {
+          "desc": "Deploy to the staging environment",
+          "args": [
+            { "name": "<branch>", "desc": "Branch to deploy" }
+          ]
+        }
+      },
+      "seeAlso": ["build"]
+    },
+    "tool": {
+      "label": "Tools",
+      "title": "Developer tools",
+      "commands": {
+        "clean": {
+          "desc": "Remove build output and caches"
+        },
+        "doctor": {
+          "desc": "Check that this checkout can run",
+          "args": [
+            { "name": "--fix", "desc": "Try to fix what is broken" }
+          ]
+        }
+      }
+    }
+  }
+}

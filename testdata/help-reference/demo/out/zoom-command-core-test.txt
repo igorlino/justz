@@ -1,0 +1,15 @@
+
+  dm test
+  ────────────────────────────────────────────────────────────────────────────────────────────────
+  Run the test suite
+
+  Examples
+
+    Re-run tests on every save
+    $ dm test -w
+
+  Options
+    -k <pattern>  Filter tests by name pattern
+    -w, --watch   Re-run on file changes
+
+[exit 0]

@@ -1,0 +1,26 @@
+
+  [1m[36mdemo[0m
+  [2mFull command reference — all dispatchers expanded[0m
+
+  [1mCore[0m
+    [32mbuild                       [0m [2m#[0m Compile the project
+    [32mci                          [0m [2m#[0m Full pre-push pipeline: lint, build, test
+    [32mtest                        [0m [2m#[0m Run the test suite
+      [36m-k <pattern>                [0m [2mFilter tests by name pattern[0m
+      [36m-w, --watch                 [0m [2mRe-run on file changes[0m
+
+  [1mbuild[0m  [2m— Build[0m
+    [32mbuild docker                [0m [2m#[0m Build the container image
+    [32mbuild release               [0m [2m#[0m Build release artifacts
+
+  [1mdeploy[0m  [2m— Deploy[0m
+    [32mdeploy production           [0m [2m#[0m Deploy to production (requires approval)
+    [32mdeploy staging              [0m [2m#[0m Deploy to the staging environment
+
+  [1mtool[0m  [2m— Tools[0m
+    [32mtool clean                  [0m [2m#[0m Remove build output and caches
+    [32mtool doctor                 [0m [2m#[0m Check that this checkout can run
+
+  [2mTip: run a dispatcher without args for argument details (e.g. dm build)[0m
+
+[exit 0]

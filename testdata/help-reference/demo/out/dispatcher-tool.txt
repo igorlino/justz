@@ -1,0 +1,11 @@
+
+  [1mtool · Tools[0m
+
+  [1mUsage:[0m dm tool <command> [options]
+
+  [1mCommands:[0m
+    [32mclean                       [0m [2m#[0m Remove build output and caches
+    [32mdoctor                      [0m [2m#[0m Check that this checkout can run
+      [36m--fix                       [0m [2mTry to fix what is broken[0m
+
+[exit 0]
