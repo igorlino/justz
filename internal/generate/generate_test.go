@@ -156,3 +156,13 @@ func TestInvalidDump(t *testing.T) {
 		t.Error("an invalid dump should be an error")
 	}
 }
+
+func TestParseAcceptsPlainStringAttributes(t *testing.T) {
+	p, err := Parse([]byte(`{"recipes":{"a":{"private":false,"doc":"A","parameters":[],"attributes":["no-cd",{"group":"build"},"unix"]}},"modules":{}}`))
+	if err != nil {
+		t.Fatalf("a string attribute must not be an error: %v", err)
+	}
+	if len(p.Core) != 1 || p.Core[0].Heading != "build" {
+		t.Errorf("heading = %+v", p.Core)
+	}
+}
