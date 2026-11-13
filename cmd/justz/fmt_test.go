@@ -170,6 +170,24 @@ func TestFmtDiscoversRegistry(t *testing.T) {
 	}
 }
 
+func TestFmtFindsRegistryFromASubdirectory(t *testing.T) {
+	root := t.TempDir()
+	writeFile(t, filepath.Join(root, "config", "commands.json"), unsortedRegistry)
+	sub := filepath.Join(root, "src", "deep")
+	if err := os.MkdirAll(sub, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Chdir(sub)
+
+	e, _, _ := testEnv(true)
+	if code := run([]string{"fmt"}, e); code != 0 {
+		t.Fatalf("exit code = %d, want 0", code)
+	}
+	if got := readFile(t, filepath.Join(root, "config", "commands.json")); got != sortedRegistry {
+		t.Errorf("registry above the working directory was not formatted:\n%s", got)
+	}
+}
+
 func TestFmtUsesJustzConfig(t *testing.T) {
 	dir := t.TempDir()
 	p := filepath.Join(dir, "elsewhere.json")
@@ -186,7 +204,11 @@ func TestFmtUsesJustzConfig(t *testing.T) {
 }
 
 func TestFmtWithoutRegistryFails(t *testing.T) {
-	t.Chdir(t.TempDir())
+	dir := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(dir, ".git"), 0o755); err != nil { // bound the search to this directory
+		t.Fatal(err)
+	}
+	t.Chdir(dir)
 	t.Setenv("JUSTZ_CONFIG", "")
 	e, _, errOut := testEnv(true)
 	if code := run([]string{"fmt"}, e); code != 1 {
