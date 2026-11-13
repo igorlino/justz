@@ -19,7 +19,9 @@ Usage:
 Commands:
   doctor        Check that justz can do its job (is just installed?)
   fmt [path]    Rewrite the command registry in its canonical order
+  shim add      Register a shim for a project (from any directory)
   shim list     List registered shims
+  shim remove   Remove a shim
 
 Flags:
   --version     Print the version

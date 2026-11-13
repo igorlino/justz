@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
+	"github.com/igorlino/justz/internal/atomicfile"
 	"github.com/igorlino/justz/internal/orderedjson"
 	"github.com/igorlino/justz/internal/registry"
 )
@@ -85,49 +85,10 @@ func runFmt(args []string, e env) int {
 		fmt.Fprintf(e.stdout, "%s is not formatted; run: justz fmt %s\n", path, path)
 		return 1
 	}
-	if err := writeFileAtomic(path, formatted); err != nil {
+	if err := atomicfile.Write(path, formatted, 0o644); err != nil {
 		fmt.Fprintf(e.stderr, "justz fmt: %v\n", err)
 		return 1
 	}
 	fmt.Fprintf(e.stdout, "formatted %s\n", path)
 	return 0
-}
-
-// writeFileAtomic replaces path with data through a temporary file in the same
-// directory, so a crash never leaves a half-written registry. It refuses to
-// write through a symbolic link.
-func writeFileAtomic(path string, data []byte) error {
-	info, err := os.Lstat(path)
-	if err != nil {
-		return err
-	}
-	if info.Mode()&os.ModeSymlink != 0 {
-		return fmt.Errorf("%s is a symbolic link; refusing to write through it", path)
-	}
-
-	tmp, err := os.CreateTemp(filepath.Dir(path), ".justz-fmt-*")
-	if err != nil {
-		return err
-	}
-	tmpName := tmp.Name()
-	cleanup := func() { os.Remove(tmpName) }
-
-	if _, err := tmp.Write(data); err != nil {
-		tmp.Close()
-		cleanup()
-		return err
-	}
-	if err := tmp.Close(); err != nil {
-		cleanup()
-		return err
-	}
-	if err := os.Chmod(tmpName, info.Mode().Perm()); err != nil {
-		cleanup()
-		return err
-	}
-	if err := os.Rename(tmpName, path); err != nil {
-		cleanup()
-		return err
-	}
-	return nil
 }
