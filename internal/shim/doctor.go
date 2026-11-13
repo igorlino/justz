@@ -3,6 +3,7 @@ package shim
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 )
 
 // Finding is one result of Doctor.
@@ -107,4 +108,31 @@ func Healthy(findings []Finding) bool {
 		}
 	}
 	return true
+}
+
+// CheckAliases looks at the jz and jzh names installed next to the justz binary
+// at self (for example by the Homebrew formula) and reports, for each one that
+// exists, whether it is the command a shell finds first. An older script of the
+// same name earlier on the PATH would hide it.
+func (d Dirs) CheckAliases(self string) []Finding {
+	var out []Finding
+	dir := filepath.Dir(self)
+	for _, n := range []string{"jz", "jzh"} {
+		ours := filepath.Join(dir, n)
+		if !exists(ours) {
+			continue
+		}
+		f := Finding{Check: "command " + n}
+		switch first, _ := d.firstExecutable(n); {
+		case first == "":
+			f.Detail = fmt.Sprintf("%s is installed but %s is not on the PATH", ours, dir)
+		case !sameFile(first, ours):
+			f.Detail = fmt.Sprintf("%s comes first on the PATH and hides the %s that justz installed (%s); remove or rename it", first, n, ours)
+		default:
+			f.OK = true
+			f.Detail = first
+		}
+		out = append(out, f)
+	}
+	return out
 }

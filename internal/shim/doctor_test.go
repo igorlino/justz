@@ -3,6 +3,8 @@ package shim
 import (
 	"errors"
 	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -133,5 +135,48 @@ func TestDoctorShimDirNotOnPath(t *testing.T) {
 	}
 	if cmd := findingFor(findings, "zzdoc", "command zzdoc"); cmd == nil || cmd.OK {
 		t.Errorf("a shim the shell cannot find should not be ok: %+v", cmd)
+	}
+}
+
+func TestCheckAliases(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("the aliases are links, installed by Homebrew on macOS and Linux")
+	}
+	f := newFixture(t, nil, nil)
+	inst := f.dir("inst")
+	self := filepath.Join(inst, "justz")
+	if err := os.WriteFile(self, []byte("binary"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	// No aliases installed: nothing to check.
+	f.d.Path = []string{inst}
+	if got := f.d.CheckAliases(self); len(got) != 0 {
+		t.Errorf("no aliases installed, but got %+v", got)
+	}
+
+	for _, n := range []string{"jz", "jzh"} {
+		if err := os.Symlink(self, filepath.Join(inst, n)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	got := f.d.CheckAliases(self)
+	if len(got) != 2 || !Healthy(got) {
+		t.Errorf("installed aliases first on the PATH should be ok: %+v", got)
+	}
+
+	// An older script of the same name earlier on the PATH hides the alias.
+	old := f.dir("old")
+	f.command(old, "jz")
+	f.d.Path = []string{old, inst}
+	got = f.d.CheckAliases(self)
+	if len(got) != 2 || got[0].OK || !strings.Contains(got[0].Detail, "hides the jz that justz installed") || !got[1].OK {
+		t.Errorf("only jz should be hidden: %+v", got)
+	}
+
+	// The install directory is not on the PATH at all.
+	f.d.Path = []string{old}
+	if got = f.d.CheckAliases(self); got[1].OK || !strings.Contains(got[1].Detail, "not on the PATH") {
+		t.Errorf("jzh is not findable: %+v", got)
 	}
 }

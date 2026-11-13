@@ -30,6 +30,7 @@ Commands:
 
 Flags:
   --as NAME     Act as the shim NAME (used by shim stubs)
+  --local NAME  Act as the built-in jz shortcut (used when started as jz)
   --version     Print the version
   --help        Print this help
 
@@ -101,6 +102,12 @@ func run(args []string, e env) int {
 		return runAs(args[1:], e)
 	case "assess":
 		return runAssess(args[1:], e)
+	case "--local":
+		if len(args) < 2 {
+			fmt.Fprintln(e.stderr, "justz: --local needs a name")
+			return 2
+		}
+		return runLocal(args[1], args[2:], e)
 	case "generate":
 		return runGenerate(args[1:], e)
 	case "resolve":
@@ -131,5 +138,10 @@ func parseJSONFlag(args []string) (asJSON bool, err error) {
 }
 
 func main() {
-	os.Exit(run(os.Args[1:], osEnv()))
+	args := os.Args[1:]
+	// Started as jz or jzh (a link to the justz binary): act as that shortcut.
+	if name := invokedAs(os.Args[0]); name != "" {
+		args = append([]string{"--local", name}, args...)
+	}
+	os.Exit(run(args, osEnv()))
 }
