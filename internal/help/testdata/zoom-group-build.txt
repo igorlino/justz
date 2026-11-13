@@ -1,0 +1,16 @@
+
+  build · Build
+
+  Usage: dm build <command> [options]
+
+  Commands:
+    docker                       # Build the container image
+      <tag>                        Image tag
+      --push                       Push the image after building
+    release                      # Build release artifacts
+      --level                      How strict to be (low|medium|high)
+
+  Examples:
+    dm build release --level high   # Strictest release build
+  See also: dm deploy
+

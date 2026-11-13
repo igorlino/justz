@@ -14,14 +14,20 @@ import (
 	"github.com/igorlino/justz/internal/registry"
 )
 
-const helpUsage = `Usage: justz help [flags]
+const helpUsage = `Usage: justz help [flags] [group] [command]
 
 Show the commands of the current project, rendered from its command registry
 (commands.json) or the personal overlay (.just-local-rich.json).
 
-  (no flags)    A compact summary: core commands, then each group
-  --expanded    The full reference: every group with its commands
-  --wide, -w    Add example columns (on by default from 100 columns)
+  (no words)         A compact summary: core commands, then each group
+  --expanded         The full reference: every group with its commands
+  <group>            One group: its usage, commands, examples
+  [group] <command>  One command: how to invoke it, examples, options
+  --wide, -w         Add example columns (on by default from 100 columns)
+
+A group or command can be given by an exact name, or by a unique start of it
+("to gi" finds "tool git"). A name that exists in several groups is ambiguous
+and is listed.
 
 Colors are used only on a terminal, and never when NO_COLOR is set. The width
 comes from COLUMNS, then the terminal, then 80.
@@ -31,19 +37,26 @@ Exit codes: 0 done, 1 error, 2 usage error.
 
 func runHelp(args []string, e env) int {
 	expanded, wide := false, false
+	var terms []string
 	for _, a := range args {
-		switch a {
-		case "--help", "-h":
+		switch {
+		case a == "--help" || a == "-h":
 			fmt.Fprint(e.stdout, helpUsage)
 			return 0
-		case "--expanded":
+		case a == "--expanded":
 			expanded = true
-		case "--wide", "-w":
+		case a == "--wide" || a == "-w":
 			wide = true
-		default:
-			fmt.Fprintf(e.stderr, "justz help: unknown argument %q\n\n%s", a, helpUsage)
+		case strings.HasPrefix(a, "-"):
+			fmt.Fprintf(e.stderr, "justz help: unknown flag %q\n\n%s", a, helpUsage)
 			return 2
+		default:
+			terms = append(terms, a)
 		}
+	}
+	if len(terms) > 2 {
+		fmt.Fprintf(e.stderr, "justz help: expected [group] <term>, got %d words\n%s", len(terms), helpUsage)
+		return 1
 	}
 
 	proj, err := loadHelpProject()
@@ -52,6 +65,9 @@ func runHelp(args []string, e env) int {
 		return 1
 	}
 	opts := help.Options{Color: e.color, Width: e.width, Wide: wide}
+	if len(terms) > 0 {
+		return zoom(proj, terms, opts, e)
+	}
 	if expanded {
 		fmt.Fprint(e.stdout, help.Expanded(proj, opts))
 	} else {
@@ -112,4 +128,29 @@ func useColor(f *os.File) bool {
 		return false
 	}
 	return term.IsTerminal(int(f.Fd()))
+}
+
+// zoom shows one group or command, with the exit codes of the lookup: 0 found,
+// 2 ambiguous or no match.
+func zoom(proj *help.Project, terms []string, opts help.Options, e env) int {
+	outcome, rows := proj.Lookup(terms...)
+	switch outcome {
+	case help.Found:
+		r := rows[0]
+		g := proj.GroupByKey(r.Group)
+		if r.IsGroup {
+			fmt.Fprint(e.stdout, help.GroupView(proj, g, opts))
+		} else {
+			fmt.Fprint(e.stdout, help.CommandView(proj, g, g.FindCommand(r.Command), opts))
+		}
+		return 0
+	case help.Ambiguous:
+		fmt.Fprintf(e.stderr, "ambiguous: '%s' matches several entries:\n", strings.Join(terms, " "))
+		for _, r := range rows {
+			fmt.Fprintf(e.stderr, "%s %s — %s\n", proj.CLI, r.Path(), r.Desc)
+		}
+		return 2
+	}
+	fmt.Fprintf(e.stderr, "no group or command matches '%s'. Try: justz help --expanded\n", strings.Join(terms, " "))
+	return 2
 }
