@@ -1,0 +1,21 @@
+set shell := ["bash", "-euo", "pipefail", "-c"]
+
+mod tool 'tool.just'
+
+[doc('Compile the project')]
+[group('core')]
+build:
+    @echo build
+
+[doc("Run the test suite\nexample: just test -w | Re-run on every save")]
+[group('core')]
+[arg('pattern', short='k', help='Filter tests by name pattern')]
+[arg('watch', long='watch', short='w', value='true', help='Re-run on file changes')]
+test pattern='' watch='false':
+    @echo test {{ pattern }} {{ watch }}
+
+[doc('Deploy to an environment')]
+[group('deploy')]
+[arg('env', help='Target environment')]
+deploy env:
+    @echo deploy {{ env }}
