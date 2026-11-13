@@ -12,6 +12,16 @@ type Options struct {
 	Color bool // use ANSI colors; callers turn it off for pipes and NO_COLOR
 	Width int  // terminal width in columns; 0 means 80
 	Wide  bool // show example columns; implied by a width of 100 or more
+	// HelpCmd is how the help command is typed, for hints in the views:
+	// "justz help" by default, "jzh" or "dmh" when run through a shim.
+	HelpCmd string
+}
+
+func (o Options) helpCmd() string {
+	if o.HelpCmd == "" {
+		return "justz help"
+	}
+	return o.HelpCmd
 }
 
 // WideAt is the width from which the example column is shown.
@@ -190,7 +200,7 @@ func Summary(proj *Project, o Options) string {
 		}
 		p.b.WriteByte('\n')
 	}
-	p.line("  %s", p.s.dim("Run ")+p.s.green("justz help --expanded")+p.s.dim(" for the full command reference."))
+	p.line("  %s", p.s.dim("Run ")+p.s.green(o.helpCmd()+" --expanded")+p.s.dim(" for the full command reference."))
 	p.b.WriteByte('\n')
 	return p.b.String()
 }
@@ -234,7 +244,7 @@ func Expanded(proj *Project, o Options) string {
 		}
 	}
 	if first != "" {
-		p.line("  %s", p.s.dim(fmt.Sprintf("Tip: run `justz help %s` for argument details", first)))
+		p.line("  %s", p.s.dim(fmt.Sprintf("Tip: run `%s %s` for argument details", o.helpCmd(), first)))
 	}
 	p.b.WriteByte('\n')
 	return p.b.String()

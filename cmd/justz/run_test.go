@@ -271,10 +271,6 @@ func TestShimRunErrors(t *testing.T) {
 	}
 
 	proj := addDemoShim(t, false)
-	r = newRuntimeEnv()
-	if code := run([]string{"--as", "zzrunh"}, r.env); code != 1 || !strings.Contains(r.errOut.String(), "help command is not available") {
-		t.Errorf("help shim: code %d, stderr %q", code, r.errOut.String())
-	}
 
 	// The project moves away.
 	if err := os.Remove(filepath.Join(proj, "justfile")); err != nil {
@@ -283,6 +279,10 @@ func TestShimRunErrors(t *testing.T) {
 	r = newRuntimeEnv()
 	if code := run([]string{"--as", "zzrun", "git"}, r.env); code != 2 || !strings.Contains(r.errOut.String(), "shim doctor") || len(r.calls) != 0 {
 		t.Errorf("missing justfile: code %d, stderr %q, calls %v", code, r.errOut.String(), r.calls)
+	}
+	r = newRuntimeEnv()
+	if code := run([]string{"--as", "zzrunh"}, r.env); code != 2 || !strings.Contains(r.errOut.String(), "shim doctor") {
+		t.Errorf("help shim with a missing justfile: code %d, stderr %q", code, r.errOut.String())
 	}
 }
 
@@ -383,11 +383,78 @@ func TestLocalShortcutWithoutAJustfile(t *testing.T) {
 		t.Errorf("code %d, stderr %q, calls %v", code, r.errOut.String(), r.calls)
 	}
 	r = newRuntimeEnv()
-	if code := run([]string{"--local", "jzh"}, r.env); code != 1 || !strings.Contains(r.errOut.String(), "help command is not available") {
-		t.Errorf("jzh: code %d, stderr %q", code, r.errOut.String())
+	if code := run([]string{"--local", "jzh"}, r.env); code != 1 || !strings.Contains(r.errOut.String(), "no justfile") {
+		t.Errorf("jzh without a justfile: code %d, stderr %q", code, r.errOut.String())
 	}
 	r = newRuntimeEnv()
 	if code := run([]string{"--local"}, r.env); code != 2 {
 		t.Errorf("--local without a name: code %d", code)
+	}
+}
+
+func TestShimHelpNames(t *testing.T) {
+	addDemoShim(t, false)
+	t.Chdir(t.TempDir()) // a pinned shim works from anywhere
+
+	helpRun := func(args ...string) *runtimeEnv {
+		r := newRuntimeEnv()
+		r.env.width = 100
+		code := run(append([]string{"--as", "zzrunh"}, args...), r.env)
+		if code != 0 {
+			t.Fatalf("zzrunh %v: exit %d, stderr %q", args, code, r.errOut.String())
+		}
+		return r
+	}
+
+	r := helpRun()
+	for _, want := range []string{"  Core\n", "Commands  (run without args", "zzrunh --expanded"} {
+		if !strings.Contains(r.out.String(), want) {
+			t.Errorf("bare help should contain %q:\n%s", want, r.out.String())
+		}
+	}
+	if len(r.calls) != 0 {
+		t.Errorf("help must not run just: %v", r.calls)
+	}
+
+	r = helpRun("git")
+	if !strings.Contains(r.out.String(), "zzrun tool git") {
+		t.Errorf("zooming a command:\n%s", r.out.String())
+	}
+	r = helpRun("-j", "tool")
+	if !strings.Contains(r.out.String(), `"path": "tool"`) {
+		t.Errorf("-j should print JSON: %q", r.out.String())
+	}
+
+	// A miss and an ambiguous name use the shim's own help name in the hint.
+	r = newRuntimeEnv()
+	if code := run([]string{"--as", "zzrunh", "nope"}, r.env); code != 2 || !strings.Contains(r.errOut.String(), "Try: zzrunh --expanded") {
+		t.Errorf("miss: code %d, stderr %q", code, r.errOut.String())
+	}
+}
+
+func TestJzhHelpsFromASubdirectory(t *testing.T) {
+	proj := registryProject(t)
+	sub := filepath.Join(proj, "src", "deep")
+	if err := os.MkdirAll(sub, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Chdir(sub)
+
+	r := newRuntimeEnv()
+	if code := run([]string{"--local", "jzh"}, r.env); code != 0 {
+		t.Fatalf("bare jzh: exit %d, stderr %q", code, r.errOut.String())
+	}
+	if !strings.Contains(r.out.String(), "jzh --expanded") || !strings.Contains(r.out.String(), "Commands  (run without") {
+		t.Errorf("bare jzh should print the summary with a usage hint:\n%s", r.out.String())
+	}
+
+	r = newRuntimeEnv()
+	if code := run([]string{"--local", "jzh", "git"}, r.env); code != 0 || !strings.Contains(r.out.String(), "Verbose") && !strings.Contains(r.out.String(), "zzrun tool git") {
+		t.Errorf("jzh <command> should zoom from a subdirectory: code %d, out %q", code, r.out.String())
+	}
+
+	r = newRuntimeEnv()
+	if code := run([]string{"--local", "jzh", "-j"}, r.env); code != 0 || !strings.HasPrefix(strings.TrimSpace(r.out.String()), "{") {
+		t.Errorf("jzh -j: code %d, out %q", code, r.out.String())
 	}
 }

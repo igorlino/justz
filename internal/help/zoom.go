@@ -298,7 +298,7 @@ func Overview(proj *Project, o Options) string {
 		p.line("  %s %s", p.s.dim("No group:"), strings.Join(names, ", "))
 	}
 	p.b.WriteByte('\n')
-	p.line("  %s %s  %s  %s %s", p.s.dim("Next:"), p.s.green("justz help <group>"), p.s.green("justz help [group] <command>"), p.s.green("justz help --browse"), p.s.dim("(browse)"))
+	p.line("  %s %s  %s  %s %s", p.s.dim("Next:"), p.s.green(o.helpCmd()+" <group>"), p.s.green(o.helpCmd()+" [group] <command>"), p.s.green(o.helpCmd()+" --browse"), p.s.dim("(browse)"))
 	p.b.WriteByte('\n')
 	return p.b.String()
 }
