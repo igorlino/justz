@@ -1,0 +1,57 @@
+{
+  "$comment": "Synthetic registry that exercises every sorting rule",
+  "cli": "demo",
+  "groups": {
+    "zeta": {
+      "label": "Zeta & <friends>",
+      "commands": {
+        "run": {
+          "desc": "Run it, café style",
+          "args": [
+            { "name": "-w, --watch", "desc": "Re-run on changes" },
+            { "name": "<file>", "desc": "Input" },
+            { "name": "--Debug", "desc": "Verbose" },
+            { "name": "[opts]", "desc": "Extra options" },
+            { "name": "-k <pattern>", "desc": "Filter" },
+            { "name": "*files", "desc": "Many" },
+            { "name": "--level", "desc": "How much", "values": ["low", "medium", "high", "critical"] },
+            { "name": "-A", "desc": "Upper-case short flag" }
+          ]
+        },
+        "build": { "desc": "Build" }
+      },
+      "examples": [
+        { "cmd": "just zeta run", "desc": "second" },
+        { "cmd": "just zeta build", "desc": "first" }
+      ],
+      "seeAlso": ["tool", "Alpha", "apps"]
+    },
+    "core": {
+      "label": "Core",
+      "commands": {
+        "test": { "desc": "Run tests", "args": [] },
+        "ci": { "desc": "Pipeline", "example": "… -w" },
+        "Build": { "desc": "Capital B sorts before lower case" }
+      },
+      "extra": {
+        "zap": { "desc": "z", "args": [ { "name": "b" }, { "name": "a" } ] },
+        "alpha": { "desc": "a" }
+      }
+    },
+    "alpha": {
+      "label": "Alpha",
+      "commands": {}
+    },
+    "Beta": {
+      "label": "Beta",
+      "commands": { "one": { "desc": "1", "n": 1.0, "big": 12345678901234567890, "flag": true, "none": null } }
+    }
+  },
+  "tiers": [
+    { "label": "First", "groups": ["zeta", "core", "alpha"] },
+    { "label": "Second", "groups": ["Beta"] }
+  ],
+  "dispatchers": ["tool", "apps", "git"],
+  "lab": ["x", "a"],
+  "order": ["zeta", "core", "alpha"]
+}

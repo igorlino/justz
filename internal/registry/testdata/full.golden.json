@@ -1,0 +1,150 @@
+{
+  "$comment": "Synthetic registry that exercises every sorting rule",
+  "cli": "demo",
+  "groups": {
+    "core": {
+      "label": "Core",
+      "commands": {
+        "Build": {
+          "desc": "Capital B sorts before lower case"
+        },
+        "ci": {
+          "desc": "Pipeline",
+          "example": "… -w"
+        },
+        "test": {
+          "desc": "Run tests",
+          "args": []
+        }
+      },
+      "extra": {
+        "alpha": {
+          "desc": "a"
+        },
+        "zap": {
+          "desc": "z",
+          "args": [
+            {
+              "name": "a"
+            },
+            {
+              "name": "b"
+            }
+          ]
+        }
+      }
+    },
+    "Beta": {
+      "label": "Beta",
+      "commands": {
+        "one": {
+          "desc": "1",
+          "n": 1.0,
+          "big": 12345678901234567890,
+          "flag": true,
+          "none": null
+        }
+      }
+    },
+    "alpha": {
+      "label": "Alpha",
+      "commands": {}
+    },
+    "zeta": {
+      "label": "Zeta & <friends>",
+      "commands": {
+        "build": {
+          "desc": "Build"
+        },
+        "run": {
+          "desc": "Run it, café style",
+          "args": [
+            {
+              "name": "<file>",
+              "desc": "Input"
+            },
+            {
+              "name": "*files",
+              "desc": "Many"
+            },
+            {
+              "name": "[opts]",
+              "desc": "Extra options"
+            },
+            {
+              "name": "-A",
+              "desc": "Upper-case short flag"
+            },
+            {
+              "name": "--Debug",
+              "desc": "Verbose"
+            },
+            {
+              "name": "-k <pattern>",
+              "desc": "Filter"
+            },
+            {
+              "name": "--level",
+              "desc": "How much",
+              "values": [
+                "low",
+                "medium",
+                "high",
+                "critical"
+              ]
+            },
+            {
+              "name": "-w, --watch",
+              "desc": "Re-run on changes"
+            }
+          ]
+        }
+      },
+      "examples": [
+        {
+          "cmd": "just zeta build",
+          "desc": "first"
+        },
+        {
+          "cmd": "just zeta run",
+          "desc": "second"
+        }
+      ],
+      "seeAlso": [
+        "Alpha",
+        "apps",
+        "tool"
+      ]
+    }
+  },
+  "tiers": [
+    {
+      "label": "First",
+      "groups": [
+        "alpha",
+        "core",
+        "zeta"
+      ]
+    },
+    {
+      "label": "Second",
+      "groups": [
+        "Beta"
+      ]
+    }
+  ],
+  "dispatchers": [
+    "apps",
+    "git",
+    "tool"
+  ],
+  "lab": [
+    "a",
+    "x"
+  ],
+  "order": [
+    "core",
+    "alpha",
+    "zeta"
+  ]
+}
