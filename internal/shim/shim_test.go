@@ -52,6 +52,15 @@ func (f *fixture) command(dir, name string) {
 	}
 }
 
+// foreignStub writes a file that justz did not write at the place its stub for
+// name goes (tz.cmd on Windows), so it is not ours.
+func (f *fixture) foreignStub(name string) {
+	f.t.Helper()
+	if err := os.WriteFile(f.d.stubPath(name), []byte("#!/bin/sh\n"), 0o755); err != nil {
+		f.t.Fatal(err)
+	}
+}
+
 func (f *fixture) justfile(name string) string {
 	f.t.Helper()
 	p := filepath.Join(f.dir(name), "justfile")
@@ -454,7 +463,7 @@ func TestDefaultDirsHonorOverrides(t *testing.T) {
 func TestFileThatIsNotOursIsReportedOnce(t *testing.T) {
 	f := newFixture(t, nil, nil)
 	jf := f.justfile("proj")
-	f.command(f.d.Shim, "tz")
+	f.foreignStub("tz")
 	_, err := f.d.Add(jf, opts("tz"))
 	got := kinds(err)
 	if len(got) != 1 || got[0] != NotOurs {
@@ -466,7 +475,7 @@ func TestFileThatIsNotOursIsReportedOnce(t *testing.T) {
 func TestReplaceDoesNotCoverAFileThatIsNotOurs(t *testing.T) {
 	f := newFixture(t, nil, nil)
 	jf := f.justfile("proj")
-	f.command(f.d.Shim, "tz")
+	f.foreignStub("tz")
 	o := opts("tz")
 	o.Replace = true
 	_, err := f.d.Add(jf, o)
