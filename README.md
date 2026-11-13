@@ -6,13 +6,13 @@
 
 `justz` is a small, single-binary CLI that fixes both, without replacing `just`. You keep your justfile. `justz` adds the layer around it.
 
-> **Status: early development.** The first release (`v0.1.0`) is a skeleton: it ships `justz doctor` and `justz shim list`, so the install and release pipeline can be tried end to end. The features below are what `justz` is being built to do, and they are not available yet.
+> **Status: early development.** Available today: `justz doctor`, `justz shim list` (a placeholder) and `justz fmt`. The other features below are what `justz` is being built to do, and they are not available yet.
 
 ## What you get
 
 - **Help people actually read.** A grouped, searchable command reference with examples, rendered from your project's own data. Zoom into a group or a single command, or print it as JSON for tools.
 - **Checks that keep docs honest.** `justz check` fails when a recipe has no documentation, when the registry and the justfile disagree, or when an example no longer parses. Run it in pre-commit and CI instead of discovering drift months later.
-- **Canonical formatting.** `justz fmt` sorts your command registry into one stable order, so diffs stay small and reviews stay calm.
+- **Canonical formatting** *(available)*. `justz fmt` sorts your command registry into one stable order, so diffs stay small and reviews stay calm. Use `justz fmt --check` in CI to fail on an unformatted registry.
 - **Shortcuts that never break.** Pin a command such as `tz` to a project's justfile and run it from any directory, with collision checks so it never hides a real command on your system.
 - **Completion for free.** Shell completion generated from the same data as the help.
 - **Built for agents.** Every command has stable JSON output and exit codes, so an AI agent can discover what a repo offers and verify its own changes without guessing. Two agent skills, `justz-cli` and `justfile-authoring`, teach agents how.
