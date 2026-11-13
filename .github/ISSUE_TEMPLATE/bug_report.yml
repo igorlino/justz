@@ -1,0 +1,40 @@
+name: Bug report
+description: Something doesn't work the way you expected
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time. If this is a security problem, please don't file it here: use the private "Report a vulnerability" button on the Security tab instead.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you run, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: How can we reproduce it?
+      description: A small justfile or `commands.json` that shows the problem helps a lot.
+  - type: input
+    id: version
+    attributes:
+      label: justz version
+      description: Output of `justz --version`
+  - type: input
+    id: just-version
+    attributes:
+      label: just version
+      description: Output of `just --version`
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Linux
+        - macOS
+        - Windows
+        - WSL2
+        - Other
