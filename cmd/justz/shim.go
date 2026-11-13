@@ -212,6 +212,8 @@ func runShimAdd(args []string, e env) int {
 			switch p.Kind {
 			case shim.Shadowed:
 				fmt.Fprintln(e.stderr, "    use --force to add it anyway")
+			case shim.NotOurs:
+				fmt.Fprintln(e.stderr, "    move or delete that file and run the command again; --replace does not cover a file justz did not write")
 			case shim.Owned, shim.Hides:
 				fmt.Fprintln(e.stderr, "    use --replace to take the name over")
 			}

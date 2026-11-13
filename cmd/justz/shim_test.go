@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -197,5 +198,37 @@ func TestShimUsageErrors(t *testing.T) {
 				t.Errorf("stderr = %q, want %q", errOut.String(), tt.want)
 			}
 		})
+	}
+}
+
+// A file that is not ours gets guidance that works: --replace does not cover
+// it, so the message must not suggest it, and the file is reported once.
+func TestShimAddNotOursHint(t *testing.T) {
+	shimDir := shimSetup(t)
+	proj := registryProject(t)
+	name := "zzrun"
+	file := filepath.Join(shimDir, name)
+	if runtime.GOOS == "windows" {
+		file += ".cmd"
+	}
+	if err := os.WriteFile(file, []byte("#!/bin/sh\nexec just\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	e, _, errOut := testEnv(true)
+	if code := run([]string{"shim", "add", proj}, e); code != 1 {
+		t.Fatalf("want exit 1, got %d: %s", code, errOut.String())
+	}
+	out := errOut.String()
+	if strings.Count(out, "was not written by justz") != 1 {
+		t.Errorf("want the file reported once: %q", out)
+	}
+	if strings.Contains(out, "would hide it") {
+		t.Errorf("the same file must not also be reported as hidden: %q", out)
+	}
+	if strings.Contains(out, "use --replace") {
+		t.Errorf("--replace does not help here, so it must not be suggested: %q", out)
+	}
+	if !strings.Contains(out, "move or delete that file") {
+		t.Errorf("want guidance that works: %q", out)
 	}
 }

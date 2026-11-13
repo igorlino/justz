@@ -448,3 +448,29 @@ func TestDefaultDirsHonorOverrides(t *testing.T) {
 		t.Errorf("DefaultDirs = %+v, %v", d, err)
 	}
 }
+
+// A file that is not ours at the stub path is one problem, not two: it must
+// not also be reported as a command the shim would hide.
+func TestFileThatIsNotOursIsReportedOnce(t *testing.T) {
+	f := newFixture(t, nil, nil)
+	jf := f.justfile("proj")
+	f.command(f.d.Shim, "tz")
+	_, err := f.d.Add(jf, opts("tz"))
+	got := kinds(err)
+	if len(got) != 1 || got[0] != NotOurs {
+		t.Fatalf("want exactly one not-ours problem, got %v (%v)", got, err)
+	}
+}
+
+// --replace does not cover a file that is not ours.
+func TestReplaceDoesNotCoverAFileThatIsNotOurs(t *testing.T) {
+	f := newFixture(t, nil, nil)
+	jf := f.justfile("proj")
+	f.command(f.d.Shim, "tz")
+	o := opts("tz")
+	o.Replace = true
+	_, err := f.d.Add(jf, o)
+	if got := kinds(err); len(got) != 1 || got[0] != NotOurs {
+		t.Fatalf("want exactly one not-ours problem with --replace, got %v (%v)", got, err)
+	}
+}
