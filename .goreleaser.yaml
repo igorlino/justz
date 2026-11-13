@@ -1,0 +1,47 @@
+version: 2
+
+project_name: justz
+
+builds:
+  - id: justz
+    main: ./cmd/justz
+    binary: justz
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w -X main.version={{ .Version }}
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64]
+
+archives:
+  - id: justz
+    formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    name_template: "justz-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
+    files:
+      - LICENSE
+      - README.md
+
+checksum:
+  name_template: "justz-{{ .Version }}-checksums.txt"
+  algorithm: sha256
+
+# Releases are created as drafts, then attested, then published by the
+# workflow, so they stay compatible with immutable releases.
+release:
+  draft: true
+  replace_existing_draft: true
+
+changelog:
+  use: github
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^ci(\\(deps\\))?:"
+      - "^build\\(deps\\):"
