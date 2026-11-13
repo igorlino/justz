@@ -1,0 +1,30 @@
+{
+  "cli": "demo",
+  "name": "demo",
+  "groups": {
+    "core": {
+      "label": "Core",
+      "commands": {
+        "build": { "desc": "Compile the project" },
+        "deploy": {
+          "desc": "Deploy to an environment",
+          "args": [{ "name": "<env>", "desc": "Target environment" }]
+        },
+        "test": {
+          "desc": "Run the test suite",
+          "example": "just test -w",
+          "args": [
+            { "name": "-k <pattern>", "desc": "Filter tests by name pattern" },
+            { "name": "-w, --watch", "desc": "Re-run on file changes" }
+          ]
+        }
+      }
+    },
+    "tool": {
+      "label": "Tools",
+      "commands": {
+        "clean": { "desc": "Remove build output and caches" }
+      }
+    }
+  }
+}
