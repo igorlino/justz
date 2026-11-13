@@ -58,6 +58,10 @@ type Input struct {
 	Variant        string             // native, rich or local-rich
 	Registry       *orderedjson.Value // nil for a native project
 	RegistrySource []byte             // the registry file as written, for the order check
+	// Sources maps a module path ("" for the root justfile, a module name for a
+	// top-level module) to the text that just --dump prints for its file. It is
+	// optional: without it the comment-block rule is not applied.
+	Sources map[string]string
 }
 
 // Result is the outcome of Run.
@@ -116,6 +120,9 @@ func Run(in Input) (Result, error) {
 
 	for _, it := range items {
 		res.Findings = append(res.Findings, recipeRules(it, in.Variant)...)
+	}
+	if len(in.Sources) > 0 {
+		res.Findings = append(res.Findings, docMultilineFindings(items, in.Sources)...)
 	}
 	if in.Registry != nil {
 		res.Findings = append(res.Findings, registryRules(in, items)...)
@@ -176,21 +183,23 @@ func recipeRules(it item, variant string) []Finding {
 	return out
 }
 
-// hasGroup reports whether the recipe has a [group] attribute. An attribute is
-// a JSON object such as {"group": "core"}, or a plain string for one without a
-// value such as "no-cd".
-func hasGroup(r recipe) bool {
+// hasAttribute reports whether the recipe has an attribute with this name. An
+// attribute is a JSON object such as {"group": "core"}, or a plain string for
+// one without a value such as "no-cd".
+func hasAttribute(r recipe, name string) bool {
 	for _, raw := range r.Attributes {
 		var obj map[string]json.RawMessage
 		if json.Unmarshal(raw, &obj) != nil {
 			continue
 		}
-		if _, ok := obj["group"]; ok {
+		if _, ok := obj[name]; ok {
 			return true
 		}
 	}
 	return false
 }
+
+func hasGroup(r recipe) bool { return hasAttribute(r, "group") }
 
 // interpolatedVariadic returns the name of a variadic (* or +) parameter that
 // the recipe body interpolates, or "".

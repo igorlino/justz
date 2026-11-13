@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -51,4 +52,31 @@ func loadProjectCtx(e env) (*projectCtx, error) {
 		}
 	}
 	return ctx, nil
+}
+
+// loadSources reads the formatted text that just --dump prints for the root
+// justfile and for each top-level module, keyed by module name ("" for the
+// root). It keeps the whole comment block above each recipe, which the JSON
+// dump does not. A file that cannot be dumped is left out.
+func (c *projectCtx) loadSources(e env) map[string]string {
+	out := map[string]string{}
+	if text, err := e.runCmd("just", "--justfile", c.Justfile, "--dump"); err == nil {
+		out[""] = text
+	}
+	var d struct {
+		Modules map[string]struct {
+			Source string `json:"source"`
+		} `json:"modules"`
+	}
+	if json.Unmarshal([]byte(c.Dump), &d) == nil {
+		for name, m := range d.Modules {
+			if m.Source == "" {
+				continue
+			}
+			if text, err := e.runCmd("just", "--justfile", m.Source, "--dump"); err == nil {
+				out[name] = text
+			}
+		}
+	}
+	return out
 }
