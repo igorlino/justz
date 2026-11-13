@@ -1,0 +1,15 @@
+
+  demo
+
+  Core
+    build               # Compile the project
+    ci                  # Full pre-push pipeline: lint, build, test
+    test                # Run the test suite
+
+  Commands  (run without args to see sub-commands)
+    build               # Build
+    deploy              # Deploy
+    tool                # Tools
+
+  Run justz help --expanded for the full command reference.
+
