@@ -19,6 +19,7 @@ Usage:
 Commands:
   doctor        Check that justz can do its job (is just installed?)
   fmt [path]    Rewrite the command registry in its canonical order
+  resolve NAME  Print the group path a bare command name stands for
   shim add      Register a shim for a project (from any directory)
   shim list     List registered shims
   shim remove   Remove a shim
@@ -26,6 +27,7 @@ Commands:
   setup         Get this machine ready and check it
 
 Flags:
+  --as NAME     Act as the shim NAME (used by shim stubs)
   --version     Print the version
   --help        Print this help
 
@@ -43,6 +45,8 @@ type env struct {
 	stdout, stderr io.Writer
 	lookPath       func(file string) (string, error)
 	runCmd         func(name string, args ...string) (string, error)
+	// execJust runs just with the terminal attached and returns its exit code.
+	execJust func(args []string) int
 }
 
 func osEnv() env {
@@ -54,7 +58,29 @@ func osEnv() env {
 			out, err := exec.Command(name, args...).Output()
 			return strings.TrimSpace(string(out)), err
 		},
+		execJust: execJust,
 	}
+}
+
+// execJust runs just with this process's terminal and the JUSTZ_* variables
+// removed, so that justz's own settings never leak into a recipe.
+func execJust(args []string) int {
+	cmd := exec.Command("just", args...)
+	cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
+	for _, kv := range os.Environ() {
+		if !strings.HasPrefix(kv, "JUSTZ_") {
+			cmd.Env = append(cmd.Env, kv)
+		}
+	}
+	err := cmd.Run()
+	if err == nil {
+		return 0
+	}
+	if ee, ok := err.(*exec.ExitError); ok {
+		return ee.ExitCode()
+	}
+	fmt.Fprintf(os.Stderr, "justz: could not run just: %v\n", err)
+	return 127
 }
 
 func run(args []string, e env) int {
@@ -69,6 +95,10 @@ func run(args []string, e env) int {
 	case "--help", "-h", "help":
 		fmt.Fprint(e.stdout, usage)
 		return 0
+	case "--as":
+		return runAs(args[1:], e)
+	case "resolve":
+		return runResolve(args[1:], e)
 	case "doctor":
 		return runDoctor(args[1:], e)
 	case "fmt":
