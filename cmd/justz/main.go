@@ -22,6 +22,8 @@ Commands:
   shim add      Register a shim for a project (from any directory)
   shim list     List registered shims
   shim remove   Remove a shim
+  shim doctor   Check every registered shim
+  setup         Get this machine ready and check it
 
 Flags:
   --version     Print the version
@@ -71,6 +73,8 @@ func run(args []string, e env) int {
 		return runDoctor(args[1:], e)
 	case "fmt":
 		return runFmt(args[1:], e)
+	case "setup":
+		return runSetup(args[1:], e)
 	case "shim":
 		return runShim(args[1:], e)
 	default:
