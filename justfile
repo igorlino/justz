@@ -46,8 +46,15 @@ snapshot:
 
 [doc('Test install.sh against a fake local release')]
 [group('check')]
+[unix]
 test-install:
     sh scripts/test-install.sh
+
+[doc('Test install.sh against a fake local release (skipped on Windows)')]
+[group('check')]
+[windows]
+test-install:
+    @echo "install.sh is for macOS, Linux and WSL2; skipping on Windows"
 
 [doc('Everything CI runs: format check, vet, test, build, install script')]
 [group('check')]
