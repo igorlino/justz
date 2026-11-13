@@ -32,8 +32,8 @@ const (
 	NotFound                 // nothing
 )
 
-// rows lists every group and command of the project.
-func (p *Project) rows() []Row {
+// Rows lists every group and command of the project, groups first.
+func (p *Project) Rows() []Row {
 	var out []Row
 	for _, g := range p.Groups {
 		out = append(out, Row{IsGroup: true, Group: g.Key, Desc: g.Label})
@@ -62,7 +62,7 @@ func (p *Project) rows() []Row {
 // always a group); the second is a command of that group, exactly or as a
 // prefix.
 func (p *Project) Lookup(terms ...string) (Outcome, []Row) {
-	all := p.rows()
+	all := p.Rows()
 	var found []Row
 
 	switch len(terms) {
