@@ -56,6 +56,11 @@ test-install:
 test-install:
     @echo "install.sh is for macOS, Linux and WSL2; skipping on Windows"
 
+[doc('Install the published release in clean containers (needs Docker and a release)')]
+[group('check')]
+verify-install:
+    sh scripts/verify-install.sh
+
 [doc('Everything CI runs: format check, vet, test, build, install script')]
 [group('check')]
 ci: fmt-check vet test build test-install
