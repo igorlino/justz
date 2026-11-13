@@ -108,8 +108,10 @@ func execJust(args []string) int {
 
 func run(args []string, e env) int {
 	if len(args) == 0 {
-		fmt.Fprint(e.stderr, usage)
-		return 2
+		// Asking for nothing is not a mistake: show what justz can do. A post-install
+		// check that runs the executable without arguments must see success.
+		fmt.Fprint(e.stdout, usage)
+		return 0
 	}
 	switch args[0] {
 	case "--version", "-version", "version":

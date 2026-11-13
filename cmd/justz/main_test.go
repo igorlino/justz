@@ -40,7 +40,7 @@ func TestRun(t *testing.T) {
 	}{
 		{"version flag", []string{"--version"}, true, 0, "justz dev\n", ""},
 		{"help flag", []string{"--help"}, true, 0, "Usage:", ""},
-		{"no arguments", nil, true, 2, "", "Usage:"},
+		{"no arguments", nil, true, 0, "Usage:", ""},
 		{"unknown command", []string{"nope"}, true, 2, "", `unknown command "nope"`},
 		{"doctor ok", []string{"doctor"}, true, 0, "[ok] just: /usr/bin/just (just 1.59.0)", ""},
 		{"doctor without just", []string{"doctor"}, false, 1, "[fail] just: not found on PATH", ""},
