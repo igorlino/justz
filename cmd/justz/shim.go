@@ -17,6 +17,7 @@ Commands:
   add [path]      Register a shim for the project at path (default: .)
   list            List registered shims
   remove <name>   Remove a shim and its stubs
+  doctor          Check every registered shim
 
 Run "justz shim <command> --help" for details.
 `
@@ -59,6 +60,8 @@ func runShim(args []string, e env) int {
 		return runShimAdd(args[1:], e)
 	case "remove":
 		return runShimRemove(args[1:], e)
+	case "doctor":
+		return runShimDoctor(args[1:], e)
 	}
 	fmt.Fprintf(e.stderr, "justz shim: unknown command %q\n\n%s", args[0], shimUsage)
 	return 2

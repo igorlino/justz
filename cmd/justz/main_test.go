@@ -17,6 +17,9 @@ func testEnv(just bool) (env, *bytes.Buffer, *bytes.Buffer) {
 			if just && file == "just" {
 				return "/usr/bin/just", nil
 			}
+			if file == "justz" {
+				return "/usr/local/bin/justz", nil
+			}
 			return "", errors.New("not found")
 		},
 		runCmd: func(name string, args ...string) (string, error) {

@@ -56,6 +56,12 @@ test-install:
 test-install:
     @echo "install.sh is for macOS, Linux and WSL2; skipping on Windows"
 
+[doc('Run the shim collision checks in a clean container (needs Docker)')]
+[group('check')]
+[unix]
+test-shim-containers:
+    sh scripts/test-shim-container.sh
+
 [doc('Install the published release in clean containers (needs Docker and a release)')]
 [group('check')]
 verify-install:
