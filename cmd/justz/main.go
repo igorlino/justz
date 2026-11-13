@@ -6,6 +6,8 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+
+	"golang.org/x/term"
 )
 
 // version is stamped at build time: go build -ldflags "-X main.version=1.2.3".
@@ -54,6 +56,13 @@ type env struct {
 	// color and width describe the output for the help views.
 	color bool
 	width int
+	// interactive is true when both input and output are a terminal, so it is
+	// safe to prompt. stdin is where an answer is read from.
+	interactive bool
+	stdin       io.Reader
+	// runFzf shows lines in fzf and returns the one chosen, or "" if the user
+	// cancelled. self is the path of this binary, used by the preview.
+	runFzf func(fzf, self string, lines []string) (string, error)
 }
 
 func osEnv() env {
@@ -65,9 +74,12 @@ func osEnv() env {
 			out, err := exec.Command(name, args...).Output()
 			return strings.TrimSpace(string(out)), err
 		},
-		execJust: execJust,
-		color:    useColor(os.Stdout),
-		width:    terminalWidth(os.Stdout),
+		execJust:    execJust,
+		color:       useColor(os.Stdout),
+		width:       terminalWidth(os.Stdout),
+		interactive: term.IsTerminal(int(os.Stdin.Fd())) && term.IsTerminal(int(os.Stdout.Fd())),
+		stdin:       os.Stdin,
+		runFzf:      runFzf,
 	}
 }
 

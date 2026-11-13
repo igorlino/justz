@@ -26,7 +26,9 @@ Show the commands of the current project, rendered from its command registry
   [group] <command>  One command: how to invoke it, examples, options
   --wide, -w         Add example columns (on by default from 100 columns)
   --json, -j         Print the same information as JSON for tools and agents
+  --browse, -b       Pick a group or command (fzf if installed, else a numbered menu)
 
+--browse never prompts without a terminal: it prints the list of groups instead.
 A group or command can be given by an exact name, or by a unique start of it
 ("to gi" finds "tool git"). A name that exists in several groups is ambiguous
 and is listed.
@@ -38,7 +40,7 @@ Exit codes: 0 done, 1 error, 2 usage error.
 `
 
 func runHelp(args []string, e env) int {
-	expanded, wide, asJSON := false, false, false
+	expanded, wide, asJSON, browseMode := false, false, false, false
 	var terms []string
 	for _, a := range args {
 		switch {
@@ -51,6 +53,8 @@ func runHelp(args []string, e env) int {
 			wide = true
 		case a == "--json" || a == "-j":
 			asJSON = true
+		case a == "--browse" || a == "-b":
+			browseMode = true
 		case strings.HasPrefix(a, "-"):
 			fmt.Fprintf(e.stderr, "justz help: unknown flag %q\n\n%s", a, helpUsage)
 			return 2
@@ -58,6 +62,8 @@ func runHelp(args []string, e env) int {
 			terms = append(terms, a)
 		}
 	}
+	// A quoted "tool git" arrives as one word; treat it as two.
+	terms = strings.Fields(strings.Join(terms, " "))
 	if len(terms) > 2 {
 		fmt.Fprintf(e.stderr, "justz help: expected [group] <term>, got %d words\n%s", len(terms), helpUsage)
 		return 1
@@ -69,6 +75,9 @@ func runHelp(args []string, e env) int {
 		return 1
 	}
 	opts := help.Options{Color: e.color, Width: e.width, Wide: wide}
+	if browseMode {
+		return browse(proj, opts, asJSON, e)
+	}
 	if asJSON {
 		return zoomJSON(proj, terms, e)
 	}
