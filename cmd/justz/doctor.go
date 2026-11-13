@@ -3,6 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+
+	"github.com/igorlino/justz/internal/shim"
 )
 
 type check struct {
@@ -26,6 +29,7 @@ func runDoctor(args []string, e env) int {
 
 	report := doctorReport{Version: currentVersion(), OK: true}
 	report.Checks = append(report.Checks, checkJust(e))
+	report.Checks = append(report.Checks, checkAliases()...)
 	for _, c := range report.Checks {
 		if !c.OK {
 			report.OK = false
@@ -69,4 +73,23 @@ func checkJust(e env) check {
 		return check{Name: "just", Detail: fmt.Sprintf("found at %s but `just --version` failed", path)}
 	}
 	return check{Name: "just", OK: true, Detail: fmt.Sprintf("%s (%s)", path, ver)}
+}
+
+// checkAliases reports on the jz and jzh names installed next to this binary,
+// if there are any: an older script of the same name earlier on the PATH
+// would hide them.
+func checkAliases() []check {
+	self, err := os.Executable()
+	if err != nil {
+		return nil
+	}
+	d, err := shim.DefaultDirs()
+	if err != nil {
+		return nil
+	}
+	var out []check
+	for _, f := range d.CheckAliases(self) {
+		out = append(out, check{Name: f.Check, OK: f.OK, Detail: f.Detail})
+	}
+	return out
 }

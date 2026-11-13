@@ -326,3 +326,68 @@ func TestExecJustRemovesJustzVariables(t *testing.T) {
 		t.Errorf("recipe saw %q, want JUSTZ_ variables removed and others kept (unset|yes)", got)
 	}
 }
+
+func TestInvokedAs(t *testing.T) {
+	for in, want := range map[string]string{
+		"jz": "jz", "/usr/local/bin/jz": "jz", "jzh": "jzh", "JZ.EXE": "jz", "jzh.exe": "jzh",
+		"justz": "", "/usr/bin/just": "", "jzz": "", "": "",
+	} {
+		if got := invokedAs(in); got != want {
+			t.Errorf("invokedAs(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
+func TestLocalShortcut(t *testing.T) {
+	proj := registryProject(t)
+	jf := filepath.Join(proj, "justfile")
+	sub := filepath.Join(proj, "src", "deep")
+	if err := os.MkdirAll(sub, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Chdir(sub) // jz finds the justfile by walking up, like just does
+
+	r := newRuntimeEnv("build")
+	if code := run([]string{"--local", "jz", "git", "-v"}, r.env); code != 0 {
+		t.Fatalf("exit %d, stderr %q", code, r.errOut.String())
+	}
+	want := []string{"--justfile", jf, "tool", "git", "-v"}
+	if len(r.calls) != 1 || strings.Join(r.calls[0], "|") != strings.Join(want, "|") {
+		t.Errorf("just ran %v, want %v", r.calls, want)
+	}
+	if !strings.Contains(r.errOut.String(), "jz: tool git") {
+		t.Errorf("stderr = %q", r.errOut.String())
+	}
+
+	// A flag first, a real recipe and an ambiguous name behave like a shim.
+	r = newRuntimeEnv("build")
+	run([]string{"--local", "jz", "--list"}, r.env)
+	run([]string{"--local", "jz", "build"}, r.env)
+	if len(r.calls) != 2 || r.calls[0][2] != "--list" || r.calls[1][2] != "build" {
+		t.Errorf("calls = %v", r.calls)
+	}
+	r = newRuntimeEnv("build")
+	if code := run([]string{"--local", "jz", "doctor"}, r.env); code != 2 || len(r.calls) != 0 {
+		t.Errorf("ambiguous: code %d, calls %v", code, r.calls)
+	}
+}
+
+func TestLocalShortcutWithoutAJustfile(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(dir, ".git"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Chdir(dir)
+	r := newRuntimeEnv()
+	if code := run([]string{"--local", "jz", "x"}, r.env); code != 2 || !strings.Contains(r.errOut.String(), "no justfile found") || len(r.calls) != 0 {
+		t.Errorf("code %d, stderr %q, calls %v", code, r.errOut.String(), r.calls)
+	}
+	r = newRuntimeEnv()
+	if code := run([]string{"--local", "jzh"}, r.env); code != 1 || !strings.Contains(r.errOut.String(), "help command is not available") {
+		t.Errorf("jzh: code %d, stderr %q", code, r.errOut.String())
+	}
+	r = newRuntimeEnv()
+	if code := run([]string{"--local"}, r.env); code != 2 {
+		t.Errorf("--local without a name: code %d", code)
+	}
+}
