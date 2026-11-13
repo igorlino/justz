@@ -55,6 +55,8 @@ type Tier struct {
 
 // Project is everything the help views need.
 type Project struct {
+	// Doc is the registry the project was read from, in canonical order.
+	Doc     *orderedjson.Value
 	Name    string
 	Tagline string
 	CLI     string // the command prefix shown in usage lines
@@ -83,6 +85,7 @@ func FromRegistry(doc *orderedjson.Value, fallbackName string) (*Project, error)
 	registry.Canonicalize(doc)
 
 	p := &Project{
+		Doc:     doc,
 		Name:    firstString(doc, fallbackName, "name", "title"),
 		Tagline: firstString(doc, "", "tagline", "subtitle"),
 		CLI:     firstString(doc, "just", "cli"),
