@@ -1,0 +1,10 @@
+{
+  "StringFileInfo": {
+    "CompanyName": "Igor Lino",
+    "FileDescription": "justz: help, checks and shims for just",
+    "InternalName": "justz",
+    "LegalCopyright": "MIT License",
+    "OriginalFilename": "justz.exe",
+    "ProductName": "justz"
+  }
+}

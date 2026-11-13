@@ -8,10 +8,18 @@ builds:
     binary: justz
     env:
       - CGO_ENABLED=0
+    # A Windows binary carries its name, version and publisher in its resources, like
+    # a signed program does. The generated resource_windows_<arch>.syso is picked up
+    # by the Go build by its file name and is not committed.
+    hooks:
+      pre:
+        - sh scripts/winres.sh {{ .Os }} {{ .Arch }} {{ .Major }} {{ .Minor }} {{ .Patch }} {{ .Version }}
     flags:
       - -trimpath
+    # The binary is not stripped: unsigned, stripped Go binaries are more often
+    # flagged by antivirus heuristics, and the size saved is small.
     ldflags:
-      - -s -w -X main.version={{ .Version }}
+      - -X main.version={{ .Version }}
     goos: [linux, darwin, windows]
     goarch: [amd64, arm64]
 
