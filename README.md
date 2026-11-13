@@ -6,7 +6,7 @@
 
 `justz` is a small, single-binary CLI that fixes both, without replacing `just`. You keep your justfile. `justz` adds the layer around it.
 
-> **Status: early development.** The commands below describe what `justz` is being built to do. Nothing is released yet, so there is nothing to install today.
+> **Status: early development.** The first release (`v0.1.0`) is a skeleton: it ships `justz doctor` and `justz shim list`, so the install and release pipeline can be tried end to end. The features below are what `justz` is being built to do, and they are not available yet.
 
 ## What you get
 
@@ -50,13 +50,43 @@ Describe your commands once, next to your justfile:
 
 Then `justz help`, `justz check`, `justz fmt` and `justz completions` work from that file and from your justfile.
 
-## Install (planned)
+## Install
 
-- macOS, Linux and WSL2: Homebrew
-- Windows: winget
-- Any platform with Go: `go install`
+`justz` needs [`just`](https://github.com/casey/just) on your PATH.
 
-Exact commands will appear here with the first release.
+**Homebrew** (macOS, Linux, WSL2):
+
+```sh
+brew install igorlino/tap/justz
+```
+
+**Install script** (macOS, Linux, WSL2). It verifies the SHA256 of the download before installing anything, installs into `~/.local/bin` and never uses `sudo`:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/igorlino/justz/main/install.sh | sh
+```
+
+**Go**:
+
+```sh
+go install github.com/igorlino/justz/cmd/justz@latest
+```
+
+**Windows**: `winget install igorlino.justz` is coming. Until then, download the `.zip` from the [releases page](https://github.com/igorlino/justz/releases).
+
+Then check your setup:
+
+```sh
+justz doctor
+```
+
+### Verify a download
+
+Releases include SHA256 checksums and build provenance attestations. To check an archive you downloaded:
+
+```sh
+gh attestation verify justz-<version>-<os>-<arch>.tar.gz --repo igorlino/justz
+```
 
 ## Agent skills (planned)
 
