@@ -18,10 +18,10 @@ type dump struct {
 }
 
 type recipe struct {
-	Private    bool                         `json:"private"`
-	Doc        *string                      `json:"doc"`
-	Parameters []parameter                  `json:"parameters"`
-	Attributes []map[string]json.RawMessage `json:"attributes"`
+	Private    bool              `json:"private"`
+	Doc        *string           `json:"doc"`
+	Parameters []parameter       `json:"parameters"`
+	Attributes []json.RawMessage `json:"attributes"`
 }
 
 type parameter struct {
@@ -103,13 +103,19 @@ func commandsOf(recipes map[string]recipe) []Command {
 	return out
 }
 
-// heading is the value of a recipe's [group] attribute, or "".
+// heading is the value of a recipe's [group] attribute, or "". An attribute is
+// a JSON object such as {"group": "core"}, or a plain string for one without a
+// value such as "no-cd", so each is tried as an object.
 func heading(r recipe) string {
-	for _, a := range r.Attributes {
-		if raw, ok := a["group"]; ok {
-			var g string
-			if json.Unmarshal(raw, &g) == nil {
-				return g
+	for _, raw := range r.Attributes {
+		var obj map[string]json.RawMessage
+		if json.Unmarshal(raw, &obj) != nil {
+			continue
+		}
+		if g, ok := obj["group"]; ok {
+			var name string
+			if json.Unmarshal(g, &name) == nil {
+				return name
 			}
 		}
 	}

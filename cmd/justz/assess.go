@@ -3,13 +3,9 @@ package main
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/igorlino/justz/internal/assess"
-	"github.com/igorlino/justz/internal/orderedjson"
-	"github.com/igorlino/justz/internal/registry"
-	"github.com/igorlino/justz/internal/shim"
 )
 
 const assessUsage = `Usage: justz assess [--json]
@@ -39,39 +35,13 @@ func runAssess(args []string, e env) int {
 		return 2
 	}
 
-	cwd, err := os.Getwd()
+	ctx, err := loadProjectCtx(e)
 	if err != nil {
 		fmt.Fprintf(e.stderr, "justz assess: %v\n", err)
 		return 1
 	}
-	justfile, err := shim.FindJustfile(cwd)
-	if err != nil {
-		fmt.Fprintf(e.stderr, "justz assess: %v\n", err)
-		return 1
-	}
-	dumpJSON, err := e.runCmd("just", "--justfile", justfile, "--dump", "--dump-format", "json")
-	if err != nil {
-		fmt.Fprintf(e.stderr, "justz assess: could not read the justfile with just: %v\n", err)
-		return 1
-	}
-
-	in := assess.Input{Dump: []byte(dumpJSON), Variant: "native"}
-	if path, err := registry.Discover(filepath.Dir(justfile)); err == nil {
-		in.Variant, in.RegistryPath = "rich", path
-	} else if overlay := filepath.Join(projectRoot(filepath.Dir(justfile)), ".just-local-rich.json"); fileExists(overlay) {
-		in.Variant, in.RegistryPath = "local-rich", overlay
-	}
-	if in.RegistryPath != "" {
-		data, err := os.ReadFile(in.RegistryPath)
-		if err != nil {
-			fmt.Fprintf(e.stderr, "justz assess: %v\n", err)
-			return 1
-		}
-		if in.Registry, err = orderedjson.Parse(data); err != nil {
-			fmt.Fprintf(e.stderr, "justz assess: %s is not valid JSON: %v\n", in.RegistryPath, err)
-			return 1
-		}
-	}
+	in := assess.Input{Dump: []byte(ctx.Dump), Variant: ctx.Variant, RegistryPath: ctx.RegistryPath, Registry: ctx.Registry}
+	justfile := ctx.Justfile
 
 	report, err := assess.Assess(in)
 	if err != nil {
