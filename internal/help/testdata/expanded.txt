@@ -1,0 +1,25 @@
+
+  demo
+  Full command reference — all groups expanded
+
+  Core
+    build                        # Compile the project
+    ci                           # Full pre-push pipeline: lint, build, test
+    test                         # Run the test suite
+      -k <pattern>                 Filter tests by name pattern
+      -w, --watch                  Re-run on file changes
+
+  build  — Build
+    build docker                 # Build the container image
+    build release                # Build release artifacts
+
+  deploy  — Deploy
+    deploy production            # Deploy to production (requires approval)
+    deploy staging               # Deploy to the staging environment
+
+  tool  — Tools
+    tool clean                   # Remove build output and caches
+    tool doctor                  # Check that this checkout can run
+
+  Tip: run `justz help build` for argument details
+

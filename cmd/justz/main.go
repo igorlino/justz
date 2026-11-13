@@ -19,6 +19,7 @@ Usage:
 Commands:
   doctor        Check that justz can do its job (is just installed?)
   fmt [path]    Rewrite the command registry in its canonical order
+  help          Show the project's commands (summary, or --expanded)
   assess        Report facts about the justfile and which variant fits
   generate      Build the personal .just-local-rich.json from a justfile
   resolve NAME  Print the group path a bare command name stands for
@@ -50,6 +51,9 @@ type env struct {
 	runCmd         func(name string, args ...string) (string, error)
 	// execJust runs just with the terminal attached and returns its exit code.
 	execJust func(args []string) int
+	// color and width describe the output for the help views.
+	color bool
+	width int
 }
 
 func osEnv() env {
@@ -62,6 +66,8 @@ func osEnv() env {
 			return strings.TrimSpace(string(out)), err
 		},
 		execJust: execJust,
+		color:    useColor(os.Stdout),
+		width:    terminalWidth(os.Stdout),
 	}
 }
 
@@ -95,11 +101,13 @@ func run(args []string, e env) int {
 	case "--version", "-version", "version":
 		fmt.Fprintln(e.stdout, "justz "+currentVersion())
 		return 0
-	case "--help", "-h", "help":
+	case "--help", "-h":
 		fmt.Fprint(e.stdout, usage)
 		return 0
 	case "--as":
 		return runAs(args[1:], e)
+	case "help":
+		return runHelp(args[1:], e)
 	case "assess":
 		return runAssess(args[1:], e)
 	case "--local":
