@@ -115,3 +115,25 @@ func TestCheckErrors(t *testing.T) {
 		t.Errorf("--help: code %d", code)
 	}
 }
+
+// The full comment block comes from the text of just --dump, not from the JSON.
+func TestCheckFindsMultilineComments(t *testing.T) {
+	t.Chdir(gitProject(t))
+	dump := `{"recipes":{"multi":{"private":false,"doc":"third line","body":[],"parameters":[],"attributes":[{"group":"core"}]}},"modules":{}}`
+	text := "# First line\n# second line\n# third line\n[group('core')]\nmulti:\n    @echo multi\n"
+	r := newRuntimeEnv()
+	r.runCmd = func(name string, args ...string) (string, error) {
+		for _, a := range args {
+			if a == "--dump-format" {
+				return dump, nil
+			}
+		}
+		return text, nil
+	}
+	if code := run([]string{"check"}, r.env); code != 0 {
+		t.Fatalf("a warning alone must pass: exit %d, out %q", code, r.out.String())
+	}
+	if !strings.Contains(r.out.String(), "doc-multiline-comment") || !strings.Contains(r.out.String(), "comment block of 3 lines") {
+		t.Errorf("output:\n%s", r.out.String())
+	}
+}

@@ -15,7 +15,7 @@ CI job can fail on drift instead of a guard running inside recipes.
 It reads the justfile through just --dump and, when there is one, the registry
 (commands.json) or the local overlay. Rules:
 
-  doc-missing, group-missing, variadic-interpolation
+  doc-missing, group-missing, doc-multiline-comment, variadic-interpolation
   registry-missing, registry-stale, registry-desc-diverges,
   registry-key-signature, registry-desc-long, registry-unsorted
   example-bare-command, example-single-flag, example-long-flag,
@@ -58,7 +58,7 @@ func runCheck(args []string, e env) int {
 		fmt.Fprintf(e.stderr, "justz check: %v\n", err)
 		return 1
 	}
-	res, err := chk.Run(chk.Input{Dump: []byte(ctx.Dump), Variant: ctx.Variant, Registry: ctx.Registry, RegistrySource: ctx.Source})
+	res, err := chk.Run(chk.Input{Dump: []byte(ctx.Dump), Variant: ctx.Variant, Registry: ctx.Registry, RegistrySource: ctx.Source, Sources: ctx.loadSources(e)})
 	if err != nil {
 		fmt.Fprintf(e.stderr, "justz check: %v\n", err)
 		return 1
