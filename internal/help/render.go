@@ -2,6 +2,7 @@ package help
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"unicode/utf8"
 )
@@ -123,6 +124,43 @@ func argDescription(a Arg) string {
 	return a.Desc + " (" + v + ")"
 }
 
+// section is a headed list of core commands.
+type section struct {
+	Title string
+	Cmds  []Command
+}
+
+// coreSections splits the core commands by their [group] heading. Commands
+// without one stay under "Core", which comes first; the others follow, sorted
+// by heading. Without any heading there is one "Core" section.
+func coreSections(g *Group) []section {
+	byHeading := map[string][]Command{}
+	var plain []Command
+	for _, c := range g.Commands {
+		if c.Heading == "" {
+			plain = append(plain, c)
+		} else {
+			byHeading[c.Heading] = append(byHeading[c.Heading], c)
+		}
+	}
+	if len(byHeading) == 0 {
+		return []section{{Title: "Core", Cmds: g.Commands}}
+	}
+	var out []section
+	if len(plain) > 0 {
+		out = append(out, section{Title: "Core", Cmds: plain})
+	}
+	keys := make([]string, 0, len(byHeading))
+	for k := range byHeading {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		out = append(out, section{Title: k, Cmds: byHeading[k]})
+	}
+	return out
+}
+
 // Summary is the compact overview: the core commands, then each tier of
 // groups with a one-line description.
 func Summary(proj *Project, o Options) string {
@@ -131,11 +169,13 @@ func Summary(proj *Project, o Options) string {
 	p.b.WriteByte('\n')
 
 	if proj.Core != nil {
-		p.line("  %s", p.s.bold("Core"))
-		for _, c := range proj.Core.Commands {
-			p.compactRow(c.Name, c.Desc)
+		for _, sec := range coreSections(proj.Core) {
+			p.line("  %s", p.s.bold(sec.Title))
+			for _, c := range sec.Cmds {
+				p.compactRow(c.Name, c.Desc)
+			}
+			p.b.WriteByte('\n')
 		}
-		p.b.WriteByte('\n')
 	}
 	for _, t := range proj.Tiers {
 		if t.Hint != "" {
@@ -163,12 +203,14 @@ func Expanded(proj *Project, o Options) string {
 	p.b.WriteByte('\n')
 
 	if proj.Core != nil {
-		p.line("  %s", p.s.bold("Core"))
-		for _, c := range proj.Core.Commands {
-			p.fullRow(c.Name, c.Desc, c.Example)
-			p.argRows(c.Args)
+		for _, sec := range coreSections(proj.Core) {
+			p.line("  %s", p.s.bold(sec.Title))
+			for _, c := range sec.Cmds {
+				p.fullRow(c.Name, c.Desc, c.Example)
+				p.argRows(c.Args)
+			}
+			p.b.WriteByte('\n')
 		}
-		p.b.WriteByte('\n')
 	}
 
 	first := ""
