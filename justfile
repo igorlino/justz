@@ -62,6 +62,12 @@ test-install:
 test-shim-containers:
     sh scripts/test-shim-container.sh
 
+[doc('Test the shell completion in real bash and zsh in a container (needs Docker)')]
+[group('check')]
+[unix]
+test-completion-containers:
+    sh scripts/test-completion-container.sh
+
 [doc('Install the published release in clean containers (needs Docker and a release)')]
 [group('check')]
 verify-install:
