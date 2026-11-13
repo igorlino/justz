@@ -44,6 +44,11 @@ build:
 snapshot:
     goreleaser release --snapshot --clean --skip=publish,announce
 
-[doc('Everything CI runs: format check, vet, test, build')]
+[doc('Test install.sh against a fake local release')]
 [group('check')]
-ci: fmt-check vet test build
+test-install:
+    sh scripts/test-install.sh
+
+[doc('Everything CI runs: format check, vet, test, build, install script')]
+[group('check')]
+ci: fmt-check vet test build test-install
