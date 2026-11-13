@@ -121,7 +121,7 @@ func TestHelpErrors(t *testing.T) {
 	}
 
 	r = helpEnv(false, 80)
-	if code := run([]string{"help", "--wat"}, r.env); code != 2 || !strings.Contains(r.errOut.String(), `unknown argument "--wat"`) {
+	if code := run([]string{"help", "--wat"}, r.env); code != 2 || !strings.Contains(r.errOut.String(), `unknown flag "--wat"`) {
 		t.Errorf("bad flag: code %d, stderr %q", code, r.errOut.String())
 	}
 	r = helpEnv(false, 80)
@@ -147,5 +147,58 @@ func TestNoColorWins(t *testing.T) {
 	t.Setenv("NO_COLOR", "1")
 	if useColor(os.Stdout) {
 		t.Error("NO_COLOR must turn colors off")
+	}
+}
+
+const zoomRegistry = `{
+  "cli": "dm",
+  "groups": {
+    "core": { "commands": { "features": {"desc": "List features"} } },
+    "tool": { "label": "Tools", "commands": { "git": {"desc": "Git helper", "args": [{"name": "-v", "desc": "Verbose"}]}, "doctor": {"desc": "Check tools"} } },
+    "sbx":  { "label": "Sandboxes", "commands": { "doctor": {"desc": "Check sandboxes"} } },
+    "ai":   { "label": "AI agents", "commands": { "claude": {"desc": "Claude"} } }
+  }
+}`
+
+func TestHelpZoom(t *testing.T) {
+	dir := gitProject(t)
+	writeFile(t, filepath.Join(dir, "config", "commands.json"), zoomRegistry)
+	t.Chdir(dir)
+
+	tests := []struct {
+		name     string
+		args     []string
+		wantCode int
+		wantOut  string
+		wantErr  string
+	}{
+		{"bare command", []string{"help", "git"}, 0, "dm tool git", ""},
+		{"unique prefix", []string{"help", "gi"}, 0, "dm tool git", ""},
+		{"two words", []string{"help", "tool", "git"}, 0, "dm tool git", ""},
+		{"group exact, command prefix", []string{"help", "ai", "cla"}, 0, "dm ai claude", ""},
+		{"group prefix, command prefix", []string{"help", "to", "gi"}, 0, "dm tool git", ""},
+		{"core command", []string{"help", "features"}, 0, "dm features", ""},
+		{"a group", []string{"help", "tool"}, 0, "tool · Tools", ""},
+		{"ambiguous exits 2", []string{"help", "doctor"}, 2, "", "ambiguous: 'doctor' matches several entries:"},
+		{"ambiguous lists candidates", []string{"help", "doctor"}, 2, "", "dm sbx doctor — Check sandboxes"},
+		{"no match exits 2", []string{"help", "zzz-nothing"}, 2, "", "no group or command matches 'zzz-nothing'"},
+		{"unknown group exits 2", []string{"help", "nogroup", "git"}, 2, "", "no group or command matches 'nogroup git'"},
+		{"three words exits 1", []string{"help", "a", "b", "c"}, 1, "", "expected [group] <term>, got 3 words"},
+		{"unknown flag exits 2", []string{"help", "--wat", "git"}, 2, "", `unknown flag "--wat"`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := helpEnv(false, 100)
+			code := run(tt.args, r.env)
+			if code != tt.wantCode {
+				t.Errorf("exit %d, want %d (stderr %q)", code, tt.wantCode, r.errOut.String())
+			}
+			if !strings.Contains(r.out.String(), tt.wantOut) {
+				t.Errorf("stdout should contain %q:\n%s", tt.wantOut, r.out.String())
+			}
+			if !strings.Contains(r.errOut.String(), tt.wantErr) {
+				t.Errorf("stderr should contain %q:\n%s", tt.wantErr, r.errOut.String())
+			}
+		})
 	}
 }

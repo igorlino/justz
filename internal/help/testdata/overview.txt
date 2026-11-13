@@ -1,0 +1,11 @@
+
+  dm  — groups
+
+  build      Build                                2 commands
+  deploy     Deploy                               2 commands
+  tool       Tools                                2 commands
+
+  No group: build, ci, test
+
+  Next: justz help <group>  justz help [group] <command>  justz help --browse (browse)
+

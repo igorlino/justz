@@ -1,0 +1,10 @@
+
+  tool · Tools
+
+  Usage: dm tool <command> [options]
+
+  Commands:
+    clean                        # Remove build output and caches
+    doctor                       # Check that this checkout can run
+      --fix                        Try to fix what is broken
+
