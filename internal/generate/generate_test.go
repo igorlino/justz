@@ -97,7 +97,7 @@ func TestSkipsPrivateRecipesAndWarnsAboutNestedModules(t *testing.T) {
 
 func TestArgumentKinds(t *testing.T) {
 	s := func(v string) *string { return &v }
-	args := arguments([]parameter{
+	args := argSpecs([]parameter{
 		{Name: "files", Kind: "star", Help: s("Many")},
 		{Name: "more", Kind: "plus", Help: s("At least one")},
 		{Name: "env", Kind: "singular", Help: s("Target")},
@@ -106,12 +106,29 @@ func TestArgumentKinds(t *testing.T) {
 		{Name: "undocumented", Kind: "singular"},
 	})
 	var names []string
-	for _, a := range args.Arr {
-		names = append(names, a.Get("name").Str)
+	for _, a := range args {
+		names = append(names, a.Name)
 	}
 	want := []string{"*files", "+more", "<env>", "-v", "--count <n>"}
 	if strings.Join(names, "|") != strings.Join(want, "|") {
 		t.Errorf("names = %v, want %v (undocumented parameters are left out)", names, want)
+	}
+}
+
+func TestParseKeepsHeadings(t *testing.T) {
+	p, err := Parse([]byte(`{"recipes":{
+		"build":{"private":false,"doc":"Build","parameters":[],"attributes":[{"doc":"Build"},{"group":"core"}]},
+		"deploy":{"private":false,"doc":"Deploy","parameters":[],"attributes":[{"group":"release"}]},
+		"loose":{"private":false,"doc":"Loose","parameters":[],"attributes":[]}},"modules":{}}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := map[string]string{}
+	for _, c := range p.Core {
+		got[c.Name] = c.Heading
+	}
+	if got["build"] != "core" || got["deploy"] != "release" || got["loose"] != "" {
+		t.Errorf("headings = %v", got)
 	}
 }
 

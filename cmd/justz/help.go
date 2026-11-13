@@ -12,6 +12,7 @@ import (
 	"github.com/igorlino/justz/internal/help"
 	"github.com/igorlino/justz/internal/orderedjson"
 	"github.com/igorlino/justz/internal/registry"
+	"github.com/igorlino/justz/internal/shim"
 )
 
 const helpUsage = `Usage: justz help [flags] [group] [command]
@@ -62,7 +63,7 @@ func runHelp(args []string, e env) int {
 		return 1
 	}
 
-	proj, err := loadHelpProject()
+	proj, err := loadHelpProject(e)
 	if err != nil {
 		fmt.Fprintf(e.stderr, "justz help: %v\n", err)
 		return 1
@@ -82,22 +83,22 @@ func runHelp(args []string, e env) int {
 	return 0
 }
 
-// loadHelpProject finds the registry (or the local overlay) of the current
-// project and builds the help model from it.
-func loadHelpProject() (*help.Project, error) {
+// loadHelpProject builds the help model of the current project, from its
+// registry, else its local overlay, else (a native project) from the justfile
+// itself through just --dump.
+func loadHelpProject(e env) (*help.Project, error) {
 	cwd, err := os.Getwd()
 	if err != nil {
 		return nil, err
 	}
 	path, err := registry.Discover(cwd)
 	if err != nil {
-		// No committed registry: try the personal overlay in the project root.
-		root := projectRoot(cwd)
-		overlay := filepath.Join(root, ".just-local-rich.json")
-		if !fileExists(overlay) {
-			return nil, fmt.Errorf("this project has no commands.json and no .just-local-rich.json (create the overlay with: justz generate)")
+		overlay := filepath.Join(projectRoot(cwd), ".just-local-rich.json")
+		if fileExists(overlay) {
+			path = overlay
+		} else {
+			return nativeProject(e, cwd)
 		}
-		path = overlay
 	}
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -108,6 +109,19 @@ func loadHelpProject() (*help.Project, error) {
 		return nil, fmt.Errorf("%s is not valid JSON: %v", path, err)
 	}
 	return help.FromRegistry(doc, filepath.Base(projectRootOf(path)))
+}
+
+// nativeProject reads a project that has no registry from its justfile.
+func nativeProject(e env, cwd string) (*help.Project, error) {
+	justfile, err := shim.FindJustfile(cwd)
+	if err != nil {
+		return nil, fmt.Errorf("this project has no commands.json, no .just-local-rich.json and no justfile")
+	}
+	dumpJSON, err := e.runCmd("just", "--justfile", justfile, "--dump", "--dump-format", "json")
+	if err != nil {
+		return nil, fmt.Errorf("could not read the justfile with just: %v", err)
+	}
+	return help.FromDump([]byte(dumpJSON), filepath.Base(projectRoot(filepath.Dir(justfile))))
 }
 
 // projectRootOf is the project root for a registry path.

@@ -22,6 +22,7 @@ type Command struct {
 	Name    string
 	Desc    string
 	Example string
+	Heading string // a display heading from a [group] attribute (native projects)
 	Args    []Arg
 }
 
