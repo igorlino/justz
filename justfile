@@ -39,6 +39,11 @@ test:
 build:
     go build -ldflags "-X main.version={{ version }}" -o justz ./cmd/justz
 
+[doc('Build every release archive locally, without publishing anything')]
+[group('build')]
+snapshot:
+    goreleaser release --snapshot --clean --skip=publish,announce
+
 [doc('Everything CI runs: format check, vet, test, build')]
 [group('check')]
 ci: fmt-check vet test build
