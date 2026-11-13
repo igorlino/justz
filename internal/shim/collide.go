@@ -90,7 +90,9 @@ func (d Dirs) checkOne(reg Registry, e Entry, n string) []Problem {
 	var problems []Problem
 
 	// A file in the shim directory that is not ours: never touch it.
-	if sp := d.stubPath(n); exists(sp) && !isOurs(sp) {
+	sp := d.stubPath(n)
+	notOurs := exists(sp) && !isOurs(sp)
+	if notOurs {
 		problems = append(problems, Problem{NotOurs, n, fmt.Sprintf("%s already exists and was not written by justz, so it will not be overwritten", sp)})
 	}
 
@@ -109,7 +111,9 @@ func (d Dirs) checkOne(reg Registry, e Entry, n string) []Problem {
 	}
 
 	// A command with the same name somewhere on the PATH.
-	if found, idx := d.firstOnPath(n); found != "" {
+	// A file that is not ours at the stub path is already reported above, so it
+	// is not reported a second time as a command the shim would hide.
+	if found, idx := d.firstOnPath(n); found != "" && !(notOurs && filepath.Clean(found) == filepath.Clean(sp)) {
 		shimIdx := d.shimDirIndex()
 		switch {
 		case shimIdx < 0:
