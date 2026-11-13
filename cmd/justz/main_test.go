@@ -101,3 +101,12 @@ func TestShimListJSON(t *testing.T) {
 		t.Errorf("want an empty shims array, got %q", out.String())
 	}
 }
+
+func TestCurrentVersionPrefersStampedVersion(t *testing.T) {
+	old := version
+	t.Cleanup(func() { version = old })
+	version = "1.2.3"
+	if got := currentVersion(); got != "1.2.3" {
+		t.Errorf("currentVersion() = %q, want %q", got, "1.2.3")
+	}
+}

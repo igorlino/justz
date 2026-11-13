@@ -24,7 +24,7 @@ func runDoctor(args []string, e env) int {
 		return 2
 	}
 
-	report := doctorReport{Version: version, OK: true}
+	report := doctorReport{Version: currentVersion(), OK: true}
 	report.Checks = append(report.Checks, checkJust(e))
 	for _, c := range report.Checks {
 		if !c.OK {
