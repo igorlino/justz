@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -200,5 +201,74 @@ func TestHelpZoom(t *testing.T) {
 				t.Errorf("stderr should contain %q:\n%s", tt.wantErr, r.errOut.String())
 			}
 		})
+	}
+}
+
+func TestHelpJSON(t *testing.T) {
+	dir := gitProject(t)
+	writeFile(t, filepath.Join(dir, "config", "commands.json"), zoomRegistry)
+	t.Chdir(dir)
+
+	decode := func(r *runtimeEnv, v any) {
+		t.Helper()
+		if err := json.Unmarshal(r.out.Bytes(), v); err != nil {
+			t.Fatalf("stdout is not valid JSON: %v\n%s", err, r.out.String())
+		}
+	}
+
+	r := helpEnv(false, 100)
+	if code := run([]string{"help", "--json"}, r.env); code != 0 {
+		t.Fatalf("overview: exit %d", code)
+	}
+	var ov struct {
+		CLI    string
+		Groups []struct{ Name string }
+		Core   []string
+	}
+	decode(r, &ov)
+	if ov.CLI != "dm" || len(ov.Groups) != 3 || len(ov.Core) != 1 {
+		t.Errorf("overview = %+v", ov)
+	}
+
+	r = helpEnv(false, 100)
+	if code := run([]string{"help", "-j", "tool", "git"}, r.env); code != 0 {
+		t.Fatalf("command: exit %d", code)
+	}
+	var cmd struct {
+		Path, Invoke, Desc string
+		Args               []struct{ Name, Desc string }
+	}
+	decode(r, &cmd)
+	if cmd.Path != "tool git" || cmd.Invoke != "dm tool git" || len(cmd.Args) != 1 || cmd.Args[0].Name != "-v" {
+		t.Errorf("command = %+v", cmd)
+	}
+
+	r = helpEnv(false, 100)
+	if code := run([]string{"help", "--json", "tool"}, r.env); code != 0 {
+		t.Fatalf("group: exit %d", code)
+	}
+	var grp struct {
+		Path     string
+		Commands []struct{ Name string }
+	}
+	decode(r, &grp)
+	if grp.Path != "tool" || len(grp.Commands) != 2 || grp.Commands[0].Name != "doctor" {
+		t.Errorf("group = %+v", grp)
+	}
+
+	// Ambiguous: an array of every match, and exit 2.
+	r = helpEnv(false, 100)
+	if code := run([]string{"help", "--json", "doctor"}, r.env); code != 2 {
+		t.Errorf("ambiguous: exit %d, want 2", code)
+	}
+	var both []struct{ Path string }
+	decode(r, &both)
+	if len(both) != 2 || both[0].Path != "sbx doctor" || both[1].Path != "tool doctor" {
+		t.Errorf("ambiguous array = %+v", both)
+	}
+
+	r = helpEnv(false, 100)
+	if code := run([]string{"help", "--json", "zzz"}, r.env); code != 2 || r.out.Len() != 0 || !strings.Contains(r.errOut.String(), "no group or command matches 'zzz'") {
+		t.Errorf("no match: code %d, stdout %q, stderr %q", code, r.out.String(), r.errOut.String())
 	}
 }

@@ -24,6 +24,7 @@ Show the commands of the current project, rendered from its command registry
   <group>            One group: its usage, commands, examples
   [group] <command>  One command: how to invoke it, examples, options
   --wide, -w         Add example columns (on by default from 100 columns)
+  --json, -j         Print the same information as JSON for tools and agents
 
 A group or command can be given by an exact name, or by a unique start of it
 ("to gi" finds "tool git"). A name that exists in several groups is ambiguous
@@ -36,7 +37,7 @@ Exit codes: 0 done, 1 error, 2 usage error.
 `
 
 func runHelp(args []string, e env) int {
-	expanded, wide := false, false
+	expanded, wide, asJSON := false, false, false
 	var terms []string
 	for _, a := range args {
 		switch {
@@ -47,6 +48,8 @@ func runHelp(args []string, e env) int {
 			expanded = true
 		case a == "--wide" || a == "-w":
 			wide = true
+		case a == "--json" || a == "-j":
+			asJSON = true
 		case strings.HasPrefix(a, "-"):
 			fmt.Fprintf(e.stderr, "justz help: unknown flag %q\n\n%s", a, helpUsage)
 			return 2
@@ -65,6 +68,9 @@ func runHelp(args []string, e env) int {
 		return 1
 	}
 	opts := help.Options{Color: e.color, Width: e.width, Wide: wide}
+	if asJSON {
+		return zoomJSON(proj, terms, e)
+	}
 	if len(terms) > 0 {
 		return zoom(proj, terms, opts, e)
 	}
@@ -152,5 +158,37 @@ func zoom(proj *help.Project, terms []string, opts help.Options, e env) int {
 		return 2
 	}
 	fmt.Fprintf(e.stderr, "no group or command matches '%s'. Try: justz help --expanded\n", strings.Join(terms, " "))
+	return 2
+}
+
+// zoomJSON prints the node of what the words select, or the overview of groups
+// when there are none. An ambiguous lookup prints an array with every match
+// and exits 2.
+func zoomJSON(proj *help.Project, terms []string, e env) int {
+	if len(terms) == 0 {
+		return printJSON(e, help.OverviewJSON(proj))
+	}
+	node := func(r help.Row) any {
+		g := proj.GroupByKey(r.Group)
+		if r.IsGroup {
+			return help.GroupJSON(proj, g)
+		}
+		return help.CommandJSON(proj, g, g.FindCommand(r.Command))
+	}
+	outcome, rows := proj.Lookup(terms...)
+	switch outcome {
+	case help.Found:
+		return printJSON(e, node(rows[0]))
+	case help.Ambiguous:
+		nodes := make([]any, 0, len(rows))
+		for _, r := range rows {
+			nodes = append(nodes, node(r))
+		}
+		if code := printJSON(e, nodes); code != 0 {
+			return code
+		}
+		return 2
+	}
+	fmt.Fprintf(e.stderr, "no group or command matches '%s'. Try: justz help --json\n", strings.Join(terms, " "))
 	return 2
 }
