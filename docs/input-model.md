@@ -47,7 +47,7 @@ The shell generator that produced the overlay behaves in ways we should not copy
 
 | Observed behavior | Decision for `justz generate` |
 |---|---|
-| Every root recipe lands in `core`, ignoring its `[group]` attribute (a recipe grouped `deploy` ends up under `core`). Only submodules become groups | Use the `[group]` attribute for root recipes, and the module name for module recipes without one. |
+| Every root recipe lands in `core`, ignoring its `[group]` attribute (a recipe grouped `deploy` ends up under `core`). Only submodules become groups | Keep it. In a registry a group is also the path used to run a command (`just <group> <command>`), so a `[group]` attribute, which is only a display heading, must not become a registry group: it would break name resolution and shims. Groups are modules, root recipes are `core`. Only top-level modules are generated; nested ones are skipped with a warning, because a group name is a single word. |
 | A flag declared with `value='true'` is rendered as `-w, --watch <watch>`, as if it took a value. The dump marks such a parameter with `value` set while `flag` is `false`, and the old generator only looked at `flag` | Treat a parameter with a `value` as a flag with no placeholder. |
 | The output is derived and nothing survives a re-run, except that people hand-add `values: [...]` for enum completion and lose them | Preserve hand-added `values` when regenerating. |
 | Multi-line `[doc]` text is cut to its first line | Keep that, and have `check` warn about multi-line comments, because `just --list` shows only their last line. |
