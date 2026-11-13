@@ -58,8 +58,9 @@ class Justz < Formula
 
   def install
     bin.install "justz"
-    # justz acts as jz when started under that name. jzh follows with justz help.
+    # justz acts as jz and jzh when started under those names
     bin.install_symlink "justz" => "jz"
+    bin.install_symlink "justz" => "jzh"
   end
 
   test do

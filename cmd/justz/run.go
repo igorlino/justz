@@ -40,8 +40,11 @@ func runAs(args []string, e env) int {
 		return 2
 	}
 	if isHelp {
-		fmt.Fprintf(e.stderr, "%s: the help command is not available in this version of justz yet\n", name)
-		return 1
+		if info, err := os.Stat(entry.Justfile); err != nil || info.IsDir() {
+			fmt.Fprintf(e.stderr, "%s: the justfile %s is gone. Check with: justz shim doctor\n", name, entry.Justfile)
+			return 2
+		}
+		return runHelpAt(filepath.Dir(entry.Justfile), name, rest, e)
 	}
 
 	return execShim(entry.Name, entry.Justfile, entry.Soft, rest, e)
@@ -120,14 +123,13 @@ func invokedAs(argv0 string) string {
 // runLocal is the built-in jz shortcut: it behaves like a shim for the justfile
 // of the current project, found by walking up from the working directory.
 func runLocal(name string, rest []string, e env) int {
-	if name == "jzh" {
-		fmt.Fprintf(e.stderr, "%s: the help command is not available in this version of justz yet\n", name)
-		return 1
-	}
 	cwd, err := os.Getwd()
 	if err != nil {
 		fmt.Fprintf(e.stderr, "%s: %v\n", name, err)
 		return 1
+	}
+	if name == "jzh" {
+		return runHelpAt(cwd, name, rest, e)
 	}
 	justfile, err := shim.FindJustfile(cwd)
 	if err != nil {

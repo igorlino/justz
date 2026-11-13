@@ -40,6 +40,17 @@ Exit codes: 0 done, 1 error, 2 usage error.
 `
 
 func runHelp(args []string, e env) int {
+	cwd, err := os.Getwd()
+	if err != nil {
+		fmt.Fprintf(e.stderr, "justz help: %v\n", err)
+		return 1
+	}
+	return runHelpAt(cwd, "justz help", args, e)
+}
+
+// runHelpAt is justz help for the project around dir. helpCmd is how the user
+// typed it ("justz help", or the name of a shim such as "jzh"), for messages.
+func runHelpAt(dir, helpCmd string, args []string, e env) int {
 	expanded, wide, asJSON, browseMode := false, false, false, false
 	var terms []string
 	for _, a := range args {
@@ -56,7 +67,7 @@ func runHelp(args []string, e env) int {
 		case a == "--browse" || a == "-b":
 			browseMode = true
 		case strings.HasPrefix(a, "-"):
-			fmt.Fprintf(e.stderr, "justz help: unknown flag %q\n\n%s", a, helpUsage)
+			fmt.Fprintf(e.stderr, "%s: unknown flag %q\n\n%s", helpCmd, a, helpUsage)
 			return 2
 		default:
 			terms = append(terms, a)
@@ -65,16 +76,16 @@ func runHelp(args []string, e env) int {
 	// A quoted "tool git" arrives as one word; treat it as two.
 	terms = strings.Fields(strings.Join(terms, " "))
 	if len(terms) > 2 {
-		fmt.Fprintf(e.stderr, "justz help: expected [group] <term>, got %d words\n%s", len(terms), helpUsage)
+		fmt.Fprintf(e.stderr, "%s: expected [group] <term>, got %d words\n%s", helpCmd, len(terms), helpUsage)
 		return 1
 	}
 
-	proj, err := loadHelpProject(e)
+	proj, err := loadHelpProject(e, dir)
 	if err != nil {
-		fmt.Fprintf(e.stderr, "justz help: %v\n", err)
+		fmt.Fprintf(e.stderr, "%s: %v\n", helpCmd, err)
 		return 1
 	}
-	opts := help.Options{Color: e.color, Width: e.width, Wide: wide}
+	opts := help.Options{Color: e.color, Width: e.width, Wide: wide, HelpCmd: helpCmd}
 	if browseMode {
 		return browse(proj, opts, asJSON, e)
 	}
@@ -95,11 +106,7 @@ func runHelp(args []string, e env) int {
 // loadHelpProject builds the help model of the current project, from its
 // registry, else its local overlay, else (a native project) from the justfile
 // itself through just --dump.
-func loadHelpProject(e env) (*help.Project, error) {
-	cwd, err := os.Getwd()
-	if err != nil {
-		return nil, err
-	}
+func loadHelpProject(e env, cwd string) (*help.Project, error) {
 	path, err := registry.Discover(cwd)
 	if err != nil {
 		overlay := filepath.Join(projectRoot(cwd), ".just-local-rich.json")
@@ -180,7 +187,7 @@ func zoom(proj *help.Project, terms []string, opts help.Options, e env) int {
 		}
 		return 2
 	}
-	fmt.Fprintf(e.stderr, "no group or command matches '%s'. Try: justz help --expanded\n", strings.Join(terms, " "))
+	fmt.Fprintf(e.stderr, "no group or command matches '%s'. Try: %s --expanded\n", strings.Join(terms, " "), opts.HelpCmd)
 	return 2
 }
 
