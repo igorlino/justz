@@ -43,12 +43,13 @@ func TestRun(t *testing.T) {
 		{"doctor without just", []string{"doctor"}, false, 1, "[fail] just: not found on PATH", ""},
 		{"doctor bad flag", []string{"doctor", "--wat"}, true, 2, "", `unexpected argument "--wat"`},
 		{"shim list", []string{"shim", "list"}, true, 0, "No shims registered.", ""},
-		{"shim without subcommand", []string{"shim"}, true, 2, "", "expected a subcommand"},
-		{"shim unknown subcommand", []string{"shim", "add"}, true, 2, "", "expected a subcommand"},
+		{"shim without subcommand", []string{"shim"}, true, 2, "", "Usage: justz shim"},
+		{"shim unknown subcommand", []string{"shim", "wat"}, true, 2, "", `unknown command "wat"`},
 		{"shim list bad flag", []string{"shim", "list", "--wat"}, true, 2, "", `unexpected argument "--wat"`},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Setenv("JUSTZ_CONFIG_DIR", t.TempDir()) // never read the real registry
 			e, out, errOut := testEnv(tt.just)
 			code := run(tt.args, e)
 			if code != tt.wantCode {
@@ -93,6 +94,7 @@ func TestDoctorJSONFailure(t *testing.T) {
 }
 
 func TestShimListJSON(t *testing.T) {
+	t.Setenv("JUSTZ_CONFIG_DIR", t.TempDir())
 	e, out, _ := testEnv(true)
 	if code := run([]string{"shim", "list", "--json"}, e); code != 0 {
 		t.Fatalf("exit code = %d, want 0", code)
