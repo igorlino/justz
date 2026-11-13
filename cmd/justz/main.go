@@ -59,7 +59,7 @@ func run(args []string, e env) int {
 	}
 	switch args[0] {
 	case "--version", "-version", "version":
-		fmt.Fprintln(e.stdout, "justz "+version)
+		fmt.Fprintln(e.stdout, "justz "+currentVersion())
 		return 0
 	case "--help", "-h", "help":
 		fmt.Fprint(e.stdout, usage)
