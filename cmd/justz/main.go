@@ -18,6 +18,7 @@ Usage:
 
 Commands:
   doctor        Check that justz can do its job (is just installed?)
+  fmt [path]    Rewrite the command registry in its canonical order
   shim list     List registered shims
 
 Flags:
@@ -66,6 +67,8 @@ func run(args []string, e env) int {
 		return 0
 	case "doctor":
 		return runDoctor(args[1:], e)
+	case "fmt":
+		return runFmt(args[1:], e)
 	case "shim":
 		return runShim(args[1:], e)
 	default:
