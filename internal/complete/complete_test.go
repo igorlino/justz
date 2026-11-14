@@ -228,7 +228,7 @@ func TestShimWithoutAProjectOffersFiles(t *testing.T) {
 func TestJustzCommands(t *testing.T) {
 	e := testEnv(t)
 	got := values(Justz([]string{""}, e))
-	for _, want := range []string{"assess", "check", "completions", "fmt", "help", "setup", "shim", "--version"} {
+	for _, want := range []string{"assess", "check", "completions", "fmt", "help", "init", "lint", "setup", "shim", "--version"} {
 		if !strings.Contains(" "+got+" ", " "+want+" ") {
 			t.Errorf("top level should offer %q: %s", want, got)
 		}
@@ -253,6 +253,9 @@ func TestJustzFlagsAndArguments(t *testing.T) {
 	}{
 		{[]string{"check", "-"}, "--json --strict", false},
 		{[]string{"fmt", "-"}, "--check", false},
+		{[]string{"lint", "-"}, "--json --strict", false},
+		{[]string{"init", "-"}, "--dry-run --module --name --variant", false},
+		{[]string{"init", ""}, "", true},
 		{[]string{"fmt", ""}, "", true},
 		{[]string{"shim", "add", "-"}, "--dry-run --force --json --name --replace --soft --suffix", false},
 		{[]string{"shim", "add", ""}, "", true},

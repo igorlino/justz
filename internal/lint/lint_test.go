@@ -1,6 +1,7 @@
 package lint
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
@@ -100,5 +101,26 @@ func TestNoFindingsIsAnEmptyListNotNull(t *testing.T) {
 	res := run(t, `{"recipes":{},"modules":{}}`)
 	if res.Findings == nil {
 		t.Error("Findings must be an empty slice so JSON prints []")
+	}
+}
+
+func TestIgnoreWorksInNestedModulesAndAddsUpAcrossAttributes(t *testing.T) {
+	both := `{"metadata":["justz-ignore","recipe-long"]},{"metadata":["justz-ignore","recipe-long"]}`
+	d := fmt.Sprintf(`{"recipes":{},"modules":{"a":{"recipes":{"x":%s},"modules":{"b":{"recipes":{"y":%s,"z":%s},"modules":{}}}}}}`,
+		recipeJSON(60, `{"metadata":["justz-ignore","recipe-long"]}`), recipeJSON(60, both), recipeJSON(60, ""))
+	res := run(t, d)
+	if got := strings.Join(rules(res), ","); got != "recipe-long just a b z" {
+		t.Errorf("findings = %q", got)
+	}
+}
+
+func TestLineIsOmittedFromJSONWhenARuleHasNone(t *testing.T) {
+	res := run(t, fmt.Sprintf(`{"recipes":{"long":%s},"modules":{}}`, recipeJSON(60, "")))
+	b, err := json.Marshal(res.Findings[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(b), `"line"`) {
+		t.Errorf("line should be omitted: %s", b)
 	}
 }

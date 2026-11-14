@@ -42,6 +42,7 @@ var justzFlags = map[string][]Candidate{
 		{"--name", "The heading of the help"},
 		{"--variant", "native or rich"},
 	},
+	"lint":    {jsonFlag, {"--strict", "Warnings fail the run too"}},
 	"resolve": {jsonFlag},
 	"setup":   {{"--dry-run", "Show what would be created"}, jsonFlag},
 	"help": {
