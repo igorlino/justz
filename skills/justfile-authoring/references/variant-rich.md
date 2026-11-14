@@ -15,7 +15,7 @@ Documentation lives in a registry, `commands.json`, next to the justfile. `justz
 | `just/<ns>.just` | One submodule per command group, each with its own `_default` |
 | `scripts/<ns>/<cmd>.sh` | Recipe implementations, for every body longer than one command |
 
-`justz` finds the registry by walking up from the working directory to the project root (the directory with `.git`), looking in each directory for `.*/config/commands.json`, then `config/commands.json`, then `just/commands.json`. `--config <path>` or `JUSTZ_CONFIG` overrides it. A committed registry wins over a personal `.just-local-rich.json`.
+`justz` finds the registry by walking up from the working directory to the project root (the directory with `.git`), looking in each directory for `.*/config/commands.json`, then `config/commands.json`, then `just/commands.json`. `justz fmt` is the exception: it looks only in the current directory, or takes a path argument or `JUSTZ_CONFIG`, so run it from the project root. A committed registry wins over a personal `.just-local-rich.json`.
 
 Nothing here is vendored. There is no `help.sh` to copy, keep identical across repos, or update: upgrading `justz` upgrades every repo.
 
@@ -27,7 +27,7 @@ Nothing here is vendored. There is no `help.sh` to copy, keep identical across r
 | Expanded | `justz help --expanded` | Every group with its commands and argument rows. `--wide`, `-w` adds example columns (on by default from 100 columns) |
 | Zoom | `justz help <group>`, `justz help [group] <cmd>` | One group (usage, commands, examples, cross-references) or one command (how to invoke it, examples, options). An exact name or a unique prefix works; an ambiguous name exits `2` and lists the groups |
 
-Add `-j` (or `--json`) for machine-readable output, `-b` to browse with `fzf` (or a numbered menu). Long descriptions wrap under their column when stdout is a terminal.
+Add `-j` (or `--json`) for machine-readable output, `-b` to browse with `fzf` (or a numbered menu).
 
 ## 1. Create `config/commands.json`
 

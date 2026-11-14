@@ -377,7 +377,7 @@ my-recipe:
 
 **✅ Fix:**
 ```just
-user := env_var_or_default('USER', 'unknown')  # Safe default
+user := env('USER', 'unknown')  # Safe default
 
 my-recipe:
     #!/usr/bin/env bash
@@ -512,7 +512,7 @@ When reviewing a justfile, look for:
 - [ ] **Private recipe naming inconsistent?** Use `[private]` everywhere
 - [ ] **No argument validation?** Add case statement
 - [ ] **Shell scripts without `set -euo pipefail`?** Add it
-- [ ] **Using `env()` for optional?** Use `env_var_or_default()`
+- [ ] **Using one-argument `env()` for optional?** Give it a default: `env('NAME', 'default')`
 - [ ] **`set fallback` without docs?** Document or remove
 - [ ] **Guarded hook with a skippable test?** Define the helper, assert it exists
 - [ ] **Scaffold or template that fails `--check`?** Run the checker on it in tests

@@ -67,7 +67,7 @@ vendored-bash renderer:
   divergence structurally impossible. `justz check` now makes it detectable in `rich`
   too, which narrows the gap between the two.
 
-Counter-evidence, in `rich`'s favour, from the same repo: its `bidi` namespace
+Counter-evidence, in `rich`'s favour, from the same repo: its UI namespace
 carries 11 arg rows, 28 examples, a 5-line footer and 4 cross-references. That
 is the best documentation in the repo and it exists *because there was a
 structured place to put it*. The `native` variant reproduces it only with `[arg]` plus a

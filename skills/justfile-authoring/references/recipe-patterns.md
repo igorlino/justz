@@ -73,11 +73,11 @@ _check-deps:
 
 **Pattern: Allow users to override without editing files**
 
-When your recipe needs a value that users might want to customize, use `env_var_or_default()` to let them override via environment.
+When your recipe needs a value that users might want to customize, use `env()` with a default to let them override via environment.
 
 ```just
 # Default image, but allow override
-LINTER_IMAGE := env_var_or_default('LINTER_IMAGE', 'ghcr.io/example/linter-toolkit:2.3.0')
+LINTER_IMAGE := env('LINTER_IMAGE', 'ghcr.io/example/linter-toolkit:2.3.0')
 
 lint-check *flags:
     docker run --rm --volume "$(pwd):/workspace" \

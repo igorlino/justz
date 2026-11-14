@@ -96,6 +96,8 @@ For agent-facing instructions in `AGENTS.md`, include a concise `## Running Task
 
 ### 5. Verify
 
+Find the justfile root with `just -c pwd`, not a hand-written parent walk: it follows `just`'s own lookup rules.
+
 ```bash
 just                         # compact listing
 just <ns>                    # one namespace
@@ -177,6 +179,7 @@ Both shapes:
 - [ ] `--unsorted` passed by the listing recipes, so source order survives
 - [ ] `[arg(…, help='…')]` for every meaningful option, short form first where one exists
 - [ ] `set unstable` + `set lists` scoped to only the modules that need boolean flags, with a comment saying why
+- [ ] Mapped dependencies re-checked in any module using `set lists` (list values interpolate by concatenation)
 - [ ] An `explain` recipe if any recipe uses a multiline `[doc]`
 
 `rich` adds:

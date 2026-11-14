@@ -60,8 +60,8 @@ If an agent is doing this, the cross-cutting rule in `SKILL.md` applies: preview
 ## What it cannot do
 
 - **It does not replace `rich`'s group-level `examples`, `footer` and `seeAlso`.** The generator carries a command's `desc` and `args`, plus one `example` parsed from an `example:` line in a multi-line `[doc]`. Group-level fields are left empty; hand-add them if you want them. If they earn their keep for the whole team, the repo has outgrown `native`; propose `rich`.
-- **A plain justfile gets descriptions but no flags.** `just --dump` fills `doc` from an ordinary trailing `#` comment, so a repo with no attributes still gets real per-recipe descriptions. `[arg(help=…)]` is the only source of argument rows, so without it there is namespace and recipe completion with descriptions but no flag or value completion.
-- A public `default` recipe is excluded by name, like any `[private]` recipe.
+- **A plain justfile gets descriptions but no flags.** `just --dump` fills `doc` from an ordinary `#` comment on the line directly above the recipe, so a repo with no attributes still gets real per-recipe descriptions. `[arg(help=…)]` is the only source of argument rows, so without it there is namespace and recipe completion with descriptions but no flag or value completion.
+- A public `default` recipe is **not** skipped: it is generated as a `core` command with whatever description it has. Rename it to `_default` in the justfile (the fix this skill recommends anyway), or accept the row.
 
 ## Verify
 

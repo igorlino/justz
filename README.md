@@ -15,7 +15,7 @@
 - **Canonical formatting** *(available)*. `justz fmt` sorts your command registry into one stable order, so diffs stay small and reviews stay calm. Use `justz fmt --check` in CI to fail on an unformatted registry.
 - **Shortcuts that never break** *(available)*. Pin a command such as `tz` to a project's justfile and run it from any directory, with collision checks so it never hides a real command on your system.
 - **Completion for free** *(available)*. Shell completion generated from the same data as the help.
-- **Built for agents.** Every command has stable JSON output and exit codes, so an AI agent can discover what a repo offers and verify its own changes without guessing. The agent skill `justz-cli` teaches agents how, and `justfile-authoring` is planned.
+- **Built for agents.** Every command has stable JSON output and exit codes, so an AI agent can discover what a repo offers and verify its own changes without guessing. Two agent skills, `justz-cli` and `justfile-authoring`, teach agents how.
 
 ## Why another tool?
 
@@ -36,9 +36,9 @@
 | Let an agent call your recipes through MCP | [`just-mcp`](https://github.com/PromptExecution/just-mcp), an MCP server for `just`. |
 | Teach an agent `just` syntax and conventions | The skills [`cli-just`](https://github.com/paulrberg/dot-agents/tree/main/skills/cli-just), [`justfile-expert`](https://github.com/laurigates/claude-plugins/tree/main/tools-plugin/skills/justfile-expert) and [`justfile`](https://github.com/mizchi/skills/tree/main/justfile). |
 
-**What `justz` adds.** The tools above help you write and run justfiles. `justz` is about what happens once a project has many of them: can a new person or an agent find the right command, and does the documentation still match the recipes? It brings a grouped command reference with examples, checks you can run in CI, a single registry that the help and the completion share, global shortcuts that cannot hide a real command, and JSON output for tools. It also ships an agent skill of its own, `justz-cli`, and `justfile-authoring` is planned, both focused on a discoverable command surface and on keeping documentation honest.
+**What `justz` adds.** The tools above help you write and run justfiles. `justz` is about what happens once a project has many of them: can a new person or an agent find the right command, and does the documentation still match the recipes? It brings a grouped command reference with examples, checks you can run in CI, a single registry that the help and the completion share, global shortcuts that cannot hide a real command, and JSON output for tools. It also ships two agent skills of its own, `justz-cli` and `justfile-authoring`, focused on a discoverable command surface and on keeping documentation honest.
 
-**How they combine.** Use `just-lsp` while you write, `justz check` before you commit, and `just-mcp` if your agent should run recipes itself. The syntax skills and `justz-cli` do not compete: install both and your agent gets syntax help and knows how to use `justz`.
+**How they combine.** Use `just-lsp` while you write, `justz check` before you commit, and `just-mcp` if your agent should run recipes itself. The syntax skills and the `justz` skills do not compete: install both and your agent gets syntax help and a convention for making the result discoverable.
 
 Know a good tool or skill that belongs in this table? Open an issue and tell us. All of this builds on the work of the `just` maintainers, and thanks go to the authors of the tools above.
 
@@ -108,7 +108,7 @@ gh attestation verify justz-<version>-<os>-<arch>.tar.gz --repo igorlino/justz
 ## Agent skills
 
 - `justz-cli`: how an agent runs and troubleshoots `justz`.
-- `justfile-authoring`: how to design a discoverable, well-documented justfile, built on `justz` (coming).
+- `justfile-authoring`: how to design a discoverable, well-documented justfile, built on `justz`.
 
 Claude Code:
 

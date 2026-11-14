@@ -103,7 +103,7 @@ recipes. Three details that matter:
 | `source_directory()` | Returns the submodule's own directory (`just/`) |
 | `set working-directory := '..'` | Resolved relative to `source_directory()`, so `..` is the repo root |
 | `[no-cd]` on a recipe | Overrides the above and runs in the user's current directory — required for recipes that act on wherever the user happens to be |
-| `just FOO=bar <ns> <cmd>` | **Silently ignored.** Module variables cannot be set from the CLI and just still exits 0. Anything a caller must override has to be an environment variable |
+| `just FOO=bar <ns> <cmd>` | **Does not work.** Module variables cannot be set from the CLI: 1.58.0 ignored it and exited 0, 1.59.0 fails with an error. Anything a caller must override has to be an environment variable |
 
 
 ## Recipe bodies belong in `scripts/<ns>/`
