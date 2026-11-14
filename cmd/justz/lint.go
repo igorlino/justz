@@ -18,6 +18,9 @@ for documentation; lint is about the recipes themselves.
 Rules:
 
   recipe-long           A recipe body over 40 lines
+  module-shell-unset    A module with linewise recipes that sets no shell, so
+                        its recipes run with sh -cu and no pipefail. A set
+                        shell or windows-shell line is the opt-out
   ignore-unknown-rule   A justz-ignore value that is not a rule
 
 Every recipe is looked at, private ones and those in nested modules included.

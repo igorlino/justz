@@ -14,8 +14,9 @@ import (
 
 // Rule ids. They are part of the output and stay stable.
 const (
-	RuleRecipeLong    = "recipe-long"
-	RuleIgnoreUnknown = "ignore-unknown-rule"
+	RuleRecipeLong       = "recipe-long"
+	RuleModuleShellUnset = "module-shell-unset"
+	RuleIgnoreUnknown    = "ignore-unknown-rule"
 )
 
 // MaxBodyLines is the length of a recipe body, in entries of the dump, above
@@ -57,13 +58,25 @@ func (r Result) Count(s check.Severity) int {
 }
 
 type dump struct {
-	Recipes map[string]recipe `json:"recipes"`
-	Modules map[string]dump   `json:"modules"`
+	Recipes  map[string]recipe `json:"recipes"`
+	Modules  map[string]dump   `json:"modules"`
+	Settings struct {
+		Shell        json.RawMessage `json:"shell"`
+		WindowsShell json.RawMessage `json:"windows_shell"`
+	} `json:"settings"`
 }
 
 type recipe struct {
 	Attributes []json.RawMessage `json:"attributes"`
 	Body       []any             `json:"body"`
+	Shebang    bool              `json:"shebang"` // also true for [script] recipes
+}
+
+// isSet reports whether a setting of the dump has a value: it is null when the
+// justfile does not set it.
+func isSet(raw json.RawMessage) bool {
+	s := strings.TrimSpace(string(raw))
+	return s != "" && s != "null"
 }
 
 // Run lints a project from the output of just --dump --dump-format json.
@@ -74,6 +87,9 @@ func Run(dumpJSON []byte) (Result, error) {
 	}
 	var res Result
 	walk(d, "", &res)
+	for name, sub := range d.Modules {
+		moduleRules(sub, name, &res)
+	}
 	sortFindings(res.Findings)
 	if res.Findings == nil {
 		res.Findings = []Finding{}
@@ -114,6 +130,30 @@ func walk(d dump, prefix string, res *Result) {
 			p = prefix + " " + name
 		}
 		walk(sub, p, res)
+	}
+}
+
+// moduleRules reports a module that did not choose a shell. just does not pass
+// the settings of the root justfile on to a module, so a module that sets none
+// runs its linewise recipes with sh -cu: no pipefail. A module of only shebang
+// or [script] recipes is not affected by the setting, and one that sets a
+// shell, or a windows-shell, has chosen. The root justfile is left alone: a
+// root without set shell is a normal small justfile.
+func moduleRules(d dump, path string, res *Result) {
+	if !isSet(d.Settings.Shell) && !isSet(d.Settings.WindowsShell) {
+		for _, r := range d.Recipes {
+			if !r.Shebang {
+				res.Findings = append(res.Findings, Finding{
+					Rule: RuleModuleShellUnset, Severity: check.Warning, Subject: "module " + path,
+					Message: "sets no shell, so its recipes run with just's default (sh -cu), without pipefail",
+					Fix:     "import a shared settings file with a set shell line (justz init writes just/preamble.just), or add set shell := ['bash', '-eu', '-o', 'pipefail', '-c']",
+				})
+				break
+			}
+		}
+	}
+	for name, sub := range d.Modules {
+		moduleRules(sub, path+" "+name, res)
 	}
 }
 
