@@ -1,0 +1,133 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/igorlino/justz/main/schema/commands.schema.json",
+  "title": "justz command registry",
+  "description": "The shape of commands.json, the registry justz reads for the rich variant. It checks types and nesting only: unknown fields are allowed, and whether the registry matches the justfile is the job of justz check.",
+  "type": "object",
+  "required": ["groups"],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "The URL of this schema, so an editor can complete and check the file."
+    },
+    "$comment": {
+      "type": "string",
+      "description": "A note for readers. justz generate writes one as a header."
+    },
+    "name": {
+      "type": "string",
+      "description": "The heading of the help. Falls back to the directory name."
+    },
+    "title": {
+      "type": "string",
+      "description": "An alias justz reads when name is missing. Prefer name."
+    },
+    "tagline": {
+      "type": "string",
+      "description": "A one-line summary shown under the heading."
+    },
+    "subtitle": {
+      "type": "string",
+      "description": "An alias justz reads when tagline is missing. Prefer tagline."
+    },
+    "cli": {
+      "type": "string",
+      "description": "The command name shown in usage lines and examples, and the name of the shim."
+    },
+    "groups": {
+      "type": "object",
+      "description": "The command groups by key. The key core holds the top-level recipes; any other key is a module, run as just <group> <command>.",
+      "additionalProperties": { "$ref": "#/definitions/group" }
+    },
+    "tiers": {
+      "type": "array",
+      "description": "Ordered, headed sections of groups in the summary.",
+      "items": { "$ref": "#/definitions/tier" }
+    },
+    "order": {
+      "type": "array",
+      "description": "justz fmt sorts it, with core first. Nothing else reads it."
+    },
+    "dispatchers": {
+      "type": "array",
+      "description": "justz fmt sorts it A to Z. Nothing else reads it."
+    },
+    "lab": {
+      "type": "array",
+      "description": "justz fmt sorts it A to Z. Nothing else reads it."
+    }
+  },
+  "definitions": {
+    "tier": {
+      "type": "object",
+      "properties": {
+        "label": { "type": "string", "description": "The section heading." },
+        "hint": { "type": "string", "description": "Text shown after the heading." },
+        "groups": {
+          "type": "array",
+          "description": "Keys of the groups in this section.",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "group": {
+      "type": "object",
+      "properties": {
+        "label": { "type": "string", "description": "The human-readable name of the group." },
+        "title": { "type": "string" },
+        "desc": { "type": "string", "description": "What the group is for." },
+        "footer": { "type": "string", "description": "Prose shown under the examples." },
+        "commands": {
+          "type": "object",
+          "description": "The commands by recipe name.",
+          "additionalProperties": { "$ref": "#/definitions/command" }
+        },
+        "extra": {
+          "type": "object",
+          "description": "Documented entries that do not run as just <group> <command>.",
+          "additionalProperties": { "$ref": "#/definitions/command" }
+        },
+        "examples": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/example" }
+        },
+        "seeAlso": {
+          "type": "array",
+          "description": "Keys of related groups.",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "command": {
+      "type": "object",
+      "properties": {
+        "desc": { "type": "string", "description": "What the command does, imperative, with no trailing period." },
+        "example": { "type": "string", "description": "A usage example, prefixed with the ellipsis mark." },
+        "args": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/argument" }
+        }
+      }
+    },
+    "argument": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "The flag or positional name, such as -s, --surface <name>." },
+        "desc": { "type": "string" },
+        "type": { "type": "string", "description": "Real registries use boolean or string. justz does not read it." },
+        "values": {
+          "type": "array",
+          "description": "The allowed values of an enum. They drive completion.",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "example": {
+      "type": "object",
+      "properties": {
+        "cmd": { "type": "string", "description": "The command line, written as just <group> <command> ..." },
+        "desc": { "type": "string", "description": "What the example does." }
+      }
+    }
+  }
+}

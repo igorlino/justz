@@ -1,6 +1,6 @@
 # Design note: `justz schema`
 
-Status: proposed.
+Status: implemented in one PR (the schema file, the schema package, the command, completion and the tests). The open questions are decided as recommended.
 
 ## Purpose
 
@@ -27,6 +27,7 @@ The input model says the `commands.json` interface does not change in v1, and th
 - `additionalProperties` is not set to `false` anywhere. A field `justz` does not know is not an error.
 - The root must be an object and `groups` is the only required field. Every other field is optional, as in the code: `FromRegistry` fails only when the root is not an object, or `groups` is missing or is not an object. `fmt` is more lenient still and accepts `{}`, but a registry with no `groups` renders nothing, so the schema reports it.
 - It checks types and nesting, not meaning. No `required` on `desc`: an empty description is `check`'s finding, and a registry that is half written should still load in the editor.
+- `null` is a wrong type like any other: `justz` reads a null field as absent, and the schema reports it, since a `null` where text belongs is almost always a mistake.
 - No `pattern` on group or command keys, no `enum` on argument `type`. A registry that `justz` accepts today must stay valid.
 
 The fields, from `internal/help/model.go` and `internal/registry/canonical.go`:
