@@ -15,7 +15,7 @@
 - **Canonical formatting** *(available)*. `justz fmt` sorts your command registry into one stable order, so diffs stay small and reviews stay calm. Use `justz fmt --check` in CI to fail on an unformatted registry.
 - **Shortcuts that never break** *(available)*. Pin a command such as `tz` to a project's justfile and run it from any directory, with collision checks so it never hides a real command on your system.
 - **Completion for free** *(available)*. Shell completion generated from the same data as the help.
-- **Built for agents.** Every command has stable JSON output and exit codes, so an AI agent can discover what a repo offers and verify its own changes without guessing. Two agent skills, `justz-cli` and `justfile-authoring`, teach agents how.
+- **Built for agents.** Every command has stable JSON output and exit codes, so an AI agent can discover what a repo offers and verify its own changes without guessing. The agent skill `justz-cli` teaches agents how, and `justfile-authoring` is planned.
 
 ## Why another tool?
 
@@ -24,6 +24,23 @@
 - **It reads `just` the supported way**, through `just --dump --dump-format json`, so it keeps working as `just` evolves.
 - **It stays out of your secrets.** `justz` never reads, stores or injects credentials.
 - **Verified releases.** Releases ship with checksums and build provenance attestations.
+
+## Part of the `just` ecosystem
+
+`justz` exists because `just` is good. It does not replace `just`, and it works alongside the other tools people have built around it. Here is where each one shines, and where `justz` fits in.
+
+| If you want to... | Good choices |
+|---|---|
+| Run tasks, write recipes, use modules and attributes | [`just`](https://github.com/casey/just) itself. Its manual is the reference for syntax. |
+| Edit justfiles with syntax checks and completion in your editor | [`just-lsp`](https://github.com/terror/just-lsp), a language server for `just`. |
+| Let an agent call your recipes through MCP | [`just-mcp`](https://github.com/PromptExecution/just-mcp), an MCP server for `just`. |
+| Teach an agent `just` syntax and conventions | The skills [`cli-just`](https://github.com/paulrberg/dot-agents/tree/main/skills/cli-just), [`justfile-expert`](https://github.com/laurigates/claude-plugins/tree/main/tools-plugin/skills/justfile-expert) and [`justfile`](https://github.com/mizchi/skills/tree/main/justfile). |
+
+**What `justz` adds.** The tools above help you write and run justfiles. `justz` is about what happens once a project has many of them: can a new person or an agent find the right command, and does the documentation still match the recipes? It brings a grouped command reference with examples, checks you can run in CI, a single registry that the help and the completion share, global shortcuts that cannot hide a real command, and JSON output for tools. It also ships an agent skill of its own, `justz-cli`, and `justfile-authoring` is planned, both focused on a discoverable command surface and on keeping documentation honest.
+
+**How they combine.** Use `just-lsp` while you write, `justz check` before you commit, and `just-mcp` if your agent should run recipes itself. The syntax skills and `justz-cli` do not compete: install both and your agent gets syntax help and knows how to use `justz`.
+
+Know a good tool or skill that belongs in this table? Open an issue and tell us. All of this builds on the work of the `just` maintainers, and thanks go to the authors of the tools above.
 
 ## How it works
 
@@ -110,7 +127,7 @@ The skills never install `justz`. They check for it and tell you how to install 
 
 ## Contributing
 
-The project is not open for code contributions yet. Ideas and feedback are welcome as issues once the first release is out.
+The project is not open for code contributions yet. Ideas and feedback are welcome as issues.
 
 ## License
 
