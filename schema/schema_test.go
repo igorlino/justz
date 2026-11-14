@@ -34,7 +34,8 @@ func newValidator(t *testing.T) *validator {
 func (v *validator) validate(sch map[string]any, val any, path string) error {
 	if ref, ok := sch["$ref"].(string); ok {
 		name, found := strings.CutPrefix(ref, "#/definitions/")
-		def, _ := v.root["definitions"].(map[string]any)[name].(map[string]any)
+		defs, _ := v.root["definitions"].(map[string]any)
+		def, _ := defs[name].(map[string]any)
 		if !found || def == nil {
 			return fmt.Errorf("%s: unknown reference %q", path, ref)
 		}
@@ -46,8 +47,8 @@ func (v *validator) validate(sch map[string]any, val any, path string) error {
 	if obj, ok := val.(map[string]any); ok {
 		if req, ok := sch["required"].([]any); ok {
 			for _, r := range req {
-				if _, has := obj[r.(string)]; !has {
-					return fmt.Errorf("%s: %q is required", path, r)
+				if name, _ := r.(string); !hasKey(obj, name) {
+					return fmt.Errorf("%s: %q is required", path, name)
 				}
 			}
 		}
@@ -89,6 +90,11 @@ func (v *validator) validate(sch map[string]any, val any, path string) error {
 	return nil
 }
 
+func hasKey(obj map[string]any, k string) bool {
+	_, ok := obj[k]
+	return ok
+}
+
 func jsonType(v any) string {
 	switch v.(type) {
 	case nil:
@@ -114,6 +120,35 @@ func check(t *testing.T, v *validator, doc string) error {
 	return v.validate(v.root, val, "$")
 }
 
+// validForm reports whether the value of a supported keyword has the form the
+// validator handles: a single type name it can tell apart, one schema for items,
+// a list of names for required, and a boolean or a schema for additionalProperties.
+func validForm(keyword string, v any) bool {
+	switch keyword {
+	case "type":
+		name, ok := v.(string)
+		return ok && (name == "object" || name == "array" || name == "string" || name == "boolean" || name == "number" || name == "null")
+	case "items":
+		_, ok := v.(map[string]any)
+		return ok
+	case "required":
+		list, ok := v.([]any)
+		for _, r := range list {
+			if _, isString := r.(string); !isString {
+				return false
+			}
+		}
+		return ok
+	case "additionalProperties":
+		switch v.(type) {
+		case bool, map[string]any:
+			return true
+		}
+		return false
+	}
+	return true
+}
+
 // unsupported walks the schema and returns every keyword it uses that is neither
 // handled by the validator nor an annotation.
 func unsupported(node any, path string, out *[]string) {
@@ -130,6 +165,8 @@ func unsupported(node any, path string, out *[]string) {
 			default:
 				if !supported[k] && !annotations[k] {
 					*out = append(*out, path+"."+k)
+				} else if !validForm(k, child) {
+					*out = append(*out, path+"."+k+" (form)")
 				}
 				unsupported(child, path+"."+k, out)
 			}
@@ -150,6 +187,43 @@ func TestSchemaUsesOnlyKeywordsTheValidatorKnows(t *testing.T) {
 	if len(bad) > 0 {
 		sort.Strings(bad)
 		t.Errorf("keywords the test validator does not enforce: %v", bad)
+	}
+}
+
+// The walk must catch what it guards against: a keyword the validator does not
+// enforce, at any depth, and a supported keyword in a form it does not handle.
+func TestUnsupportedWalkCatchesMutations(t *testing.T) {
+	cases := []struct{ name, schema, want string }{
+		{"top level", `{"type": "object", "pattern": "x"}`, "$.pattern"},
+		{"in a property", `{"properties": {"a": {"minLength": 1}}}`, "$.properties.a.minLength"},
+		{"in additionalProperties", `{"additionalProperties": {"enum": []}}`, "$.additionalProperties.enum"},
+		{"in items", `{"items": {"oneOf": []}}`, "$.items.oneOf"},
+		{"in a definition", `{"definitions": {"d": {"format": "uri"}}}`, "$.definitions.d.format"},
+		{"under a property named like a keyword", `{"properties": {"type": {"anyOf": []}}}`, "$.properties.type.anyOf"},
+		{"type list", `{"type": ["string", "null"]}`, "$.type (form)"},
+		{"type integer", `{"type": "integer"}`, "$.type (form)"},
+		{"tuple items", `{"items": [{"type": "string"}]}`, "$.items (form)"},
+		{"required not strings", `{"required": [1]}`, "$.required (form)"},
+		{"additionalProperties string", `{"additionalProperties": "no"}`, "$.additionalProperties (form)"},
+	}
+	for _, c := range cases {
+		var node any
+		if err := json.Unmarshal([]byte(c.schema), &node); err != nil {
+			t.Fatal(err)
+		}
+		var bad []string
+		unsupported(node, "$", &bad)
+		if len(bad) == 0 || bad[0] != c.want {
+			t.Errorf("%s: got %v, want %q", c.name, bad, c.want)
+		}
+	}
+	// A property named like a keyword is a name, not a keyword.
+	var ok any
+	_ = json.Unmarshal([]byte(`{"properties": {"pattern": {"type": "string"}, "items": {"type": "array"}}}`), &ok)
+	var bad []string
+	unsupported(ok, "$", &bad)
+	if len(bad) != 0 {
+		t.Errorf("property names reported as keywords: %v", bad)
 	}
 }
 
@@ -255,6 +329,11 @@ func TestWrongShapesFail(t *testing.T) {
 		{"seeAlso entry", `{"groups": {"a": {"seeAlso": [{}]}}}`, "$.groups.a.seeAlso[0]: want string, got object"},
 		{"tier groups", `{"groups": {}, "tiers": [{"groups": "a"}]}`, "$.tiers[0].groups: want array, got string"},
 		{"cli is a number", `{"cli": 1, "groups": {}}`, "$.cli: want string, got number"},
+		{"null desc", `{"groups": {"a": {"commands": {"x": {"desc": null}}}}}`, "$.groups.a.commands.x.desc: want string, got null"},
+		{"null args entry", `{"groups": {"a": {"commands": {"x": {"args": [null]}}}}}`, "$.groups.a.commands.x.args[0]: want object, got null"},
+		{"values is a string", `{"groups": {"a": {"commands": {"x": {"args": [{"values": "a"}]}}}}}`, "$.groups.a.commands.x.args[0].values: want array, got string"},
+		{"tiers is an object", `{"groups": {}, "tiers": {}}`, "$.tiers: want array, got object"},
+		{"example is a number", `{"groups": {"a": {"commands": {"x": {"example": 1}}}}}`, "$.groups.a.commands.x.example: want string, got number"},
 		{"order is a string", `{"groups": {}, "order": "core"}`, "$.order: want array, got string"},
 	}
 	v := newValidator(t)

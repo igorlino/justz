@@ -256,6 +256,8 @@ func TestJustzFlagsAndArguments(t *testing.T) {
 		{[]string{"lint", "-"}, "--json --strict", false},
 		{[]string{"init", "-"}, "--dry-run --module --name --variant", false},
 		{[]string{"init", ""}, "", true},
+		{[]string{"schema", ""}, "", false},
+		{[]string{"schema", "-"}, "", false},
 		{[]string{"fmt", ""}, "", true},
 		{[]string{"shim", "add", "-"}, "--dry-run --force --json --name --replace --soft --suffix", false},
 		{[]string{"shim", "add", ""}, "", true},
