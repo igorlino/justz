@@ -1,5 +1,6 @@
 {
   "name": "justz",
+  "version": "0.1.0",
   "description": "Skills for running the justz CLI and for authoring discoverable justfiles",
   "author": {
     "name": "Igor Lino"
