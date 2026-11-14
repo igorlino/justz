@@ -1,94 +1,123 @@
 # Design note: `justz lint`
 
-Status: proposed. Nothing is implemented. The open questions at the end need a decision before the code starts.
+Status: proposed, second draft after an independent review against just 1.59.0. Nothing is implemented. The open questions at the end need a decision before the code starts.
 
 ## Purpose
 
-Find antipatterns that can be seen in the structure of a justfile, as advice. `justz check` stays about documentation and parity and keeps failing CI by default. `justz lint` is about the recipe bodies and never fails CI unless asked.
+Find antipatterns that can be seen in the structure of a justfile, as advice. `justz check` stays about documentation and parity. `justz lint` is about recipe parameters and bodies, and every rule is a warning.
 
 ```
-justz lint [--json] [--strict] [path]
+justz lint [--json] [--strict]
 ```
 
-Exit codes: `0` no findings, or only warnings; `1` with `--strict` and at least one finding; `2` usage error. A finding has the same shape as a `check` finding (`rule`, `severity`, `subject`, `message`, `fix`) plus `line`, the line inside the recipe body.
+It finds the justfile from the working directory, as `check` does, and takes no path.
+
+Exit codes follow `check`: `1` when there is an error, or with `--strict` when there is a warning; `1` when the justfile cannot be loaded; `2` for a usage error; otherwise `0`. Every rule in this note is a warning, so without `--strict` a finding never fails a run.
+
+`--json` prints the same envelope as `check` (`ok`, `checked`, `errors`, `warnings`, `findings`). A finding has the `check` fields (`rule`, `severity`, `subject`, `message`, `fix`) plus `line` where a rule points into a body.
 
 ## Input
 
-The JSON of `just --dump --dump-format json`, as for `check`. A recipe body there is a list of lines; a line is a list of text fragments and interpolations. Comments stay in the body, and attributes (including `metadata`) are in the dump. `justz` does not parse justfile text and never runs a recipe.
+The JSON of `just --dump --dump-format json`. `justz` does not parse justfile text and never runs a recipe. What the review confirmed about the dump:
+
+- A recipe body is a list of lines. A line is a list of text fragments and interpolations. Comment lines, blank lines, the shebang line and each continuation line are separate entries.
+- An interpolation is an expression tree, not a name: `["variable","tok"]`, `["call","quote",["variable","tok"]]`, `["concatenate",…]`, `["if",…]`, `["call","env","GH_TOKEN"]`.
+- The dump has no source line and no file name. Recipes from an `import` are merged into the importing file.
+- A module does not inherit the root settings; its `settings.shell` is `null` when it sets none.
+
+So `line` is the 1-based index into the recipe body as dumped (the first body line is 1, and comment and blank lines count). It is not a line of the file.
+
+**Scope.** Every recipe is looked at: public, private, `default`, and recipes of nested modules. `check` skips private recipes because they need no documentation; a long body or a secret is as real in a private helper. The subject of a finding is the recipe's full path (`deploy`, `ops::deploy`, `ops::db::restore`).
 
 ## Opt-out
 
-Per recipe, with the attribute `just` already has, so it needs no comment parsing and survives `just --dump`:
+Per recipe, with the attribute `just` already has. It is in the dump, so no comment parsing is needed:
 
 ```just
-[metadata('justz-ignore', 'secret-on-command-line')]
-deploy host:
+[metadata('justz-ignore', 'secret-parameter', 'recipe-long')]
+deploy token:
 ```
 
-One attribute names one or more rule ids. An unknown id in the list is itself a finding (`ignore-unknown-rule`), so a typo cannot hide a finding. There is no file-wide switch.
+- The first value must be exactly `justz-ignore`. Every further value is one rule id. Several such attributes on a recipe add up.
+- An id that is not a lint rule, or an attribute that names no rule, is a finding (`ignore-unknown-rule`), so a typo cannot hide a finding.
+- `just` rejects `[metadata]` on a `mod` line (`module has invalid attribute metadata`), so the attribute cannot silence a module rule. The one module rule below has its own opt-out.
+- Verified on just 1.59.0 without `set unstable`. Which older versions have `[metadata]` is not verified; a dump without it means no opt-outs, never an error.
 
 ## Rules
 
-| Rule | Severity | Reports |
-|---|---|---|
-| `recipe-long` | warning | A recipe body over 40 lines (blank lines and comment lines do not count; the shebang line does not count). The fix names `scripts/<group>/<name>.sh` and a thin recipe. |
-| `secret-on-command-line` | warning | A secret-like name in the argument list of `ssh`, `sudo` or `env`. See below. |
-| `module-shell-not-strict` | warning | A module whose `set shell` is the default (`sh`, no `pipefail`). The fix is `import 'preamble.just'`, which `justz init` writes. The root justfile is not reported. |
-| `ignore-unknown-rule` | warning | An id in `justz-ignore` that is not a rule. |
-
-Line-count thresholds are fixed, not configurable. A project that needs another number is better served by `[metadata('justz-ignore', 'recipe-long')]` on the recipe that earns it.
-
-### `secret-on-command-line`
-
-A secret in an argument is visible in the process list, in `sudo` logs and, for `ssh`, on the remote host as well. Base64 only changes the quoting. The rule looks at structure and never at values.
-
-1. **Lines.** Take each body line that is not a comment. Join lines that end in a backslash.
-2. **Segments.** Split the line on `|`, `||`, `&&`, `;` and `&` outside quotes. The splitter understands single quotes, double quotes and backslashes, nothing else (no `$(...)` nesting, no heredocs). A line it cannot split (an unclosed quote) is skipped, not guessed at.
-3. **Command.** The first word of a segment, after leading `NAME=value` words and after `sudo` with its flags. The segment is in scope when that command is `ssh`, `sudo` or `env`.
-4. **Secret-like name.** Split a variable name on `_` and on camel-case boundaries, in upper case. It is secret-like when it contains the segment `TOKEN`, `PASSWORD`, `PASSWD`, `PASS`, `SECRET`, `CREDENTIAL` or `CREDENTIALS`, or one of the pairs `API KEY`, `SECRET KEY`, `PRIVATE KEY`, `ACCESS KEY`. It is not secret-like when its last segment is `FILE`, `PATH`, `DIR`, `NAME`, `ID`, `USER`, `URL` or `HOST`, so `SSH_KEY_FILE`, `TOKEN_PATH` and `AWS_ACCESS_KEY_ID` stay quiet. A bare `KEY` is not enough: it matches too much.
-5. **Reference.** In an in-scope segment, report a secret-like name that appears as `$NAME`, `${NAME}`, `{{ name }}` (a parameter or variable), `env('NAME')` or `env_var('NAME')`, or as the left side of `NAME=` (the right side may be literal, and is never copied into the message).
-
-A reference that is the operand of a redirection (`<`, `<<<`) is not part of the argument list, so it is not reported: `ssh host 'cat > file' <<<"$TOKEN"` stays quiet.
-
-The message names the recipe, the line, the command word and the variable name. It never contains the value or the line text.
-
-The fix: send the secret on standard input (a pipe, or `<<<"$TOKEN"`) or write it to a mode `0600` file and pass the path. The `justfile-authoring` skill already has the 1Password patterns; the message points at `references/credentials-in-recipes.md`.
-
-Fixtures. Each is a synthetic recipe in `internal/lint/testdata`, modelled on the real pattern, never copied from a private repo.
-
-| Fixture | Expected |
+| Rule | Reports |
 |---|---|
-| `ssh host "sudo -E env DB_PASSWORD={{pw}} run"` | finding |
-| `ssh host "run $API_TOKEN"` | finding |
-| `sudo env GH_TOKEN=x make deploy` | finding (name only; the value is not echoed) |
-| `printf %s "$API_TOKEN" \| ssh host 'cat > /dev/null'` | none: the name is in `printf`, not in `ssh` |
-| `ssh -i "$SSH_KEY_FILE" host` | none: a path |
-| `ssh host 'cat > f' <<<"$API_TOKEN"` | none: the operand of a redirection |
-| `echo "$API_TOKEN"` | none in v1 (see open questions) |
-| `ssh host "echo 'a | b' $TOKEN"` | finding: the pipe is inside quotes |
-| a line with an unclosed quote | none, no crash |
-| `[metadata('justz-ignore', 'secret-on-command-line')]` on the recipe | none |
-| the same recipe in a shebang body | the same result |
+| `recipe-long` | A recipe body over 40 lines |
+| `secret-parameter` | A recipe parameter with a secret-like name |
+| `secret-interpolated` | A secret-like name inside `{{ … }}` in a body line that `just` hands to a shell |
+| `module-shell-unset` | A module with linewise recipes and no `set shell` |
+| `ignore-unknown-rule` | A `justz-ignore` value that is not a lint rule |
+
+### `recipe-long`
+
+The count is the number of body entries in the dump, the same measure `justz assess` uses (`long.over40`), so the two agree on a recipe. Blank lines, comments, the shebang line and continuation lines all count: subtracting some of them needs rules for `[script]` recipes (no shebang line in the body) and for continuations, and buys little at a threshold of 40. `assess` counts public recipes only; `lint` reports private ones too. The fix names `scripts/<group>/<name>.sh` and a thin recipe.
+
+### The two secret rules
+
+The first draft looked for secret-like names in the arguments of `ssh`, `sudo` and `env`. The review showed that this misses the main exposure and is fragile, so it is replaced. What was measured on just 1.59.0:
+
+- `just deploy S3CR3T` puts the value in the argument list of `just` itself, before any body line runs. With `set positional-arguments` it is also in the argument list of the recipe's shell, even when the body never names it.
+- `just` runs each linewise line as `<shell> -c '<line>'` with `{{ … }}` already replaced. So an interpolated value is in the shell's argument list whatever the command is (`echo`, `printf`, a comment line), and `just` prints the line unless it starts with `@`.
+- `$NAME` in the body is expanded by the shell later. It reaches a process list only when it ends up in the arguments of an external command.
+
+The first two need no shell parsing, so they are the rules.
+
+**`secret-parameter`.** A parameter of the recipe has a secret-like name. The message: the value is typed on the command line, so it is visible in the process list and stays in the shell history. The fix: take no secret as a parameter; read it inside the recipe from the environment, a mode `0600` file or the password manager (`references/credentials-in-recipes.md` in the `justfile-authoring` skill).
+
+**`secret-interpolated`.** A body line of a linewise recipe (comment lines included, since `just` interpolates and prints them) has an interpolation whose expression tree contains:
+
+- a variable or parameter with a secret-like name;
+- a call to `env`, `env_var` or `env_var_or_default` whose first argument is a secret-like name;
+- a variable that the dump's `assignments` define, directly or through other variables, by one of the above (`tok := env('GH_TOKEN')`, then `{{ tok }}`).
+
+The fix: use the shell's own variable (`$GH_TOKEN`, or an exported `just` variable as `$tok`) so the value stays in the environment. The message never contains the line text or a value.
+
+Shebang and `[script]` recipes are not reported by this rule: there the interpolated text goes into a temporary script file, not into an argument list. That is a smaller exposure (a file in the user's runtime directory) and is left out of v1.
+
+**Secret-like name.** Lower-case the name and split it on `_`, `-` and camel-case boundaries.
+
+- It is secret-like when a part ends in `token`, `tokens`, `password`, `passwd`, `passphrase`, `secret`, `secrets`, `credential`, `credentials` or `apikey`; or when the last part is `pass` or `pw`; or when it has `key` right after `api`, `private`, `access`, `secret` or `signing`.
+- It is not secret-like when its last part says it is something else: `file`, `path`, `dir`, `name`, `id`, `user`, `url`, `host`, `ref`, `arn`, `ttl`, `endpoint`, `length`, `count`, `type`, `args`.
+
+| Name | Result |
+|---|---|
+| `API_TOKEN`, `apiToken`, `api-token`, `authtoken`, `dbpassword`, `dbPass`, `SSH_PASS`, `pw`, `SSH_KEY_PASSPHRASE`, `APIKEY`, `SIGNING_KEY`, `SECRETS` | secret-like |
+| `SSH_KEY_FILE`, `TOKEN_PATH`, `GITHUB_TOKEN_FILE`, `AWS_ACCESS_KEY_ID`, `TOKEN_TTL`, `TOKEN_ENDPOINT`, `PASSWORD_LENGTH`, `OP_TOKEN_REF`, `SECRET_ARN`, `PASS_THROUGH_ARGS` | not secret-like |
+| `TOKENIZER`, `PASSTHROUGH`, `BYPASS`, `COMPASS`, `KEYCLOAK_URL`, `KEY` | not secret-like |
+| `GH_PAT`, `DATABASE_URL`, `VAULT_SECRET_ID`, `TOKEN2` | missed, accepted: no name list finds these without flagging far more |
+| `TESTS_PASS` | flagged wrongly, accepted: silence it with `justz-ignore` |
+
+Fixtures in `internal/lint/testdata` are synthetic recipes with exactly these names and shapes, never copied from a private repository.
+
+### `module-shell-unset`
+
+A module that has at least one linewise recipe and whose `settings.shell` is `null` runs those recipes with `sh -cu`: no `pipefail`, and not the shell the root file chose. The fix is to import a shared settings file (`justz init` writes `just/preamble.just`) or to add a `set shell` line.
+
+- A module with only shebang or `[script]` recipes is not reported: the setting does not affect them.
+- Any `set shell` line silences the rule, including `set shell := ['sh', '-cu']`. That is the opt-out: the rule is about a module that did not choose, not about which shell is right.
+- The root file is not reported. A root without `set shell` is a normal small justfile.
 
 ## Not in scope
 
-- Reading, resolving, storing or scanning for secret values. Use a dedicated scanner such as `gitleaks`; `justz` stays on the structural side of that line.
-- `shellcheck`. A long recipe is reported so it can move to a script that can be linted.
-- Changing `check`, or running `lint` from `check`.
-
-## `assess`
-
-`justz assess` already counts shebang and long recipes. Once `lint` exists, `assess` can report the number of lint findings from the same detector, so the two cannot disagree. That is a second step, not part of the first PR.
+- Reading, resolving, storing or scanning for secret values. Use a dedicated scanner such as `gitleaks`.
+- `shellcheck`. A long recipe is reported so that it can move to a script that can be linted.
+- Running `lint` from `check`.
+- `$NAME` inside shell text. See open question 1.
 
 ## Plan
 
-1. `internal/lint` with `recipe-long`, `ignore-unknown-rule` and the opt-out, then `justz lint`.
-2. `module-shell-not-strict`.
-3. `secret-on-command-line`, last, with its fixtures. If it is noisy on the M9 pilot, drop the rule and keep the guidance in the skill.
+1. `internal/lint` with `recipe-long`, the opt-out and `ignore-unknown-rule`, then `justz lint` with completion entries.
+2. `module-shell-unset`.
+3. `secret-parameter` and `secret-interpolated` with the name matcher and its table as tests.
 
 ## Open questions
 
-1. **`curl`.** `curl -H "Authorization: Bearer $TOKEN"` and `curl -u user:$PASS` expose a secret in the process list the same way. Recommendation: not in v1; add after the pilot shows what the real noise is.
-2. **`echo` and `printf`.** They are shell builtins, so they do not reach the process list, but they print into CI logs. Recommendation: out of scope for this rule; a separate `secret-in-output` rule can come later.
-3. **Line limit.** 40 matches `assess`. Recommendation: keep 40.
-4. **Default exit code.** Recommendation: warnings never fail without `--strict`, as the plan says.
+1. **Secrets in shell text (`ssh host "run $TOKEN"`, `curl -H "Authorization: Bearer $TOKEN"`, `docker run -e`, `sshpass -p`).** This is the shape the plan's audit found, and the two rules above catch it only when the secret arrives through a parameter or `{{ … }}`. Finding `$NAME` in the arguments of an external command means parsing shell: quoting, heredocs, `$( … )`, prefixes such as `timeout` and `exec`, and strings over several lines. The review built wrong results for each. Recommendation: not in v1. Run the M9 pilot with the two structural rules, look at what they miss in the real file, and design a shell-text rule against that evidence, or keep the guidance in the skill.
+2. **Shebang recipes in `secret-interpolated`.** Recommendation: leave them out of v1, as above.
+3. **Line limit.** Recommendation: 40 body entries, identical to `assess`.
+4. **`secret-parameter` when the parameter has a default from the environment** (`deploy token=env('GH_TOKEN')`). The usual call types nothing, but the parameter still invites it. Recommendation: report it; the opt-out exists.
