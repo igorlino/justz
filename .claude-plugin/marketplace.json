@@ -10,9 +10,7 @@
     {
       "name": "justz",
       "source": "./",
-      "description": "Skills for running the justz CLI and for authoring discoverable justfiles",
-      "license": "MIT",
-      "keywords": ["just", "justfile", "cli", "help", "completion"]
+      "description": "Skills for running the justz CLI and for authoring discoverable justfiles"
     }
   ]
 }

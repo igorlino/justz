@@ -100,7 +100,7 @@ Claude Code:
 /plugin install justz --marketplace igorlino/justz
 ```
 
-The skills then appear as `/justz:justz-cli`. Any other agent (Codex, Copilot, Antigravity and others) can install them with the `skills` CLI:
+The one-step install needs Claude Code 2.1.275 or later; on older versions use `/plugin install justz@justz`. The skills then appear as `/justz:justz-cli`. A third-party marketplace does not auto-update by default: run `/plugin marketplace update justz` to get new commits. Any other agent (Codex, Copilot, Antigravity and others) can install them with the `skills` CLI:
 
 ```sh
 npx skills add igorlino/justz

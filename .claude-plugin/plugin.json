@@ -6,5 +6,12 @@
   },
   "homepage": "https://github.com/igorlino/justz",
   "repository": "https://github.com/igorlino/justz",
-  "license": "MIT"
+  "license": "MIT",
+  "keywords": [
+    "just",
+    "justfile",
+    "cli",
+    "help",
+    "completion"
+  ]
 }
