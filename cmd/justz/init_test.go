@@ -67,6 +67,57 @@ func TestInitRefusesExistingJustfileInAnyCase(t *testing.T) {
 	}
 }
 
+func TestInitRefusesJustfileInOtherCase(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, filepath.Join(dir, "JUSTFILE"), "x:\n")
+	e, _, errOut := testEnv(false)
+	if code := run([]string{"init", dir}, e); code != 1 || !strings.Contains(errOut.String(), "JUSTFILE") {
+		t.Fatalf("code %d: %s", code, errOut)
+	}
+}
+
+func TestInitRefusesFileWhereDirectoryIsNeeded(t *testing.T) {
+	for _, tc := range []struct{ blocker, variant string }{{"just", "native"}, {"config", "rich"}} {
+		dir := t.TempDir()
+		writeFile(t, filepath.Join(dir, tc.blocker), "a file\n")
+		e, _, errOut := testEnv(false)
+		if code := run([]string{"init", "--variant", tc.variant, dir}, e); code != 1 || !strings.Contains(errOut.String(), "not a directory") {
+			t.Fatalf("%s: code %d: %s", tc.blocker, code, errOut)
+		}
+		if _, err := os.Stat(filepath.Join(dir, "justfile")); err == nil {
+			t.Errorf("%s: a refusal must write nothing", tc.blocker)
+		}
+	}
+}
+
+func TestInitRefusesSymlinkedDirectory(t *testing.T) {
+	root := t.TempDir()
+	dir, outside := filepath.Join(root, "p"), filepath.Join(root, "outside")
+	for _, d := range []string{dir, outside} {
+		if err := os.MkdirAll(d, 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.Symlink(outside, filepath.Join(dir, "just")); err != nil {
+		t.Skipf("symlinks unavailable: %v", err)
+	}
+	e, _, errOut := testEnv(false)
+	if code := run([]string{"init", dir}, e); code != 1 || !strings.Contains(errOut.String(), "symbolic link") {
+		t.Fatalf("code %d: %s", code, errOut)
+	}
+	if entries, _ := os.ReadDir(outside); len(entries) != 0 {
+		t.Error("init wrote through the symbolic link")
+	}
+}
+
+func TestInitHintsAtNameWhenDirectoryNameIsUnusable(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "my+proj")
+	e, _, errOut := testEnv(false)
+	if code := run([]string{"init", dir}, e); code != 2 || !strings.Contains(errOut.String(), "--name") {
+		t.Fatalf("code %d: %s", code, errOut)
+	}
+}
+
 func TestInitDryRunWritesNothing(t *testing.T) {
 	dir := t.TempDir()
 	e, out, _ := testEnv(false)
@@ -88,6 +139,8 @@ func TestInitUsageErrors(t *testing.T) {
 		{"init", "--module"},
 		{"init", "a", "b"},
 		{"init", "--variant", "fancy", "x"},
+		{"init", "--name", "", "x"},
+		{"init", "--name", "it's", "x"},
 		{"init", "--module", "Bad", "x"},
 	} {
 		e, _, _ := testEnv(false)

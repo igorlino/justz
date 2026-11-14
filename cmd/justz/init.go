@@ -70,6 +70,10 @@ func runInit(args []string, e env) int {
 				fmt.Fprintln(e.stderr, "justz init: --name needs a value")
 				return 2
 			}
+			if v == "" {
+				fmt.Fprintln(e.stderr, "justz init: --name must not be empty")
+				return 2
+			}
 			opts.Name = v
 		case a == "--module" || strings.HasPrefix(a, "--module="):
 			v, ok := value("--module")
@@ -97,32 +101,27 @@ func runInit(args []string, e env) int {
 		fmt.Fprintf(e.stderr, "justz init: %v\n", err)
 		return 1
 	}
-	if opts.Name == "" {
+	nameGiven := opts.Name != ""
+	if !nameGiven {
 		opts.Name = filepath.Base(abs)
 	}
 	files, err := scaffold.Build(opts)
 	if err != nil {
 		fmt.Fprintf(e.stderr, "justz init: %v\n", err)
+		if !nameGiven {
+			fmt.Fprintln(e.stderr, "justz init: the name defaults to the directory name; pass --name to choose another")
+		}
 		return 2
 	}
 
 	// Check everything before writing anything, so a refusal leaves no half project.
-	var clash []string
-	for _, name := range []string{"justfile", "Justfile", ".justfile"} {
-		if _, err := os.Lstat(filepath.Join(abs, name)); err == nil {
-			clash = append(clash, name)
-		}
+	problems, err := conflicts(abs, files)
+	if err != nil {
+		fmt.Fprintf(e.stderr, "justz init: %v\n", err)
+		return 1
 	}
-	for _, f := range files {
-		if f.Path == "justfile" {
-			continue
-		}
-		if _, err := os.Lstat(filepath.Join(abs, filepath.FromSlash(f.Path))); err == nil {
-			clash = append(clash, f.Path)
-		}
-	}
-	if len(clash) > 0 {
-		fmt.Fprintf(e.stderr, "justz init: refusing to overwrite %s in %s. Nothing was written.\n", strings.Join(clash, ", "), abs)
+	if len(problems) > 0 {
+		fmt.Fprintf(e.stderr, "justz init: refusing to write in %s: %s. Nothing was written.\n", abs, strings.Join(problems, "; "))
 		return 1
 	}
 
@@ -151,4 +150,49 @@ func runInit(args []string, e env) int {
 		fmt.Fprintln(e.stdout, "next: add recipes with [doc] and [group], then run: just")
 	}
 	return 0
+}
+
+// conflicts lists what would stop init from writing files under root without
+// touching anything outside it: a justfile that already exists under any case,
+// a target that exists, a directory on the way that is a file or a symbolic link
+// (a link could send the write elsewhere), or a path that cannot be inspected.
+func conflicts(root string, files []scaffold.File) ([]string, error) {
+	var out []string
+	entries, err := os.ReadDir(root)
+	if err != nil && !os.IsNotExist(err) {
+		return nil, err
+	}
+	// just matches the name without regard to case, so JUSTFILE counts.
+	for _, en := range entries {
+		if strings.EqualFold(en.Name(), "justfile") || strings.EqualFold(en.Name(), ".justfile") {
+			out = append(out, en.Name()+" exists")
+		}
+	}
+	for _, f := range files {
+		parts := strings.Split(f.Path, "/")
+		cur := root
+		for i, part := range parts {
+			cur = filepath.Join(cur, part)
+			info, err := os.Lstat(cur)
+			if os.IsNotExist(err) {
+				break
+			}
+			if err != nil {
+				return nil, err
+			}
+			last := i == len(parts)-1
+			switch {
+			case last:
+				// The justfile itself is reported by the case-insensitive scan.
+				if f.Path != "justfile" {
+					out = append(out, f.Path+" exists")
+				}
+			case info.Mode()&os.ModeSymlink != 0:
+				out = append(out, part+" is a symbolic link")
+			case !info.IsDir():
+				out = append(out, part+" is not a directory")
+			}
+		}
+	}
+	return out, nil
 }
