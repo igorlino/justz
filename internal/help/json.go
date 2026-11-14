@@ -53,6 +53,7 @@ type CommandNode struct {
 	Path     string        `json:"path"`
 	Invoke   string        `json:"invoke"`
 	Desc     string        `json:"desc"`
+	Detail   string        `json:"detail,omitempty"`
 	Args     []ArgNode     `json:"args"`
 	Examples []ExampleNode `json:"examples"`
 }
@@ -96,7 +97,7 @@ func CommandJSON(proj *Project, g *Group, c *Command) CommandNode {
 		path = g.Key + " " + c.Name
 	}
 	n := CommandNode{
-		Path: path, Invoke: proj.CLI + " " + path, Desc: c.Desc,
+		Path: path, Invoke: proj.CLI + " " + path, Desc: c.Desc, Detail: c.Detail,
 		Args: []ArgNode{}, Examples: []ExampleNode{},
 	}
 	for _, a := range c.Args {

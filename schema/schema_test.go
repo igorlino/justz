@@ -306,7 +306,7 @@ func TestEveryDocumentedFieldIsTyped(t *testing.T) {
 		"tiers": [{"label": "L", "hint": "h", "groups": ["a"]}], "order": ["core", 1], "dispatchers": [{}], "lab": [],
 		"groups": {"a": {"label": "A", "title": "T", "desc": "d", "footer": "f", "seeAlso": ["b"],
 			"examples": [{"cmd": "just a x", "desc": "d"}],
-			"commands": {"x": {"desc": "d", "example": "… e", "args": [{"name": "--env <e>", "desc": "d", "type": "string", "values": ["a", "b"]}]}},
+			"commands": {"x": {"desc": "d", "detail": "long text\\nmore", "example": "… e", "args": [{"name": "--env <e>", "desc": "d", "type": "string", "values": ["a", "b"]}]}},
 			"extra": {"y": {"desc": "d"}}}}}`
 	if err := check(t, newValidator(t), doc); err != nil {
 		t.Error(err)
@@ -329,6 +329,8 @@ func TestWrongShapesFail(t *testing.T) {
 		{"seeAlso entry", `{"groups": {"a": {"seeAlso": [{}]}}}`, "$.groups.a.seeAlso[0]: want string, got object"},
 		{"tier groups", `{"groups": {}, "tiers": [{"groups": "a"}]}`, "$.tiers[0].groups: want array, got string"},
 		{"cli is a number", `{"cli": 1, "groups": {}}`, "$.cli: want string, got number"},
+		{"detail is a number", `{"groups": {"a": {"commands": {"x": {"detail": 3}}}}}`, "$.groups.a.commands.x.detail: want string, got number"},
+		{"detail on an extra entry", `{"groups": {"a": {"extra": {"y": {"detail": []}}}}}`, "$.groups.a.extra.y.detail: want string, got array"},
 		{"null desc", `{"groups": {"a": {"commands": {"x": {"desc": null}}}}}`, "$.groups.a.commands.x.desc: want string, got null"},
 		{"null args entry", `{"groups": {"a": {"commands": {"x": {"args": [null]}}}}}`, "$.groups.a.commands.x.args[0]: want object, got null"},
 		{"values is a string", `{"groups": {"a": {"commands": {"x": {"args": [{"values": "a"}]}}}}}`, "$.groups.a.commands.x.args[0].values: want array, got string"},

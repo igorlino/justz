@@ -1,6 +1,6 @@
 # Design note: a `detail` field for long command descriptions
 
-Status: proposed.
+Status: implemented in one PR (the field, the zoom section, the JSON, the schema property, the check fix text and the tests). The open questions are decided as recommended.
 
 ## Problem
 

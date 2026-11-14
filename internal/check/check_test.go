@@ -293,3 +293,51 @@ func TestAttributesMayBePlainStrings(t *testing.T) {
 		t.Errorf("string attributes must not break parsing or hide the group: %+v", res.Findings)
 	}
 }
+
+func TestLongDescriptionFixPointsAtDetailForARegistryAndAtTheDocForTheOverlay(t *testing.T) {
+	long := strings.Repeat("word ", 40)
+	dump := dumpOf(t, map[string]any{"a": rc("Doc", grp("core"))}, nil)
+	src := `{"groups":{"core":{"commands":{"a":{"desc":"` + long + `"}}}}}`
+	fix := func(variant string) string {
+		t.Helper()
+		res := run(t, Input{Dump: dump, Variant: variant, Registry: parse(t, src), RegistrySource: []byte(src)})
+		for _, f := range res.Findings {
+			if f.Rule == RuleDescLong {
+				return f.Fix
+			}
+		}
+		t.Fatalf("%s: no %s finding in %+v", variant, RuleDescLong, res.Findings)
+		return ""
+	}
+	if got := fix("rich"); !strings.Contains(got, `"detail"`) || !strings.Contains(got, "equal to the [doc]") {
+		t.Errorf("rich fix = %q", got)
+	}
+	if got := fix("local-rich"); strings.Contains(got, "detail") || !strings.Contains(got, "justz generate") {
+		t.Errorf("local-rich fix = %q", got)
+	}
+}
+
+func TestDetailIsNotComparedAndDivergingFixPointsAtIt(t *testing.T) {
+	dump := dumpOf(t, map[string]any{"a": rc("Short doc", grp("core")), "b": rc("Other doc", grp("core"))}, nil)
+	src := `{"groups":{"core":{"commands":{
+		"a":{"desc":"Short doc","detail":"` + strings.Repeat("a long text that is not the doc ", 30) + `"},
+		"b":{"desc":"Different"}}}}}`
+	for _, variant := range []string{"rich", "local-rich"} {
+		res := run(t, Input{Dump: dump, Variant: variant, Registry: parse(t, src), RegistrySource: []byte(src)})
+		if has(res, RuleRegistryDesc, "just a") || has(res, RuleDescLong, "core.a") {
+			t.Errorf("%s: detail was compared with the [doc] or counted as a long description: %v", variant, res.Findings)
+		}
+		var fix string
+		for _, f := range res.Findings {
+			if f.Rule == RuleRegistryDesc && f.Subject == "just b" {
+				fix = f.Fix
+			}
+		}
+		if variant == "rich" && !strings.Contains(fix, `"detail"`) {
+			t.Errorf("rich diverges fix = %q", fix)
+		}
+		if variant == "local-rich" && !strings.Contains(fix, "justz generate") {
+			t.Errorf("local-rich diverges fix = %q", fix)
+		}
+	}
+}

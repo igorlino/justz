@@ -23,7 +23,7 @@ Show the commands of the current project, rendered from its command registry
   (no words)         A compact summary: core commands, then each group
   --expanded         The full reference: every group with its commands
   <group>            One group: its usage, commands, examples
-  [group] <command>  One command: how to invoke it, examples, options
+  [group] <command>  One command: how to invoke it, examples, options, details
   --wide, -w         Add example columns (on by default from 100 columns)
   --json, -j         Print the same information as JSON for tools and agents
   --browse, -b       Pick a group or command (fzf if installed, else a numbered menu)
@@ -212,7 +212,14 @@ func zoomJSON(proj *help.Project, terms []string, e env) int {
 	case help.Ambiguous:
 		nodes := make([]any, 0, len(rows))
 		for _, r := range rows {
-			nodes = append(nodes, node(r))
+			n := node(r)
+			// A lookup that is ambiguous is a choice, not a read: leave the
+			// long text out so the array stays small.
+			if cn, ok := n.(help.CommandNode); ok {
+				cn.Detail = ""
+				n = cn
+			}
+			nodes = append(nodes, n)
 		}
 		if code := printJSON(e, nodes); code != 0 {
 			return code

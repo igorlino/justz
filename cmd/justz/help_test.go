@@ -333,3 +333,44 @@ func TestHelpNativeJSON(t *testing.T) {
 		t.Errorf("native JSON: code %d, out %q", code, r.out.String())
 	}
 }
+
+const detailCLIRegistry = `{
+  "cli": "dm",
+  "groups": {
+    "tool": { "label": "Tools", "commands": {
+      "doctor": {"desc": "Check tools", "detail": "Walks the PATH and reports what is missing."} } },
+    "sbx": { "label": "Sandboxes", "commands": {
+      "doctor": {"desc": "Check sandboxes", "detail": "Starts each sandbox and stops it again."} } }
+  }
+}`
+
+func TestHelpShowsDetailOnlyInTheZoom(t *testing.T) {
+	dir := gitProject(t)
+	writeFile(t, filepath.Join(dir, "config", "commands.json"), detailCLIRegistry)
+	t.Chdir(dir)
+
+	r := helpEnv(false, 80)
+	if code := run([]string{"help", "tool", "doctor"}, r.env); code != 0 || !strings.Contains(r.out.String(), "Details") || !strings.Contains(r.out.String(), "Walks the PATH") {
+		t.Errorf("zoom: exit %d, out %q", code, r.out.String())
+	}
+	for _, args := range [][]string{{"help"}, {"help", "--expanded"}, {"help", "tool"}} {
+		r = helpEnv(false, 80)
+		if code := run(args, r.env); code != 0 || strings.Contains(r.out.String(), "Walks the PATH") {
+			t.Errorf("%v: exit %d, detail leaked into the listing:\n%s", args, code, r.out.String())
+		}
+	}
+
+	r = helpEnv(false, 80)
+	if code := run([]string{"help", "-j", "tool", "doctor"}, r.env); code != 0 || !strings.Contains(r.out.String(), `"detail": "Walks the PATH and reports what is missing."`) {
+		t.Errorf("zoom JSON: exit %d, out %q", code, r.out.String())
+	}
+	r = helpEnv(false, 80)
+	if code := run([]string{"help", "-j", "tool"}, r.env); code != 0 || strings.Contains(r.out.String(), "detail") {
+		t.Errorf("group JSON carries detail: exit %d, out %q", code, r.out.String())
+	}
+	// An ambiguous lookup is a choice, not a read: the array leaves the text out.
+	r = helpEnv(false, 80)
+	if code := run([]string{"help", "-j", "doctor"}, r.env); code != 2 || strings.Contains(r.out.String(), "detail") || !strings.Contains(r.out.String(), `"path": "sbx doctor"`) {
+		t.Errorf("ambiguous JSON: exit %d, out %q", code, r.out.String())
+	}
+}

@@ -218,3 +218,21 @@ func TestFmtWithoutRegistryFails(t *testing.T) {
 		t.Errorf("stderr = %q", errOut.String())
 	}
 }
+
+func TestFmtKeepsDetailText(t *testing.T) {
+	dir := t.TempDir()
+	p := filepath.Join(dir, "commands.json")
+	src := `{"groups":{"core":{"commands":{"b":{"desc":"b","detail":"line one\n\nline <two> & \"three\" — end"},"a":{"desc":"a"}}}}}`
+	writeFile(t, p, src)
+	e, _, _ := testEnv(true)
+	if code := run([]string{"fmt", p}, e); code != 0 {
+		t.Fatalf("fmt exit %d", code)
+	}
+	got := readFile(t, p)
+	if !strings.Contains(got, `"detail": "line one\n\nline <two> & \"three\" — end"`) {
+		t.Errorf("detail changed by fmt:\n%s", got)
+	}
+	if strings.Index(got, `"a"`) > strings.Index(got, `"b"`) {
+		t.Errorf("commands not sorted:\n%s", got)
+	}
+}
