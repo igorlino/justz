@@ -27,6 +27,7 @@ Commands:
   assess        Report facts about the justfile and which variant fits
   generate      Build the personal .just-local-rich.json from a justfile
   init [dir]    Scaffold a justfile that documents itself
+  lint          Find antipatterns in the recipes, as advice
   resolve NAME  Print the group path a bare command name stands for
   shim add      Register a shim for a project (from any directory)
   shim list     List registered shims
@@ -147,6 +148,8 @@ func run(args []string, e env) int {
 		return runGenerate(args[1:], e)
 	case "init":
 		return runInit(args[1:], e)
+	case "lint":
+		return runLint(args[1:], e)
 	case "resolve":
 		return runResolve(args[1:], e)
 	case "doctor":
