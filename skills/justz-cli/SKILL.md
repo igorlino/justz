@@ -4,7 +4,8 @@ description: >
   Teaches coding agents how to run and troubleshoot the `justz` CLI (and its `jz`, `jzh` and
   project shims such as `tz`) on top of `just`. Use when running, suggesting or fixing any `justz`
   command: showing a project's commands with `justz help`, checking justfile and command-registry
-  drift with `justz check`, sorting `commands.json` with `justz fmt`, resolving a bare command name
+  drift with `justz check`, advice on recipes with `justz lint`, scaffolding with `justz init`,
+  printing the registry's JSON Schema with `justz schema`, sorting `commands.json` with `justz fmt`, resolving a bare command name
   with `justz resolve`, registering or repairing shims with `justz shim`, shell completion with
   `justz completions`, or preparing a machine with `justz setup` and `justz doctor`. Do not use for
   writing or restructuring a justfile (use `justfile-authoring`) or for running a project's own
@@ -12,7 +13,7 @@ description: >
 metadata:
   author: igorlino
   domain: tooling
-  version: "0.1.0"
+  version: "0.2.0"
 ---
 
 # `justz` CLI Skill
@@ -21,10 +22,10 @@ metadata:
 
 ## Rules
 
-- **Check the binary first.** `command -v justz && justz --version`. If it is missing, tell the user how to install it and stop; never install it yourself and never fall back to a hand-written help script. Install options: `brew install igorlino/tap/justz`, `go install github.com/igorlino/justz/cmd/justz@latest`, the install script, or the release archives (Windows: the release `.zip`).
+- **Check the binary first.** `command -v justz && justz --version`. `init`, `lint` and `schema` need 0.6.0 or newer. If it is missing, tell the user how to install it and stop; never install it yourself and never fall back to a hand-written help script. Install options: `brew install igorlino/tap/justz`, `go install github.com/igorlino/justz/cmd/justz@latest`, the install script, or the release archives (Windows: the release `.zip`).
 - **Discover from the CLI, not the source.** `justz --help`, `justz <command> --help`, and `justz help` for the project's own commands. `doctor` and `shim list` have no `--help` of their own; use `justz --help` and `justz shim --help`. Do not read `commands.json` or the justfile only to learn flags.
-- **Use `--json` in agents.** `doctor`, `check`, `assess`, `resolve`, `setup` and every `shim` command accept `--json` (`help` uses `-j`). `fmt`, `generate` and `completions` do not. Parse the JSON; do not scrape the text tables.
-- **Read the exit code.** `0` success, `1` a check failed or an error, `2` usage error. `resolve` adds `3` (no match). With `--json`, a failed check or no match still prints its JSON document; an operational or usage error prints a plain message on stderr and no JSON. `check` fails only on errors, so warnings (common) exit `0` unless `--strict`.
+- **Use `--json` in agents.** `doctor`, `check`, `lint`, `assess`, `resolve`, `setup` and every `shim` command accept `--json` (`help` uses `-j`). `fmt`, `generate`, `completions`, `init` and `schema` do not. Parse the JSON; do not scrape the text tables.
+- **Read the exit code.** `0` success, `1` a check failed or an error, `2` usage error. `resolve` adds `3` (no match). With `--json`, a failed check or no match still prints its JSON document; an operational or usage error prints a plain message on stderr and no JSON. `check` fails only on errors, so warnings (common) exit `0` unless `--strict`. `lint` reports only warnings, so it exits `0` unless `--strict`. `init` exits `1` when it refuses to write because a file is in the way, and `2` for a bad name or option.
 - **Run from the project.** Commands read the justfile of the current directory (or `JUSTZ_CONFIG` for the registry). A shim (`tz`, `jz`) runs for its own project from any directory.
 - **Never edit derived files.** `.just-local-rich.json` is written by `justz generate`; re-run it. `justz` refuses to write it when git tracks it.
 
@@ -35,6 +36,9 @@ metadata:
 | What can this project do? | `justz help` (summary), `justz help --expanded`, `justz help <group>`, `justz help [group] <command>`, add `-j` for JSON |
 | Focused docs for one command, examples first | `justz help [group] <command>` (exact name or unique prefix; an ambiguous name exits `2` and lists the groups) |
 | Is the documentation in sync? | `justz check` (`--json`, `--strict` makes warnings fail) |
+| Advice on the recipes (long bodies, secrets, a module with no shell) | `justz lint` (`--json`, `--strict` makes warnings fail) |
+| Start a project with a self-documenting justfile | `justz init [dir]` (`--variant native\|rich`, `--name`, `--module` repeated, `--dry-run` writes nothing) |
+| Schema of the registry, for an editor or CI | `justz schema` (prints JSON; `justz schema > commands.schema.json`) |
 | Keep the registry sorted | `justz fmt` (`--check` writes nothing and exits `1` when unsorted) |
 | Which group does a bare name mean? | `justz resolve <name>` (exit `0` one match, `2` several, `3` none) |
 | Which documentation variant fits? | `justz assess --json` |
@@ -50,6 +54,10 @@ metadata:
 **Find and run a project command.** `justz help` to see groups, `justz help <group>` for its commands, `justz help <group> <cmd>` for flags and examples, then run `just <group> <cmd> ...` (or the shim, for example `tz <group> <cmd>`). Pass flags directly; do not insert `--`.
 
 **Fix documentation drift.** `justz check --json`. Each finding has `rule`, `severity`, `subject`, `message` and `fix`. Apply the `fix`, re-run until it exits `0`. `registry-unsorted` is fixed with `justz fmt`; `registry-desc-diverges` means the justfile `[doc]` and the registry `desc` must be the same text.
+
+**Act on lint findings.** `justz lint --json`. Each finding has `rule`, `severity`, `subject`, `message`, `fix` and sometimes `line`, which counts lines of the recipe body as `just --dump` shows them, not lines of the file. Fix the cause: move a long body to `scripts/<group>/<name>.sh`, read a secret inside the recipe instead of taking it as a parameter or interpolating it, give a module a `set shell` or import the shared preamble. Silence one recipe only when the finding is wrong, with `[metadata('justz-ignore', '<rule>')]` (the rules `recipe-long`, `secret-parameter` and `secret-interpolated`; `[metadata]` is verified on `just` 1.59.0 only); a typo in the rule name is itself a finding. `module-shell-unset` has no per-recipe opt-out. Do not turn a finding off to make the run pass.
+
+**Start a project.** `justz init --dry-run` lists the files, then `justz init` writes them. It never overwrites: if a file is in the way it writes nothing and exits `1`. It does not need `just`. Add `--variant rich` for a `commands.json` registry. `lint` needs `just`, `init` and `schema` do not. Do this only when the user asks for a new justfile, after showing the `--dry-run` list; for an existing repo use `justz assess` and the `justfile-authoring` skill.
 
 **Register a shim.** `justz shim add /path/to/project --soft`. The name comes from the registry's `cli` field unless `--name` is given. `justz` never overwrites a file it did not write: a refusal means a foreign file is in the shim directory. `--replace` re-points a shim owned by another project, but cannot override a file justz did not write. Then `justz shim doctor`.
 

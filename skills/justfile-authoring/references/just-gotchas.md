@@ -23,7 +23,7 @@ This skill does not teach `just` syntax: run `just --man` or read the manual. Th
 ## Modules and settings
 
 - **A module recipe runs with its working directory set to the module's directory.** `justfile_directory()` inside a module is still the **project root**, and `source_directory()` is the module's own directory. `[no-cd]` runs the recipe where the user is.
-- **Settings do not carry into modules.** With `set quiet` in the root, `just m up` still echoed its command, because the module had no `set quiet`. Repeat `set shell`, `set quiet`, `set positional-arguments` in each module that needs them.
+- **Settings do not carry into modules.** With `set quiet` in the root, `just m up` still echoed its command, because the module had no `set quiet`. Put `set shell` and `set positional-arguments` in a shared file and `import` it from the root and each module (`references/shared-mechanics.md`), or repeat them in each module that needs them. A module with no `set shell` runs with `sh -cu` and no `pipefail`; `justz lint` reports it as `module-shell-unset`.
 - **`mod? maybe`** (optional module) lets a justfile load when the file is missing.
 - **`set fallback`**: running `just g` from `m/` found the parent's recipe `g`.
 - **Modules parse on every invocation**, even when you run a different recipe. Avoid load-time work in them (backticks in assignments, asserts) *(manual)*.

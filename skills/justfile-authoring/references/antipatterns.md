@@ -137,7 +137,7 @@ for file in src/**/*.go; do
 done
 ```
 
-See: [recipe-patterns.md](recipe-patterns.md#script-extraction) for when to extract.
+See: [recipe-patterns.md](recipe-patterns.md#script-extraction) for when to extract. `justz lint` reports a recipe body over 40 lines (`recipe-long`); the count includes blank lines and comments, the same measure as `justz assess`.
 
 ---
 

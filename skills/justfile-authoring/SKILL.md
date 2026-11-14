@@ -13,8 +13,8 @@ description: >
 metadata:
   author: igorlino
   domain: dx
-  version: "1.0.0"
-  requires: "justz-cli; justz 0.5.1 or newer for the rich and local-rich variants"
+  version: "1.1.0"
+  requires: "justz-cli; justz 0.5.1 or newer for the rich and local-rich variants; 0.6.0 or newer for init, lint and schema"
 ---
 
 # Justfile Authoring
@@ -27,6 +27,7 @@ It does not teach `just` syntax. For that, run `just --man` or read the manual; 
 
 - `just --version`. `[group]`, `[arg]` and `--explain` are recent; without them the `native` variant degrades to plain doc comments. Say so rather than assuming.
 - **`native` needs only `just`.** For `rich` and `local-rich`, check `command -v justz && justz --version`. If it is missing or older than 0.5.1, tell the user how to install it (see the `justz-cli` skill) and stop. Never install it yourself, and never fall back to a hand-written help script.
+- `justz init`, `justz lint` and `justz schema` need 0.6.0 or newer. On an older `justz`, scaffold by hand from the references and skip the lint step, and say so.
 
 ## The three shapes
 
@@ -76,6 +77,8 @@ Ask before any file is created or moved. Script extraction is not on this list: 
 
 ### 3. Scaffold
 
+For a new project, `justz init` (0.6.0 or newer) writes the layout once the user has answered step 2: `justz init --dry-run [--variant native|rich] [--name NAME] [--module NAME]...` shows the files: show that list to the user and get their go before `justz init` writes them. It writes a root `justfile`, a shared `just/preamble.just` that every file imports for its settings, one module per group and, for `rich`, a sorted `config/commands.json`. It never overwrites, so it is for a directory with no justfile; for an existing repo, build by hand from the references below and use `justz assess` and `justz generate`. Edit what it wrote rather than keeping its placeholders.
+
 Read `references/shared-mechanics.md` (`mod` layout, argument shape, `set positional-arguments`, script extraction, `doctor`), then the chosen shape:
 
 - **`native`**: `references/variant-native.md`.
@@ -109,7 +112,7 @@ shellcheck -S warning -x scripts/**/*.sh
 (cd any/subdir && just <ns> <cmd>)   # repo-root paths still resolve
 ```
 
-In `rich` repos also run `justz check` and `justz fmt --check`. Then add a deliberately undocumented recipe, confirm the check fails, and remove it. A guard nobody has seen fail is a guard nobody can trust.
+Run `justz lint` (0.6.0 or newer): it points at long recipe bodies, secret-like parameters, secrets interpolated into a command line, and modules with no shell. Fix each one, or silence a wrong finding on one recipe with `[metadata('justz-ignore', '<rule>')]`; never to make the run pass. In `rich` repos also run `justz check` and `justz fmt --check`. Then add a deliberately undocumented recipe, confirm the check fails, and remove it. A guard nobody has seen fail is a guard nobody can trust.
 
 ## References
 
@@ -117,7 +120,7 @@ In `rich` repos also run `justz check` and `justz fmt --check`. Then add a delib
 |---|---|---|
 | Choosing a shape | [references/choosing-a-variant.md](references/choosing-a-variant.md) | Steps 1 and 2: assessment format, thresholds, evidence |
 | `native` mechanics | [references/variant-native.md](references/variant-native.md) | Scaffolding the justfile-only shape |
-| `rich` mechanics | [references/variant-rich.md](references/variant-rich.md) | Scaffolding or maintaining a `commands.json` registry with `justz` |
+| `rich` mechanics | [references/variant-rich.md](references/variant-rich.md) | Scaffolding or maintaining a `commands.json` registry with `justz`, including its JSON Schema |
 | `local-rich` overlay | [references/variant-local-rich.md](references/variant-local-rich.md) | One developer wants richer help and completion on a `native` repo |
 | Shared mechanics | [references/shared-mechanics.md](references/shared-mechanics.md) | `mod` layout, argument shape, script extraction, `doctor` |
 | Migration | [references/migration.md](references/migration.md) | A legacy `help.sh` repo, or moving between shapes |
@@ -152,7 +155,8 @@ In `rich` repos also run `justz check` and `justz fmt --check`. Then add a delib
 - Do not duplicate a description. In `rich`, `commands.json` is authoritative and any `[doc]` must match it exactly (`justz check` enforces this); in `native`, `[doc]` is the only copy. Duplication produced a 20-of-32 divergence in the field.
 - Do not tell agents to avoid `just --list` or `just --dump`. They cannot be stale; a registry can.
 - Do not commit `.just-local-rich.json`, and do not scaffold it as part of the step 2 question. It is personal; `justz generate` refuses to write it where git tracks it.
-- Do not put a secret value on a command line, in a justfile, or in a `commands.json` example. See `references/credentials-in-recipes.md`.
+- Do not put a secret value on a command line, in a justfile, or in a `commands.json` example. See `references/credentials-in-recipes.md`. Do not take a secret as a recipe parameter, and do not interpolate one with `{{ }}`: `just` puts the value in the process list. `justz lint` reports both.
+- Do not leave a module that has line-by-line recipes without a `set shell`: it runs them with `sh -cu` and no `pipefail`, whatever the root chose. Import the shared settings file (`justz init` writes `just/preamble.just`) or set the shell in the module.
 
 ## Checklist
 
@@ -169,6 +173,8 @@ Both shapes:
 - [ ] Modules whose recipes parse or forward arguments set `positional-arguments` and iterate `"$@"`
 - [ ] Wrapper recipes forward the wrapped tool's flags rather than consuming them
 - [ ] No recipe body holds multi-line shell
+- [ ] `justz lint` is clean, or each finding left in place is a decision the user made
+- [ ] Every module with line-by-line recipes sets its shell, by an import of one shared settings file or by its own `set shell`
 - [ ] `bash -n` and `shellcheck -S warning -x` pass for every script under `scripts/`
 - [ ] `doctor` checks every required tool
 - [ ] README and `AGENTS.md` updated, including which shape the repo uses and why
