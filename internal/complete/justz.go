@@ -12,6 +12,7 @@ var justzCommands = []Candidate{
 	{"generate", "Build the personal .just-local-rich.json"},
 	{"help", "Show the project's commands"},
 	{"init", "Scaffold a justfile that documents itself"},
+	{"lint", "Find antipatterns in the recipes, as advice"},
 	{"resolve", "Print the group path a bare command name stands for"},
 	{"setup", "Get this machine ready and check it"},
 	{"shim", "Manage shims"},

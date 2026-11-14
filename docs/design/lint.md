@@ -27,7 +27,7 @@ The JSON of `just --dump --dump-format json`. `justz` does not parse justfile te
 
 So `line` is the 1-based index into the recipe body as dumped (the first body line is 1, and comment and blank lines count). It is not a line of the file.
 
-**Scope.** Every recipe is looked at: public, private, `default`, and recipes of nested modules. `check` skips private recipes because they need no documentation; a long body or a secret is as real in a private helper. The subject of a finding is the recipe's full path (`deploy`, `ops::deploy`, `ops::db::restore`).
+**Scope.** Every recipe is looked at: public, private, `default`, and recipes of nested modules. `check` skips private recipes because they need no documentation; a long body or a secret is as real in a private helper. The subject of a finding is `just` and the recipe path, as in `check` (`just deploy`, `just ops deploy`, `just ops db restore`).
 
 ## Opt-out
 
