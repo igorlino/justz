@@ -18,7 +18,7 @@
 - **Shortcuts that never break** *(available)*. Pin a command such as `tz` to a project's justfile and run it from any directory, with collision checks so it never hides a real command on your system.
 - **Completion for free** *(available)*. Shell completion generated from the same data as the help.
 - **An editor-ready schema** *(available)*. `justz schema` prints the JSON Schema of `commands.json`, so an editor can complete and type-check the registry.
-- **Built for agents.** Every command has stable JSON output and exit codes, so an AI agent can discover what a repo offers and verify its own changes without guessing. Two agent skills, `justz-cli` and `justfile-authoring`, teach agents how.
+- **Built for agents.** Every command has stable exit codes, and the ones that report something (`check`, `lint`, `assess`, `doctor`, `resolve`, `setup`, `shim`) print JSON with `--json`, so an AI agent can discover what a repo offers and verify its own changes without guessing. Two agent skills, `justz-cli` and `justfile-authoring`, teach agents how.
 
 ## Why another tool?
 
@@ -68,7 +68,7 @@ Describe your commands once, next to your justfile:
 }
 ```
 
-Then `justz help`, `justz check`, `justz fmt` and `justz completions` work from that file and from your justfile. To start a new project with this layout, run `justz init --variant rich`. To get completion and type checks for the registry in your editor, save the schema with `justz schema > commands.schema.json` and point your editor at it, or add a `"$schema"` line with `https://raw.githubusercontent.com/igorlino/justz/main/schema/commands.schema.json`.
+Then `justz help`, `justz check`, `justz fmt` and `justz completions` work from that file and from your justfile. To start a new project with this layout, run `justz init --variant rich`. To get completion and type checks for the registry in your editor, save the schema with `justz schema > commands.schema.json` and point your editor at it, or add a `"$schema"` line at the top of the registry with `https://raw.githubusercontent.com/igorlino/justz/main/schema/commands.schema.json`.
 
 ## Install
 

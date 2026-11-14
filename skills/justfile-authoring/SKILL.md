@@ -77,7 +77,7 @@ Ask before any file is created or moved. Script extraction is not on this list: 
 
 ### 3. Scaffold
 
-For a new project, `justz init` (0.6.0 or newer) writes the layout once the user has answered step 2: `justz init --dry-run [--variant native|rich] [--name NAME] [--module NAME]...` shows the files, and `justz init` writes them. It writes a root `justfile`, a shared `just/preamble.just` that every file imports for its settings, one module per group and, for `rich`, a sorted `config/commands.json`. It never overwrites, so it is for an empty directory; for an existing repo, build by hand from the references below and use `justz assess` and `justz generate`. Edit what it wrote rather than keeping its placeholders.
+For a new project, `justz init` (0.6.0 or newer) writes the layout once the user has answered step 2: `justz init --dry-run [--variant native|rich] [--name NAME] [--module NAME]...` shows the files: show that list to the user and get their go before `justz init` writes them. It writes a root `justfile`, a shared `just/preamble.just` that every file imports for its settings, one module per group and, for `rich`, a sorted `config/commands.json`. It never overwrites, so it is for a directory with no justfile; for an existing repo, build by hand from the references below and use `justz assess` and `justz generate`. Edit what it wrote rather than keeping its placeholders.
 
 Read `references/shared-mechanics.md` (`mod` layout, argument shape, `set positional-arguments`, script extraction, `doctor`), then the chosen shape:
 
@@ -156,7 +156,7 @@ Run `justz lint` (0.6.0 or newer): it points at long recipe bodies, secret-like 
 - Do not tell agents to avoid `just --list` or `just --dump`. They cannot be stale; a registry can.
 - Do not commit `.just-local-rich.json`, and do not scaffold it as part of the step 2 question. It is personal; `justz generate` refuses to write it where git tracks it.
 - Do not put a secret value on a command line, in a justfile, or in a `commands.json` example. See `references/credentials-in-recipes.md`. Do not take a secret as a recipe parameter, and do not interpolate one with `{{ }}`: `just` puts the value in the process list. `justz lint` reports both.
-- Do not leave a module without a `set shell`: it runs with `sh -cu` and no `pipefail`, whatever the root chose. Import the shared settings file (`justz init` writes `just/preamble.just`) or set the shell in the module.
+- Do not leave a module that has line-by-line recipes without a `set shell`: it runs them with `sh -cu` and no `pipefail`, whatever the root chose. Import the shared settings file (`justz init` writes `just/preamble.just`) or set the shell in the module.
 
 ## Checklist
 
@@ -174,7 +174,7 @@ Both shapes:
 - [ ] Wrapper recipes forward the wrapped tool's flags rather than consuming them
 - [ ] No recipe body holds multi-line shell
 - [ ] `justz lint` is clean, or each finding left in place is a decision the user made
-- [ ] Every module sets its shell, by an import of one shared settings file or by its own `set shell`
+- [ ] Every module with line-by-line recipes sets its shell, by an import of one shared settings file or by its own `set shell`
 - [ ] `bash -n` and `shellcheck -S warning -x` pass for every script under `scripts/`
 - [ ] `doctor` checks every required tool
 - [ ] README and `AGENTS.md` updated, including which shape the repo uses and why

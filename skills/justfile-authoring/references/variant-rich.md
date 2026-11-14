@@ -50,8 +50,7 @@ To start from an existing justfile instead of a blank file, `justz generate --st
 The root justfile stays small: `_default`, `help`, `check`, and the `mod` links. Every command-group recipe lives in `just/<ns>.just`.
 
 ```just
-set shell := ["bash", "-eu", "-o", "pipefail", "-c"]
-set positional-arguments
+import 'just/preamble.just'   # set shell := bash strict, set positional-arguments (justz init writes it)
 
 mod trading  'just/trading.just'
 mod strategy 'just/strategy.just'

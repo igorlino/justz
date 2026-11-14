@@ -202,7 +202,7 @@ func secretRules(d dump, r recipe, subject string, ignored map[string]bool, inje
 		res.Findings = append(res.Findings, Finding{
 			Rule: RuleSecretInterpol, Severity: check.Warning, Subject: subject, Line: i + 1,
 			Message: fmt.Sprintf("interpolates %s into a command line: just substitutes the value before the shell starts, so it is in the process list", strings.Join(names, ", ")),
-			Fix:     "use the shell's own variable, with the value exported from the environment ($NAME), so the value never appears in the command line",
+			Fix:     "use the shell's own variable, with the value exported from the environment ($NAME), so just does not put the value in the command line",
 		})
 	}
 }
