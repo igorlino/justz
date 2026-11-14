@@ -17,7 +17,7 @@ A project documents its commands in one of three ways, and `justz` supports all 
 ## Inputs
 
 1. **The justfile dump (always).** `justz` reads the justfile through `just --dump --dump-format json`, including nested `modules`. It never parses justfile text itself. `just` is called with a fixed argument list and never through a shell.
-2. **The registry, `commands.json` (rich).** Found by walking up from the working directory to the project root, looking in each directory for `.*/config/commands.json` (sorted by name), then `config/commands.json`, then `just/commands.json`. `--config <path>` and `$JUSTZ_CONFIG` override the search.
+2. **The registry, `commands.json` (rich).** Found by walking up from the working directory to the project root, looking in each directory for `.*/config/commands.json` (sorted by name), then `config/commands.json`, then `just/commands.json`. There is no flag or variable that overrides the search for `help`, `check`, `generate` and the rest. Only `justz fmt` is different: it looks in the current directory only, or takes a path argument or `$JUSTZ_CONFIG`.
 3. **The local overlay, `.just-local-rich.json` (local-rich).** Found in the project root. It has the same shape as the registry.
 
 The project root is the first directory that contains a `.git` entry, or the filesystem root if there is none.
