@@ -88,10 +88,25 @@ Releases include SHA256 checksums and build provenance attestations. To check an
 gh attestation verify justz-<version>-<os>-<arch>.tar.gz --repo igorlino/justz
 ```
 
-## Agent skills (planned)
+## Agent skills
 
 - `justz-cli`: how an agent runs and troubleshoots `justz`.
-- `justfile-authoring`: how to design a discoverable, well-documented justfile, built on `justz`.
+- `justfile-authoring`: how to design a discoverable, well-documented justfile, built on `justz` (coming).
+
+Claude Code:
+
+```sh
+/plugin marketplace add igorlino/justz
+/plugin install justz --marketplace igorlino/justz
+```
+
+The skills then appear as `/justz:justz-cli`. Any other agent (Codex, Copilot, Antigravity and others) can install them with the `skills` CLI:
+
+```sh
+npx skills add igorlino/justz
+```
+
+The skills never install `justz`. They check for it and tell you how to install it.
 
 ## Contributing
 

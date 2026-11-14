@@ -1,0 +1,18 @@
+{
+  "name": "justz",
+  "owner": {
+    "name": "Igor Lino"
+  },
+  "metadata": {
+    "description": "Agent skills for the justz CLI and for authoring justfiles"
+  },
+  "plugins": [
+    {
+      "name": "justz",
+      "source": "./",
+      "description": "Skills for running the justz CLI and for authoring discoverable justfiles",
+      "license": "MIT",
+      "keywords": ["just", "justfile", "cli", "help", "completion"]
+    }
+  ]
+}

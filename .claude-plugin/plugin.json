@@ -1,0 +1,10 @@
+{
+  "name": "justz",
+  "description": "Skills for running the justz CLI and for authoring discoverable justfiles",
+  "author": {
+    "name": "Igor Lino"
+  },
+  "homepage": "https://github.com/igorlino/justz",
+  "repository": "https://github.com/igorlino/justz",
+  "license": "MIT"
+}
