@@ -15,6 +15,8 @@ import (
 // Rule ids. They are part of the output and stay stable.
 const (
 	RuleRecipeLong       = "recipe-long"
+	RuleSecretParameter  = "secret-parameter"
+	RuleSecretInterpol   = "secret-interpolated"
 	RuleModuleShellUnset = "module-shell-unset"
 	RuleIgnoreUnknown    = "ignore-unknown-rule"
 )
@@ -28,7 +30,7 @@ const MaxBodyLines = 40
 const IgnoreKey = "justz-ignore"
 
 // ignorable lists the rules a recipe may silence, in the order they are shown.
-var ignorable = []string{RuleRecipeLong}
+var ignorable = []string{RuleRecipeLong, RuleSecretInterpol, RuleSecretParameter}
 
 // Finding is one piece of advice. It has the fields of a check finding.
 type Finding struct {
@@ -58,6 +60,9 @@ func (r Result) Count(s check.Severity) int {
 }
 
 type dump struct {
+	Assignments map[string]struct {
+		Value any `json:"value"`
+	} `json:"assignments"`
 	Recipes  map[string]recipe `json:"recipes"`
 	Modules  map[string]dump   `json:"modules"`
 	Settings struct {
@@ -68,7 +73,11 @@ type dump struct {
 type recipe struct {
 	Attributes []json.RawMessage `json:"attributes"`
 	Body       []any             `json:"body"`
-	Shebang    bool              `json:"shebang"` // also true for [script] recipes
+	Parameters []struct {
+		Name    string `json:"name"`
+		Default any    `json:"default"`
+	} `json:"parameters"`
+	Shebang bool `json:"shebang"` // also true for [script] recipes
 }
 
 // isSet reports whether a setting of the dump has a value: it is null when the
@@ -122,6 +131,7 @@ func walk(d dump, prefix string, res *Result) {
 				Fix:     "move the logic to scripts/<group>/<name>.sh and keep the recipe thin, or add [metadata('" + IgnoreKey + "', '" + RuleRecipeLong + "')]",
 			})
 		}
+		secretRules(d, r, subject, ignored, res)
 	}
 	for name, sub := range d.Modules {
 		p := name
