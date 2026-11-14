@@ -99,7 +99,8 @@ Fixtures in `internal/lint/testdata` are synthetic recipes with exactly these na
 A module that has at least one linewise recipe and whose `settings.shell` is `null` runs those recipes with `sh -cu`: no `pipefail`, and not the shell the root file chose. The fix is to import a shared settings file (`justz init` writes `just/preamble.just`) or to add a `set shell` line.
 
 - A module with only shebang or `[script]` recipes is not reported: the setting does not affect them.
-- Any `set shell` line silences the rule, including `set shell := ['sh', '-cu']`. That is the opt-out: the rule is about a module that did not choose, not about which shell is right.
+- Any `set shell` line silences the rule, including `set shell := ['sh', '-cu']`. `set windows-shell` does not: it changes nothing on Linux or macOS, where the recipes still run with `sh -cu` (verified).
+- A recipe with an empty body, such as one that only has dependencies, runs no shell and does not count. That is the opt-out: the rule is about a module that did not choose, not about which shell is right.
 - The root file is not reported. A root without `set shell` is a normal small justfile.
 
 ## Not in scope
@@ -112,7 +113,7 @@ A module that has at least one linewise recipe and whose `settings.shell` is `nu
 ## Plan
 
 1. `internal/lint` with `recipe-long`, the opt-out and `ignore-unknown-rule`, then `justz lint` with completion entries.
-2. `module-shell-unset`.
+2. `module-shell-unset` (done).
 3. `secret-parameter` and `secret-interpolated` with the name matcher and its table as tests.
 
 ## Open questions

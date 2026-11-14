@@ -32,6 +32,18 @@ func rules(res Result) []string {
 	return out
 }
 
+// longRules is rules without the module-shell findings, for tests of a rule
+// that builds modules with no settings.
+func longRules(res Result) []string {
+	var out []string
+	for _, r := range rules(res) {
+		if !strings.HasPrefix(r, RuleModuleShellUnset) {
+			out = append(out, r)
+		}
+	}
+	return out
+}
+
 func TestRecipeLongThreshold(t *testing.T) {
 	d := fmt.Sprintf(`{"recipes":{"ok":%s,"long":%s},"modules":{}}`, recipeJSON(40, ""), recipeJSON(41, ""))
 	res := run(t, d)
@@ -52,7 +64,7 @@ func TestRecipeLongCountsPrivateDefaultAndNestedModules(t *testing.T) {
 		recipeJSON(50, ""), recipeJSON(50, ""), recipeJSON(50, ""), recipeJSON(50, ""))
 	res := run(t, d)
 	want := "recipe-long just _helper,recipe-long just default,recipe-long just ops db restore,recipe-long just ops deploy"
-	if got := strings.Join(rules(res), ","); got != want {
+	if got := strings.Join(longRules(res), ","); got != want {
 		t.Errorf("findings = %q\nwant       %q", got, want)
 	}
 }
@@ -109,7 +121,7 @@ func TestIgnoreWorksInNestedModulesAndAddsUpAcrossAttributes(t *testing.T) {
 	d := fmt.Sprintf(`{"recipes":{},"modules":{"a":{"recipes":{"x":%s},"modules":{"b":{"recipes":{"y":%s,"z":%s},"modules":{}}}}}}`,
 		recipeJSON(60, `{"metadata":["justz-ignore","recipe-long"]}`), recipeJSON(60, both), recipeJSON(60, ""))
 	res := run(t, d)
-	if got := strings.Join(rules(res), ","); got != "recipe-long just a b z" {
+	if got := strings.Join(longRules(res), ","); got != "recipe-long just a b z" {
 		t.Errorf("findings = %q", got)
 	}
 }
@@ -122,5 +134,53 @@ func TestLineIsOmittedFromJSONWhenARuleHasNone(t *testing.T) {
 	}
 	if strings.Contains(string(b), `"line"`) {
 		t.Errorf("line should be omitted: %s", b)
+	}
+}
+
+func moduleDump(settings, recipes string) string {
+	return fmt.Sprintf(`{"recipes":{},"settings":{"shell":null},"modules":{"m":{"recipes":{%s},"settings":{%s},"modules":{}}}}`, recipes, settings)
+}
+
+func TestModuleShellUnset(t *testing.T) {
+	linewise := `"a":{"attributes":[],"body":[["echo"]],"shebang":false}`
+	shebang := `"s":{"attributes":[],"body":[["#!/bin/sh"],["echo"]],"shebang":true}`
+	tests := []struct {
+		name, settings, recipes, want string
+	}{
+		{"no shell, linewise recipe", `"shell":null,"windows_shell":null`, linewise, "module-shell-unset module m"},
+		{"mixed recipes", `"shell":null`, linewise + "," + shebang, "module-shell-unset module m"},
+		{"settings missing", ``, linewise, "module-shell-unset module m"},
+		{"shell set", `"shell":{"command":"bash","arguments":["-eu","-c"]}`, linewise, ""},
+		{"zsh is a choice", `"shell":{"command":"zsh","arguments":["-c"]}`, linewise, ""},
+		{"windows-shell does not change sh on Linux", `"shell":null,"windows_shell":{"command":"pwsh","arguments":["-c"]}`, linewise, "module-shell-unset module m"},
+		{"empty body runs nothing", `"shell":null`, `"e":{"attributes":[],"body":[],"shebang":false}`, ""},
+		{"dependency-only recipe runs nothing", `"shell":null`, shebang + `,"b":{"attributes":[],"body":[],"shebang":false}`, ""},
+		{"only shebang recipes", `"shell":null`, shebang, ""},
+		{"no recipes", `"shell":null`, ``, ""},
+	}
+	for _, tt := range tests {
+		got := strings.Join(rules(run(t, moduleDump(tt.settings, tt.recipes))), ",")
+		if got != tt.want {
+			t.Errorf("%s: findings = %q, want %q", tt.name, got, tt.want)
+		}
+	}
+}
+
+func TestModuleShellUnsetNestedAndRootIsLeftAlone(t *testing.T) {
+	linewise := `"a":{"attributes":[],"body":[["echo"]],"shebang":false}`
+	d := fmt.Sprintf(`{"recipes":{%s},"settings":{"shell":null},"modules":{"o":{"recipes":{},"settings":{"shell":{"command":"bash","arguments":["-c"]}},"modules":{"i":{"recipes":{%s},"settings":{"shell":null},"modules":{}}}}}}`, linewise, linewise)
+	res := run(t, d)
+	if got := strings.Join(rules(res), ","); got != "module-shell-unset module o i" {
+		t.Errorf("findings = %q", got)
+	}
+	if f := res.Findings[0]; f.Severity != "warning" || !strings.Contains(f.Fix, "preamble.just") {
+		t.Errorf("finding = %+v", f)
+	}
+}
+
+func TestModuleRuleCannotBeIgnoredPerRecipe(t *testing.T) {
+	res := run(t, fmt.Sprintf(`{"recipes":{"a":%s},"modules":{}}`, recipeJSON(1, `{"metadata":["justz-ignore","module-shell-unset"]}`)))
+	if got := strings.Join(rules(res), ","); got != "ignore-unknown-rule just a" {
+		t.Errorf("findings = %q", got)
 	}
 }
