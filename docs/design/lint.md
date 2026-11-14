@@ -48,9 +48,11 @@ A secret in an argument is visible in the process list, in `sudo` logs and, for 
 4. **Secret-like name.** Split a variable name on `_` and on camel-case boundaries, in upper case. It is secret-like when it contains the segment `TOKEN`, `PASSWORD`, `PASSWD`, `PASS`, `SECRET`, `CREDENTIAL` or `CREDENTIALS`, or one of the pairs `API KEY`, `SECRET KEY`, `PRIVATE KEY`, `ACCESS KEY`. It is not secret-like when its last segment is `FILE`, `PATH`, `DIR`, `NAME`, `ID`, `USER`, `URL` or `HOST`, so `SSH_KEY_FILE`, `TOKEN_PATH` and `AWS_ACCESS_KEY_ID` stay quiet. A bare `KEY` is not enough: it matches too much.
 5. **Reference.** In an in-scope segment, report a secret-like name that appears as `$NAME`, `${NAME}`, `{{ name }}` (a parameter or variable), `env('NAME')` or `env_var('NAME')`, or as the left side of `NAME=` (the right side may be literal, and is never copied into the message).
 
+A reference that is the operand of a redirection (`<`, `<<<`) is not part of the argument list, so it is not reported: `ssh host 'cat > file' <<<"$TOKEN"` stays quiet.
+
 The message names the recipe, the line, the command word and the variable name. It never contains the value or the line text.
 
-The fix: send the secret on standard input (`ssh host 'cat > file' <<<"$TOKEN"` is still an argument to the shell, so use a pipe from a command that reads it from the keychain) or write it to a mode `0600` file and pass the path. The `justfile-authoring` skill already has the 1Password patterns; the message points at `references/credentials-in-recipes.md`.
+The fix: send the secret on standard input (a pipe, or `<<<"$TOKEN"`) or write it to a mode `0600` file and pass the path. The `justfile-authoring` skill already has the 1Password patterns; the message points at `references/credentials-in-recipes.md`.
 
 Fixtures. Each is a synthetic recipe in `internal/lint/testdata`, modelled on the real pattern, never copied from a private repo.
 
@@ -61,6 +63,7 @@ Fixtures. Each is a synthetic recipe in `internal/lint/testdata`, modelled on th
 | `sudo env GH_TOKEN=x make deploy` | finding (name only; the value is not echoed) |
 | `printf %s "$API_TOKEN" \| ssh host 'cat > /dev/null'` | none: the name is in `printf`, not in `ssh` |
 | `ssh -i "$SSH_KEY_FILE" host` | none: a path |
+| `ssh host 'cat > f' <<<"$API_TOKEN"` | none: the operand of a redirection |
 | `echo "$API_TOKEN"` | none in v1 (see open questions) |
 | `ssh host "echo 'a | b' $TOKEN"` | finding: the pipe is inside quotes |
 | a line with an unclosed quote | none, no crash |
