@@ -11,6 +11,7 @@ var justzCommands = []Candidate{
 	{"fmt", "Rewrite the command registry in canonical order"},
 	{"generate", "Build the personal .just-local-rich.json"},
 	{"help", "Show the project's commands"},
+	{"init", "Scaffold a justfile that documents itself"},
 	{"resolve", "Print the group path a bare command name stands for"},
 	{"setup", "Get this machine ready and check it"},
 	{"shim", "Manage shims"},
@@ -34,8 +35,14 @@ var justzFlags = map[string][]Candidate{
 	"doctor":   {jsonFlag},
 	"fmt":      {{"--check", "Do not write; exit 1 if not formatted"}},
 	"generate": {{"--stdout", "Print the result and write nothing"}},
-	"resolve":  {jsonFlag},
-	"setup":    {{"--dry-run", "Show what would be created"}, jsonFlag},
+	"init": {
+		{"--dry-run", "List the files and write nothing"},
+		{"--module", "A command group (repeat the flag)"},
+		{"--name", "The heading of the help"},
+		{"--variant", "native or rich"},
+	},
+	"resolve": {jsonFlag},
+	"setup":   {{"--dry-run", "Show what would be created"}, jsonFlag},
 	"help": {
 		{"--browse", "Pick a group or command"},
 		{"--expanded", "Show the full reference"},
@@ -92,7 +99,7 @@ func Justz(words []string, e Env) Result {
 			return Result{Candidates: filter([]Candidate{{"bash", "Bash completion script"}, {"zsh", "Zsh completion script"}}, cur)}
 		}
 		return Result{}
-	case "fmt", "generate", "shim add":
+	case "fmt", "generate", "init", "shim add":
 		// A file or directory, and the flags once a dash is typed.
 		return Result{Files: true}
 	case "shim remove":
