@@ -22,6 +22,8 @@ type Command struct {
 	Name    string
 	Desc    string
 	Example string
+	// Detail is longer prose about the command, shown only in its zoom.
+	Detail  string
 	Heading string // a display heading from a [group] attribute (native projects)
 	Args    []Arg
 }
@@ -141,7 +143,7 @@ func readCommands(v *orderedjson.Value) []Command {
 	}
 	var out []Command
 	for _, m := range v.Obj {
-		c := Command{Name: m.Key, Desc: firstString(m.Val, "", "desc"), Example: firstString(m.Val, "", "example")}
+		c := Command{Name: m.Key, Desc: firstString(m.Val, "", "desc"), Example: firstString(m.Val, "", "example"), Detail: firstString(m.Val, "", "detail")}
 		if args := m.Val.Get("args"); args != nil && args.Kind == orderedjson.Array {
 			for _, a := range args.Arr {
 				arg := Arg{Name: firstString(a, "", "name"), Desc: firstString(a, "", "desc")}

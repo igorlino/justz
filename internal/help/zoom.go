@@ -270,12 +270,34 @@ func CommandView(proj *Project, g *Group, c *Command, o Options) string {
 		}
 	}
 
+	if detail := cleanDetail(c.Detail); detail != "" {
+		p.b.WriteByte('\n')
+		p.line("  %s", p.s.bold("Details"))
+		for _, l := range wrap(w-6, detail) {
+			if l == "" {
+				p.b.WriteByte('\n')
+				continue
+			}
+			p.line("    %s", l)
+		}
+	}
+
 	if g.Key != "core" && len(g.SeeAlso) > 0 {
 		p.b.WriteByte('\n')
 		p.seeAlso(proj, g)
 	}
 	p.b.WriteByte('\n')
 	return p.b.String()
+}
+
+// cleanDetail trims the newlines around a command's detail text and turns
+// Windows line ends into newlines, so the section never starts or ends with a
+// blank line. A text of only blanks is no text.
+func cleanDetail(s string) string {
+	if strings.TrimSpace(s) == "" {
+		return ""
+	}
+	return strings.Trim(strings.ReplaceAll(s, "\r\n", "\n"), "\n")
 }
 
 // Overview is the short list of groups: the next zoom level when nothing is

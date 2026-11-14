@@ -212,7 +212,14 @@ func zoomJSON(proj *help.Project, terms []string, e env) int {
 	case help.Ambiguous:
 		nodes := make([]any, 0, len(rows))
 		for _, r := range rows {
-			nodes = append(nodes, node(r))
+			n := node(r)
+			// A lookup that is ambiguous is a choice, not a read: leave the
+			// long text out so the array stays small.
+			if cn, ok := n.(help.CommandNode); ok {
+				cn.Detail = ""
+				n = cn
+			}
+			nodes = append(nodes, n)
 		}
 		if code := printJSON(e, nodes); code != 0 {
 			return code

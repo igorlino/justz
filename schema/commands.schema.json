@@ -102,6 +102,7 @@
       "type": "object",
       "properties": {
         "desc": { "type": "string", "description": "What the command does, imperative, with no trailing period." },
+        "detail": { "type": "string", "description": "Longer prose about the command. Only the zoom (justz help <group> <command>) shows it. Keep desc to one line." },
         "example": { "type": "string", "description": "A usage example, prefixed with the ellipsis mark." },
         "args": {
           "type": "array",

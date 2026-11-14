@@ -337,7 +337,7 @@ func registryRules(in Input, items []item) []Finding {
 		if n := utf8.RuneCountInString(e.Desc); n > MaxDescLength {
 			out = append(out, Finding{RuleDescLong, Warning, subject,
 				fmt.Sprintf("the description is %d characters long (over %d)", n, MaxDescLength),
-				"keep a one-line description and move the rest to a runbook"})
+				descLongFix(in.Variant)})
 		}
 	}
 
@@ -385,4 +385,14 @@ func sortFindings(f []Finding) {
 		}
 		return f[i].Subject < f[j].Subject
 	})
+}
+
+// descLongFix says where the rest of a long description goes. A committed
+// registry has the detail field; the generated overlay is derived from the
+// justfile, so its text comes from the [doc].
+func descLongFix(variant string) string {
+	if variant == "local-rich" {
+		return "shorten the [doc] in the justfile, then run: justz generate"
+	}
+	return `keep a one-line description equal to the [doc], and move the rest to "detail" in the registry`
 }
