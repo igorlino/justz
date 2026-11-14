@@ -13,6 +13,7 @@ import (
 	"github.com/igorlino/justz/internal/orderedjson"
 	"github.com/igorlino/justz/internal/registry"
 	"github.com/igorlino/justz/internal/shim"
+	"github.com/igorlino/justz/internal/textsafe"
 )
 
 const helpUsage = `Usage: justz help [flags] [group] [command]
@@ -181,13 +182,13 @@ func zoom(proj *help.Project, terms []string, opts help.Options, e env) int {
 		}
 		return 0
 	case help.Ambiguous:
-		fmt.Fprintf(e.stderr, "ambiguous: '%s' matches several entries:\n", strings.Join(terms, " "))
+		fmt.Fprintf(e.stderr, "ambiguous: '%s' matches several entries:\n", textsafe.Line(strings.Join(terms, " ")))
 		for _, r := range rows {
 			fmt.Fprintf(e.stderr, "%s %s — %s\n", proj.CLI, r.Path(), r.Desc)
 		}
 		return 2
 	}
-	fmt.Fprintf(e.stderr, "no group or command matches '%s'. Try: %s --expanded\n", strings.Join(terms, " "), opts.HelpCmd)
+	fmt.Fprintf(e.stderr, "no group or command matches '%s'. Try: %s --expanded\n", textsafe.Line(strings.Join(terms, " ")), opts.HelpCmd)
 	return 2
 }
 
@@ -226,6 +227,6 @@ func zoomJSON(proj *help.Project, terms []string, e env) int {
 		}
 		return 2
 	}
-	fmt.Fprintf(e.stderr, "no group or command matches '%s'. Try: justz help --json\n", strings.Join(terms, " "))
+	fmt.Fprintf(e.stderr, "no group or command matches '%s'. Try: justz help --json\n", textsafe.Line(strings.Join(terms, " ")))
 	return 2
 }

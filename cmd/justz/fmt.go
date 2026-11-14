@@ -9,6 +9,7 @@ import (
 	"github.com/igorlino/justz/internal/atomicfile"
 	"github.com/igorlino/justz/internal/orderedjson"
 	"github.com/igorlino/justz/internal/registry"
+	"github.com/igorlino/justz/internal/textsafe"
 )
 
 const fmtUsage = `Usage: justz fmt [--check] [path]
@@ -67,7 +68,7 @@ func runFmt(args []string, e env) int {
 	}
 	doc, err := orderedjson.Parse(original)
 	if err != nil {
-		fmt.Fprintf(e.stderr, "justz fmt: %s is not valid JSON: %v\n", path, err)
+		fmt.Fprintf(e.stderr, "justz fmt: %s is not valid JSON: %v\n", textsafe.Line(path), err)
 		return 1
 	}
 	registry.Canonicalize(doc)
@@ -78,17 +79,17 @@ func runFmt(args []string, e env) int {
 	}
 
 	if bytes.Equal(original, formatted) {
-		fmt.Fprintf(e.stdout, "%s is already formatted\n", path)
+		fmt.Fprintf(e.stdout, "%s is already formatted\n", textsafe.Line(path))
 		return 0
 	}
 	if check {
-		fmt.Fprintf(e.stdout, "%s is not formatted; run: justz fmt %s\n", path, path)
+		fmt.Fprintf(e.stdout, "%s is not formatted; run: justz fmt %s\n", textsafe.Line(path), textsafe.Line(path))
 		return 1
 	}
 	if err := atomicfile.Write(path, formatted, 0o644); err != nil {
 		fmt.Fprintf(e.stderr, "justz fmt: %v\n", err)
 		return 1
 	}
-	fmt.Fprintf(e.stdout, "formatted %s\n", path)
+	fmt.Fprintf(e.stdout, "formatted %s\n", textsafe.Line(path))
 	return 0
 }

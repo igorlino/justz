@@ -11,6 +11,7 @@ import (
 
 	"github.com/igorlino/justz/internal/help"
 	"github.com/igorlino/justz/internal/resolve"
+	"github.com/igorlino/justz/internal/textsafe"
 )
 
 // Candidate is one possible completion.
@@ -132,11 +133,15 @@ func groupAndCommandCandidates(proj *help.Project, cur string) []Candidate {
 	var cands []Candidate
 	if proj.Core != nil {
 		for _, c := range proj.Core.Commands {
-			cands = append(cands, Candidate{c.Name, c.Desc})
+			if textsafe.IsName(c.Name) {
+				cands = append(cands, Candidate{c.Name, c.Desc})
+			}
 		}
 	}
 	for _, g := range proj.Groups {
-		cands = append(cands, Candidate{g.Key, g.Label})
+		if textsafe.IsName(g.Key) {
+			cands = append(cands, Candidate{g.Key, g.Label})
+		}
 	}
 	if cur != "" {
 		cands = append(cands, bareNames(proj)...)
@@ -151,7 +156,9 @@ func bareNames(proj *help.Project) []Candidate {
 	var out []Candidate
 	for _, g := range proj.Groups {
 		for _, c := range g.Commands {
-			out = append(out, Candidate{c.Name, g.Key + ": " + c.Desc})
+			if textsafe.IsName(c.Name) {
+				out = append(out, Candidate{c.Name, g.Key + ": " + c.Desc})
+			}
 		}
 	}
 	sort.SliceStable(out, func(i, j int) bool { return out[i].Value < out[j].Value })
@@ -165,7 +172,9 @@ func commandsOfGroup(proj *help.Project, key string) []Candidate {
 	}
 	var out []Candidate
 	for _, c := range g.Commands {
-		out = append(out, Candidate{c.Name, c.Desc})
+		if textsafe.IsName(c.Name) {
+			out = append(out, Candidate{c.Name, c.Desc})
+		}
 	}
 	return out
 }

@@ -9,6 +9,7 @@ import (
 
 	"github.com/igorlino/justz/internal/registry"
 	"github.com/igorlino/justz/internal/shim"
+	"github.com/igorlino/justz/internal/textsafe"
 )
 
 const shimUsage = `Usage: justz shim <command>
@@ -105,7 +106,7 @@ func runShimList(args []string, e env) int {
 		if s.Soft {
 			soft = "  (soft)"
 		}
-		fmt.Fprintf(e.stdout, "%s\t%s%s\n", s.Name, s.Justfile, soft)
+		fmt.Fprintf(e.stdout, "%s\t%s%s\n", textsafe.Line(s.Name), textsafe.Line(s.Justfile), soft)
 	}
 	return 0
 }
@@ -234,12 +235,12 @@ func runShimAdd(args []string, e env) int {
 	} else if res.Updated {
 		verb = "updated"
 	}
-	fmt.Fprintf(e.stdout, "%s shim %s (and %s) for %s\n", verb, res.Entry.Name, res.Entry.HelpName(), res.Entry.Justfile)
+	fmt.Fprintf(e.stdout, "%s shim %s (and %s) for %s\n", verb, textsafe.Line(res.Entry.Name), textsafe.Line(res.Entry.HelpName()), textsafe.Line(res.Entry.Justfile))
 	for _, f := range res.Files {
-		fmt.Fprintf(e.stdout, "  %s\n", f)
+		fmt.Fprintf(e.stdout, "  %s\n", textsafe.Line(f))
 	}
 	for _, w := range res.Warnings {
-		fmt.Fprintf(e.stdout, "warning: %s\n", w)
+		fmt.Fprintf(e.stdout, "warning: %s\n", textsafe.Line(w))
 	}
 	return 0
 }
@@ -287,12 +288,12 @@ func runShimRemove(args []string, e env) int {
 	if res.DryRun {
 		verb = "would remove"
 	}
-	fmt.Fprintf(e.stdout, "%s shim %s\n", verb, res.Name)
+	fmt.Fprintf(e.stdout, "%s shim %s\n", verb, textsafe.Line(res.Name))
 	for _, f := range res.Removed {
-		fmt.Fprintf(e.stdout, "  deleted %s\n", f)
+		fmt.Fprintf(e.stdout, "  deleted %s\n", textsafe.Line(f))
 	}
 	for _, f := range res.Skipped {
-		fmt.Fprintf(e.stdout, "  left %s alone: justz did not write it\n", f)
+		fmt.Fprintf(e.stdout, "  left %s alone: justz did not write it\n", textsafe.Line(f))
 	}
 	return 0
 }

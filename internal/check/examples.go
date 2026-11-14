@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/igorlino/justz/internal/orderedjson"
+	"github.com/igorlino/justz/internal/textsafe"
 )
 
 var flagScan = regexp.MustCompile(`-{1,2}[A-Za-z0-9][A-Za-z0-9-]*`)
@@ -101,7 +102,7 @@ func exampleRules(reg *orderedjson.Value) []Finding {
 					}
 					if !shown {
 						out = append(out, Finding{RuleExampleEnumUnset, sev, fmt.Sprintf("%s.%s", g.Key, c.Key),
-							fmt.Sprintf("%s declares the values %s, but no example in %s.examples uses it", a.Name, strings.Join(a.Values, "|"), g.Key),
+							fmt.Sprintf("%s declares the values %s, but no example in %s.examples uses it", a.Name, strings.Join(a.Values, "|"), textsafe.Line(g.Key)),
 							"add an example that passes the flag"})
 					}
 				}

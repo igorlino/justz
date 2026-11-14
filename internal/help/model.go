@@ -109,6 +109,7 @@ func FromRegistry(doc *orderedjson.Value, fallbackName string) (*Project, error)
 		}
 	}
 	p.Tiers = readTiers(doc, p)
+	p.sanitize()
 	return p, nil
 }
 
