@@ -30,7 +30,7 @@ const MaxBodyLines = 40
 const IgnoreKey = "justz-ignore"
 
 // ignorable lists the rules a recipe may silence, in the order they are shown.
-var ignorable = []string{RuleRecipeLong, RuleSecretInterpol, RuleSecretParameter}
+var ignorable = []string{RuleRecipeLong, RuleSecretParameter, RuleSecretInterpol}
 
 // Finding is one piece of advice. It has the fields of a check finding.
 type Finding struct {
@@ -77,6 +77,10 @@ type recipe struct {
 		Name    string `json:"name"`
 		Default any    `json:"default"`
 	} `json:"parameters"`
+	Dependencies []struct {
+		Recipe    string `json:"recipe"`
+		Arguments []any  `json:"arguments"`
+	} `json:"dependencies"`
 	Shebang bool `json:"shebang"` // also true for [script] recipes
 }
 
@@ -108,6 +112,7 @@ func Run(dumpJSON []byte) (Result, error) {
 // walk looks at every recipe: public, private, default, and those of nested
 // modules. A long body or a secret is as real in a private helper.
 func walk(d dump, prefix string, res *Result) {
+	injected := dependencySecrets(d)
 	for name, r := range d.Recipes {
 		res.Checked++
 		path := name
@@ -131,7 +136,7 @@ func walk(d dump, prefix string, res *Result) {
 				Fix:     "move the logic to scripts/<group>/<name>.sh and keep the recipe thin, or add [metadata('" + IgnoreKey + "', '" + RuleRecipeLong + "')]",
 			})
 		}
-		secretRules(d, r, subject, ignored, res)
+		secretRules(d, r, subject, ignored, injected[name], res)
 	}
 	for name, sub := range d.Modules {
 		p := name

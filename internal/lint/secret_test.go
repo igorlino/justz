@@ -8,12 +8,17 @@ import (
 
 func TestSecretLikeNames(t *testing.T) {
 	yes := []string{"API_TOKEN", "apiToken", "api-token", "authtoken", "dbpassword", "dbPass", "SSH_PASS", "pw",
-		"SSH_KEY_PASSPHRASE", "APIKEY", "SIGNING_KEY", "SECRETS", "GH_TOKEN", "DB_PASSWORD", "X_SECRET", "TESTS_PASS"}
+		"SSH_KEY_PASSPHRASE", "APIKEY", "SIGNING_KEY", "SECRETS", "GH_TOKEN", "DB_PASSWORD", "X_SECRET", "TESTS_PASS",
+		"MYSQL_PWD", "PASSWORDS", "ENCRYPTION_KEY", "MASTER_KEY", "PRIVATEKEY", "SECRETKEY", "TOKEN2", "dbPassword2",
+		"AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN", "PGPASSWORD", "REDIS_PASS", "OP_SERVICE_ACCOUNT_TOKEN",
+		"ANTHROPIC_API_KEY", "STRIPE_SECRET_KEY", "SECRET_KEY_BASE", "PRIVATE_KEY", "api_key", "x-api-key", "passwordHash"}
 	no := []string{"SSH_KEY_FILE", "TOKEN_PATH", "GITHUB_TOKEN_FILE", "AWS_ACCESS_KEY_ID", "TOKEN_TTL", "TOKEN_ENDPOINT",
 		"PASSWORD_LENGTH", "OP_TOKEN_REF", "SECRET_ARN", "PASS_THROUGH_ARGS", "TOKENIZER", "PASSTHROUGH", "BYPASS",
-		"COMPASS", "KEYCLOAK_URL", "KEY", "", "_", "name", "args",
+		"COMPASS", "KEYCLOAK_URL", "KEY", "", "_", "name", "args", "TOKENS_PER_MINUTE", "PASSWORD_POLICY", "PASSWORD_PROMPT",
+		"TOKEN_EXPIRES", "TOKEN_EXPIRY", "SECRET_MANAGER", "SECRET_VERSION", "TOKEN_VAR", "PASSWORD_FILE", "SECRETS_DIR",
+		"PASSWORD_RESET_URL", "CREDENTIALS_FILE", "KUBECONFIG", "PRIVATE_KEY_FILE",
 		// accepted misses: no name list finds these without flagging far more
-		"GH_PAT", "DATABASE_URL", "VAULT_SECRET_ID", "TOKEN2"}
+		"GH_PAT", "DATABASE_URL", "VAULT_SECRET_ID", "GITHUB_PAT", "DOCKER_AUTH_CONFIG", "BASIC_AUTH", "Authorization", "bearer", "SSH_KEY"}
 	for _, n := range yes {
 		if !SecretLike(n) {
 			t.Errorf("%q should be secret-like", n)
@@ -54,10 +59,6 @@ func TestSecretParameter(t *testing.T) {
 	f := res.Findings[0]
 	if !strings.Contains(f.Message, `"db_password"`) || f.Line != 0 || f.Severity != "warning" {
 		t.Errorf("finding = %+v", f)
-	}
-	// A variadic parameter is a parameter too.
-	if g := got(t, fixture(param("tokens", "null"), "", false, "", "")); g != "secret-parameter just r" {
-		t.Errorf("variadic: %q", g)
 	}
 }
 
@@ -166,5 +167,61 @@ func TestAssignmentsOfTheModuleAreUsedForItsRecipes(t *testing.T) {
 	d := `{"assignments":{},"recipes":{},"modules":{"m":{"assignments":{"tok":{"value":["call","env","GH_TOKEN"]}},"settings":{"shell":{"command":"bash"}},"recipes":{"r":{"attributes":[],"parameters":[],"body":[["@echo ",[["variable","tok"]]]],"shebang":false}},"modules":{}}}}`
 	if g := got(t, d); g != "secret-interpolated just m r" {
 		t.Errorf("findings = %q", g)
+	}
+}
+
+func TestIgnoringTheParameterRuleDoesNotHideItsInterpolation(t *testing.T) {
+	// The interpolation rule must still fire: only the parameter finding is silenced.
+	attrs := `{"metadata":["justz-ignore","secret-parameter"]}`
+	g := got(t, fixture(param("token", "null"), `["@echo ",[["variable","token"]]]`, false, "", attrs))
+	if g != "secret-interpolated just r" {
+		t.Errorf("findings = %q", g)
+	}
+}
+
+func TestParameterDefaultThatNamesAnAssignmentOfTheSameName(t *testing.T) {
+	// host := env('GH_TOKEN') and  a host=host:  the default is the assignment.
+	d := fixture(param("host", `["variable","host"]`), `["@echo ",[["variable","host"]]]`, false, assign("host", `["call","env","GH_TOKEN"]`), "")
+	if g := got(t, d); g != "secret-interpolated just r" {
+		t.Errorf("findings = %q", g)
+	}
+}
+
+func TestOnlyTheBranchesOfAnIfCount(t *testing.T) {
+	cond := `["@echo ",[["if",["==",["call","env","GH_TOKEN"],"x"],"a","b"]]]`
+	if g := got(t, fixture("", cond, false, "", "")); g != "" {
+		t.Errorf("a compared secret should not count: %q", g)
+	}
+	branch := `["@echo ",[["if",["==",["variable","h"],"x"],["call","env","GH_TOKEN"],"b"]]]`
+	if g := got(t, fixture("", branch, false, assign("h", `"h"`), "")); g != "secret-interpolated just r" {
+		t.Errorf("a secret in a branch should count: %q", g)
+	}
+}
+
+func depDump(args string, targetParams string, targetBody string) string {
+	return fmt.Sprintf(`{"assignments":{},"modules":{},"recipes":{
+		"dep":{"attributes":[],"parameters":[],"body":[],"shebang":false,"dependencies":[{"recipe":"b","arguments":[%s]}]},
+		"b":{"attributes":[],"parameters":[%s],"body":[%s],"shebang":false,"dependencies":[]}}}`, args, targetParams, targetBody)
+}
+
+func TestDependencyArgumentsFlowIntoTheReceivingRecipe(t *testing.T) {
+	// dep: (b env('GH_TOKEN'))  with  b p:  @echo {{p}}: the value is in the line.
+	d := depDump(`["call","env","GH_TOKEN"]`, param("p", "null"), `["@echo ",[["variable","p"]]]`)
+	res := run(t, d)
+	if got := strings.Join(rules(res), ","); got != "secret-interpolated just b" || !strings.Contains(res.Findings[0].Message, "GH_TOKEN") {
+		t.Errorf("findings = %v", res.Findings)
+	}
+	// A literal argument carries nothing.
+	if g := got(t, depDump(`"x"`, param("p", "null"), `["@echo ",[["variable","p"]]]`)); g != "" {
+		t.Errorf("literal: %q", g)
+	}
+	// The second of two arguments, and a variadic receiver taking the rest.
+	d = depDump(`"x",["call","env","Y_TOKEN"]`, param("a", "null")+","+param("rest", "null"), `["@echo ",[["variable","rest"]]]`)
+	if g := got(t, d); g != "secret-interpolated just b" {
+		t.Errorf("second argument: %q", g)
+	}
+	// An argument the receiver does not use in a line is not reported.
+	if g := got(t, depDump(`["call","env","GH_TOKEN"]`, param("p", "null"), `["@true"]`)); g != "" {
+		t.Errorf("unused: %q", g)
 	}
 }
