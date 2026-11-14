@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -147,5 +149,57 @@ func TestInitUsageErrors(t *testing.T) {
 		if code := run(args, e); code != 2 {
 			t.Errorf("%v: code %d, want 2", args, code)
 		}
+	}
+}
+
+// The scaffold promises a project that passes check and fmt --check on the first
+// run. Only a real just can show that its files parse, so this runs it.
+func TestInitScaffoldPassesCheckWithRealJust(t *testing.T) {
+	if _, err := exec.LookPath("just"); err != nil {
+		t.Skip("just is not installed")
+	}
+	for _, tc := range []struct {
+		variant string
+		modules []string
+	}{
+		{"native", nil},
+		{"native", []string{"build", "ops"}},
+		{"rich", nil},
+		{"rich", []string{"build", "ops"}},
+	} {
+		t.Run(tc.variant+"-"+strings.Join(tc.modules, "+"), func(t *testing.T) {
+			dir := t.TempDir()
+			if err := os.Mkdir(filepath.Join(dir, ".git"), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			real := osEnv()
+			var out, errOut bytes.Buffer
+			real.stdout, real.stderr = &out, &errOut
+
+			args := []string{"init", "--variant", tc.variant, "--name", "demo", dir}
+			for _, m := range tc.modules {
+				args = append(args, "--module", m)
+			}
+			if code := run(args, real); code != 0 {
+				t.Fatalf("init: code %d: %s", code, errOut.String())
+			}
+			t.Chdir(dir)
+
+			steps := [][]string{{"check", "--strict"}}
+			if tc.variant == "rich" {
+				steps = append(steps, []string{"fmt", "--check"})
+			}
+			for _, step := range steps {
+				out.Reset()
+				errOut.Reset()
+				if code := run(step, real); code != 0 {
+					t.Errorf("justz %s: code %d\nstdout: %s\nstderr: %s", strings.Join(step, " "), code, out.String(), errOut.String())
+				}
+			}
+			// The justfile and every module must load, not only be documented.
+			if _, err := real.runCmd("just", "--list", "--list-submodules"); err != nil {
+				t.Errorf("just --list: %v", err)
+			}
+		})
 	}
 }
