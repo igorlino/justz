@@ -12,6 +12,10 @@ type Options struct {
 	Color bool // use ANSI colors; callers turn it off for pipes and NO_COLOR
 	Width int  // terminal width in columns; 0 means 80
 	Wide  bool // show example columns; implied by a width of 100 or more
+	// Wrap breaks a long description at the width, with the lines after the first
+	// aligned under it. Callers turn it on for a terminal; piped output keeps one
+	// line per command so grep and diff see whole rows.
+	Wrap bool
 	// HelpCmd is how the help command is typed, for hints in the views:
 	// "justz help" by default, "jzh" or "dmh" when run through a shim.
 	HelpCmd string
@@ -91,9 +95,32 @@ func (p *printer) header(proj *Project) {
 	p.line("  %s", title)
 }
 
+// minDescWidth is the narrowest a wrapped description gets. On a terminal
+// narrower than the name column plus this, lines run past the edge instead of
+// breaking after every word.
+const minDescWidth = 20
+
+// descLines splits a description for a row whose text starts at column indent.
+// Without Wrap it is one line.
+func (p *printer) descLines(indent int, desc string) []string {
+	if !p.o.Wrap {
+		return []string{desc}
+	}
+	w := p.o.width() - indent
+	if w < minDescWidth {
+		w = minDescWidth
+	}
+	return wrap(w, desc)
+}
+
 // compactRow is a row of the summary: a name, a hash and a description.
 func (p *printer) compactRow(name, desc string) {
-	p.line("    %s %s %s", p.s.green(pad(name, compactName)), p.s.dim("#"), desc)
+	const indent = 4 + compactName + 3
+	lines := p.descLines(indent, desc)
+	p.line("    %s %s %s", p.s.green(pad(name, compactName)), p.s.dim("#"), lines[0])
+	for _, l := range lines[1:] {
+		p.line("%s%s", strings.Repeat(" ", indent), l)
+	}
 }
 
 // fullRow is a row of the expanded view. With the wide layout and an example,
@@ -103,7 +130,12 @@ func (p *printer) fullRow(name, desc, example string) {
 		p.line("    %s %s %s %s", p.s.green(pad(name, fullName)), p.s.dim("#"), pad(desc, exampleDesc), p.s.dim(example))
 		return
 	}
-	p.line("    %s %s %s", p.s.green(pad(name, fullName)), p.s.dim("#"), desc)
+	const indent = 4 + fullName + 3
+	lines := p.descLines(indent, desc)
+	p.line("    %s %s %s", p.s.green(pad(name, fullName)), p.s.dim("#"), lines[0])
+	for _, l := range lines[1:] {
+		p.line("%s%s", strings.Repeat(" ", indent), l)
+	}
 }
 
 // argRows prints the arguments of a command under its row.
@@ -114,7 +146,12 @@ func (p *printer) argRows(args []Arg) {
 			p.line("      %s", p.s.cyan(a.Name))
 			continue
 		}
-		p.line("      %s %s", p.s.cyan(pad(a.Name, fullName)), p.s.dim(desc))
+		const indent = 6 + fullName + 1
+		lines := p.descLines(indent, desc)
+		p.line("      %s %s", p.s.cyan(pad(a.Name, fullName)), p.s.dim(lines[0]))
+		for _, l := range lines[1:] {
+			p.line("%s%s", strings.Repeat(" ", indent), p.s.dim(l))
+		}
 	}
 }
 
