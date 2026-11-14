@@ -98,6 +98,9 @@ func TestZoomDetailCutsAWordLongerThanTheLine(t *testing.T) {
 	if !strings.Contains(out, "now") {
 		t.Errorf("text after the long word is lost:\n%s", out)
 	}
+	if got := strings.Count(out, "a"); got < 100 {
+		t.Errorf("characters of the long word were lost: %d a's in\n%s", got, out)
+	}
 }
 
 func TestZoomWithoutDetailIsUnchanged(t *testing.T) {
@@ -125,6 +128,9 @@ func TestZoomDetailColorIsOnlyOnTheHeading(t *testing.T) {
 	if got := ansi.ReplaceAllString(colored, ""); got != plain {
 		t.Errorf("colored view differs from the plain one once the escapes are gone:\n%q\n%q", got, plain)
 	}
+	if !strings.Contains(colored, "\x1b[1mDetails\x1b[0m") {
+		t.Errorf("the Details heading is not bold in:\n%q", colored)
+	}
 }
 
 func TestDetailIsOnlyInTheZoomJSONAndNotInListings(t *testing.T) {
@@ -146,5 +152,45 @@ func TestDetailIsOnlyInTheZoomJSONAndNotInListings(t *testing.T) {
 		if strings.Contains(view, "Builds the day directory") {
 			t.Errorf("a listing view carries detail:\n%s", view)
 		}
+	}
+}
+
+func TestZoomDetailAtAWidthBelowTheMinimum(t *testing.T) {
+	out := detailView(t, "ops deploy", Options{Width: 10})
+	for _, l := range strings.Split(out, "\n") {
+		if len([]rune(l)) > 40 {
+			t.Errorf("line over the 40-column minimum: %q", l)
+		}
+	}
+}
+
+func TestDetailIgnoresBlankLinesAtTheEdges(t *testing.T) {
+	p := load(t, `{"groups": {"core": {"commands": {"a": {"desc": "A", "detail": " \nbody\n \t\n"}}}}}`)
+	g := p.GroupByKey("core")
+	got := CommandView(p, g, g.FindCommand("a"), Options{})
+	if !strings.Contains(got, "  Details\n    body\n\n") || strings.Contains(got, "\n\n\n") {
+		t.Errorf("blank-only lines at the edges were kept:\n%q", got)
+	}
+}
+
+func TestDetailOfTheWrongTypeIsIgnored(t *testing.T) {
+	for _, v := range []string{`3`, `null`, `[]`, `{}`, `""`} {
+		p := load(t, `{"groups": {"core": {"commands": {"a": {"desc": "A", "detail": `+v+`}}}}}`)
+		g := p.GroupByKey("core")
+		if c := g.FindCommand("a"); c.Detail != "" {
+			t.Errorf("detail %s: Detail = %q", v, c.Detail)
+		}
+		if strings.Contains(CommandView(p, g, g.FindCommand("a"), Options{}), "Details") {
+			t.Errorf("detail %s shows a section", v)
+		}
+	}
+}
+
+func TestExtraEntryDetailIsInTheJSON(t *testing.T) {
+	p := load(t, detailRegistry)
+	g := p.Group("ops")
+	n := toMap(t, CommandJSON(p, g, g.FindCommand("hidden")))
+	if n["detail"] != "Extra entries have detail too." {
+		t.Errorf("extra entry JSON = %v", n)
 	}
 }

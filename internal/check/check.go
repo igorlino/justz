@@ -316,7 +316,7 @@ func registryRules(in Input, items []item) []Finding {
 		if it.R.Doc != nil && e.HasDesc && strings.TrimSpace(*it.R.Doc) != "" && strings.TrimSpace(*it.R.Doc) != strings.TrimSpace(e.Desc) {
 			out = append(out, Finding{RuleRegistryDesc, Error, subject,
 				fmt.Sprintf("[doc] diverges from the registry description\n      justfile: %s\n      registry: %s", *it.R.Doc, e.Desc),
-				"make them the same, or keep the long text in a runbook and a one-line [doc] in both"})
+				descDivergesFix(in.Variant)})
 		}
 	}
 
@@ -385,6 +385,14 @@ func sortFindings(f []Finding) {
 		}
 		return f[i].Subject < f[j].Subject
 	})
+}
+
+// descDivergesFix says how to make a [doc] and a registry description the same.
+func descDivergesFix(variant string) string {
+	if variant == "local-rich" {
+		return "the overlay is out of date: run justz generate"
+	}
+	return `make them the same: keep a one-line description in both, and move the rest to "detail" in the registry`
 }
 
 // descLongFix says where the rest of a long description goes. A committed

@@ -292,12 +292,10 @@ func CommandView(proj *Project, g *Group, c *Command, o Options) string {
 
 // cleanDetail trims the newlines around a command's detail text and turns
 // Windows line ends into newlines, so the section never starts or ends with a
-// blank line. A text of only blanks is no text.
+// blank line, even when a line at the edge holds only spaces. A text of only
+// blanks is no text.
 func cleanDetail(s string) string {
-	if strings.TrimSpace(s) == "" {
-		return ""
-	}
-	return strings.Trim(strings.ReplaceAll(s, "\r\n", "\n"), "\n")
+	return strings.Trim(strings.ReplaceAll(s, "\r\n", "\n"), " \t\r\n")
 }
 
 // Overview is the short list of groups: the next zoom level when nothing is

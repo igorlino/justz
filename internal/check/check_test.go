@@ -316,3 +316,28 @@ func TestLongDescriptionFixPointsAtDetailForARegistryAndAtTheDocForTheOverlay(t 
 		t.Errorf("local-rich fix = %q", got)
 	}
 }
+
+func TestDetailIsNotComparedAndDivergingFixPointsAtIt(t *testing.T) {
+	dump := dumpOf(t, map[string]any{"a": rc("Short doc", grp("core")), "b": rc("Other doc", grp("core"))}, nil)
+	src := `{"groups":{"core":{"commands":{
+		"a":{"desc":"Short doc","detail":"` + strings.Repeat("a long text that is not the doc ", 30) + `"},
+		"b":{"desc":"Different"}}}}}`
+	for _, variant := range []string{"rich", "local-rich"} {
+		res := run(t, Input{Dump: dump, Variant: variant, Registry: parse(t, src), RegistrySource: []byte(src)})
+		if has(res, RuleRegistryDesc, "just a") || has(res, RuleDescLong, "core.a") {
+			t.Errorf("%s: detail was compared with the [doc] or counted as a long description: %v", variant, res.Findings)
+		}
+		var fix string
+		for _, f := range res.Findings {
+			if f.Rule == RuleRegistryDesc && f.Subject == "just b" {
+				fix = f.Fix
+			}
+		}
+		if variant == "rich" && !strings.Contains(fix, `"detail"`) {
+			t.Errorf("rich diverges fix = %q", fix)
+		}
+		if variant == "local-rich" && !strings.Contains(fix, "justz generate") {
+			t.Errorf("local-rich diverges fix = %q", fix)
+		}
+	}
+}

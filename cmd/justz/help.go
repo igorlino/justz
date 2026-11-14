@@ -23,7 +23,7 @@ Show the commands of the current project, rendered from its command registry
   (no words)         A compact summary: core commands, then each group
   --expanded         The full reference: every group with its commands
   <group>            One group: its usage, commands, examples
-  [group] <command>  One command: how to invoke it, examples, options
+  [group] <command>  One command: how to invoke it, examples, options, details
   --wide, -w         Add example columns (on by default from 100 columns)
   --json, -j         Print the same information as JSON for tools and agents
   --browse, -b       Pick a group or command (fzf if installed, else a numbered menu)
