@@ -20,9 +20,8 @@ mod quality  'just/quality.just'
 **Submodule file — `just/<ns>.just`:**
 
 ```just
-set shell := ["bash", "-eu", "-o", "pipefail", "-c"]
+import 'preamble.just'          # the settings every file shares (see below)
 set working-directory := '..'
-set positional-arguments
 
 py := ".venv/bin/python"
 
@@ -36,6 +35,7 @@ subcommand-a *args:
 
 Key rules:
 - `set working-directory := '..'` makes paths relative to the repo root, not the `just/` dir.
+- Settings are shared by `import`, not repeated. A module does not inherit the root's settings, so without the import it runs its recipes with `sh -cu` and no `pipefail`. Put `set shell := ["bash", "-eu", "-o", "pipefail", "-c"]` and `set positional-arguments` in `just/preamble.just`, and `import 'just/preamble.just'` in the root and `import 'preamble.just'` in each module (`justz init` writes this layout). A `set` line in an imported file applies to the importing file and to every module that imports it; verified on `just` 1.59.0. Two things cannot be shared: `set working-directory` (the root runs in the project directory and a module in the directory of its file, so a relative value fits only one) and `_default` (an imported one collides with the module's own). `justz lint` reports a module that sets no shell (`module-shell-unset`).
 - A `_default` recipe, **first in the file and private**, makes `just <ns>` list
   instead of running the module's first recipe. See the variant reference for its body.
 - The `rich` variant only: add the namespace as a group in `commands.json` (and to a

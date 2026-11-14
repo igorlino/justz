@@ -41,6 +41,8 @@ For each recipe write a description that says what it does, not just which tool 
 - Every group-level `examples` entry must add information the argument rows do not: a value-taking flag (especially enum `values`), several flags together, passthrough arguments (`-- …`), or an environment override. Never a bare command, and never a single boolean flag that an argument row already shows. `justz check` rejects both (`example-bare-command`, `example-single-flag`) and also flags long options where a short alias exists (`example-long-flag`) and an enum that no example uses (`example-enum-missing`).
 - Run **`justz fmt`** after every edit. It writes the canonical order: groups (`core` first, then A to Z), commands A to Z, arguments (positional first, then flags A to Z), examples by `cmd`, `seeAlso` and `tiers[].groups` A to Z. `justz fmt --check` writes nothing and exits `1` when the file is not formatted.
 
+To start a new project instead of one file, `justz init --variant rich` (0.6.0 or newer) writes the justfile, the modules and a registry that already passes `justz check` and `justz fmt --check`; `--dry-run` lists the files first. It never overwrites.
+
 To start from an existing justfile instead of a blank file, `justz generate --stdout` prints a registry-shaped starting point from the justfile's own `[doc]` and `[arg]` attributes. Review it, then add the `args`, `examples` and `seeAlso` that are the reason for choosing `rich`.
 
 ## 2. Wire the root `justfile`
@@ -103,6 +105,12 @@ _default:
 Wire `justz check` and `justz fmt --check` into `check` and `ci`, then add a deliberately undocumented recipe and confirm both fail.
 
 ## `commands.json` schema quick reference
+
+`justz schema` (0.6.0 or newer) prints the JSON Schema of this file. It checks types and nesting only, allows unknown fields and requires only `groups`; whether the registry matches the justfile stays with `justz check`. Save it with `justz schema > commands.schema.json` and point the editor at it, or add this line at the top of the registry for completion and type checks as you type:
+
+```json
+"$schema": "https://raw.githubusercontent.com/igorlino/justz/main/schema/commands.schema.json",
+```
 
 ```jsonc
 {

@@ -6,15 +6,18 @@
 
 `justz` is a small, single-binary CLI that fixes both, without replacing `just`. You keep your justfile. `justz` adds the layer around it.
 
-> **Status: early development.** Available today: `justz help` (summary, `--expanded`, zoom into a group or command, `--json`, `--browse`), `justz check`, `justz completions` (zsh and bash), `justz fmt`, the shim system (`justz setup`, `justz shim add`, `list`, `remove` and `doctor`, plus the `jz` and `jzh` shortcuts), `justz resolve`, `justz generate`, `justz assess` and `justz doctor`. Everything in the list below is available; `justz init` and `justz lint` are what comes next.
+> **Status: early development.** Available today: `justz help` (summary, `--expanded`, zoom into a group or command, `--json`, `--browse`), `justz check`, `justz completions` (zsh and bash), `justz fmt`, the shim system (`justz setup`, `justz shim add`, `list`, `remove` and `doctor`, plus the `jz` and `jzh` shortcuts), `justz resolve`, `justz generate`, `justz assess`, `justz doctor`, `justz init`, `justz lint` and `justz schema`. Everything in the list below is available.
 
 ## What you get
 
 - **Help people actually read** *(available)*. A grouped, searchable command reference with examples, rendered from your project's own data. Zoom into a group or a single command, or print it as JSON for tools.
 - **Checks that keep docs honest** *(available)*. `justz check` fails when a recipe has no documentation, when the registry and the justfile disagree, or when an example no longer parses. Run it in pre-commit and CI instead of discovering drift months later.
 - **Canonical formatting** *(available)*. `justz fmt` sorts your command registry into one stable order, so diffs stay small and reviews stay calm. Use `justz fmt --check` in CI to fail on an unformatted registry.
+- **A scaffold that documents itself** *(available)*. `justz init` writes a justfile, a shared `just/preamble.just` and one module per group (and, for the rich variant, a sorted `config/commands.json`) that pass `justz check` on the first run. It never overwrites a file.
+- **Advice on the recipes themselves** *(available)*. `justz lint` points at antipatterns you can see in the structure of a justfile: a recipe body over 40 lines, a secret-like parameter, a secret interpolated into a command line, a module that runs without a chosen shell. Every finding is a warning, and one recipe can opt out with `[metadata('justz-ignore', '<rule>')]`.
 - **Shortcuts that never break** *(available)*. Pin a command such as `tz` to a project's justfile and run it from any directory, with collision checks so it never hides a real command on your system.
 - **Completion for free** *(available)*. Shell completion generated from the same data as the help.
+- **An editor-ready schema** *(available)*. `justz schema` prints the JSON Schema of `commands.json`, so an editor can complete and type-check the registry.
 - **Built for agents.** Every command has stable JSON output and exit codes, so an AI agent can discover what a repo offers and verify its own changes without guessing. Two agent skills, `justz-cli` and `justfile-authoring`, teach agents how.
 
 ## Why another tool?
@@ -65,7 +68,7 @@ Describe your commands once, next to your justfile:
 }
 ```
 
-Then `justz help`, `justz check`, `justz fmt` and `justz completions` work from that file and from your justfile.
+Then `justz help`, `justz check`, `justz fmt` and `justz completions` work from that file and from your justfile. To start a new project with this layout, run `justz init --variant rich`. To get completion and type checks for the registry in your editor, save the schema with `justz schema > commands.schema.json` and point your editor at it, or add a `"$schema"` line with `https://raw.githubusercontent.com/igorlino/justz/main/schema/commands.schema.json`.
 
 ## Install
 
