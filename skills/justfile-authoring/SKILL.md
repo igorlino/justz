@@ -13,7 +13,7 @@ description: >
 metadata:
   author: igorlino
   domain: dx
-  version: "1.0.0"
+  version: "1.1.0"
   requires: "justz-cli; justz 0.5.1 or newer for the rich and local-rich variants; 0.6.0 or newer for init, lint and schema"
 ---
 
