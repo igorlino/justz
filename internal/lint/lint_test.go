@@ -152,7 +152,9 @@ func TestModuleShellUnset(t *testing.T) {
 		{"settings missing", ``, linewise, "module-shell-unset module m"},
 		{"shell set", `"shell":{"command":"bash","arguments":["-eu","-c"]}`, linewise, ""},
 		{"zsh is a choice", `"shell":{"command":"zsh","arguments":["-c"]}`, linewise, ""},
-		{"windows-shell only is a choice", `"shell":null,"windows_shell":{"command":"pwsh","arguments":["-c"]}`, linewise, ""},
+		{"windows-shell does not change sh on Linux", `"shell":null,"windows_shell":{"command":"pwsh","arguments":["-c"]}`, linewise, "module-shell-unset module m"},
+		{"empty body runs nothing", `"shell":null`, `"e":{"attributes":[],"body":[],"shebang":false}`, ""},
+		{"dependency-only recipe runs nothing", `"shell":null`, shebang + `,"b":{"attributes":[],"body":[],"shebang":false}`, ""},
 		{"only shebang recipes", `"shell":null`, shebang, ""},
 		{"no recipes", `"shell":null`, ``, ""},
 	}

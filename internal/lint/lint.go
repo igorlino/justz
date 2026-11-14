@@ -61,8 +61,7 @@ type dump struct {
 	Recipes  map[string]recipe `json:"recipes"`
 	Modules  map[string]dump   `json:"modules"`
 	Settings struct {
-		Shell        json.RawMessage `json:"shell"`
-		WindowsShell json.RawMessage `json:"windows_shell"`
+		Shell json.RawMessage `json:"shell"`
 	} `json:"settings"`
 }
 
@@ -113,7 +112,7 @@ func walk(d dump, prefix string, res *Result) {
 			res.Findings = append(res.Findings, Finding{
 				Rule: RuleIgnoreUnknown, Severity: check.Warning, Subject: subject,
 				Message: msg,
-				Fix:     "use one of: " + strings.Join(ignorable, ", "),
+				Fix:     "use one of: " + strings.Join(ignorable, ", ") + ". " + RuleModuleShellUnset + " has no per-recipe opt-out: set a shell in the module",
 			})
 		}
 		if n := len(r.Body); n > MaxBodyLines && !ignored[RuleRecipeLong] {
@@ -136,13 +135,14 @@ func walk(d dump, prefix string, res *Result) {
 // moduleRules reports a module that did not choose a shell. just does not pass
 // the settings of the root justfile on to a module, so a module that sets none
 // runs its linewise recipes with sh -cu: no pipefail. A module of only shebang
-// or [script] recipes is not affected by the setting, and one that sets a
-// shell, or a windows-shell, has chosen. The root justfile is left alone: a
-// root without set shell is a normal small justfile.
+// or [script] recipes, or of recipes with nothing to run, is not affected by
+// the setting, and one that sets a shell has chosen. set windows-shell does not
+// count: it changes nothing on Linux or macOS. The root justfile is left alone:
+// a root without set shell is a normal small justfile.
 func moduleRules(d dump, path string, res *Result) {
-	if !isSet(d.Settings.Shell) && !isSet(d.Settings.WindowsShell) {
+	if !isSet(d.Settings.Shell) {
 		for _, r := range d.Recipes {
-			if !r.Shebang {
+			if !r.Shebang && len(r.Body) > 0 {
 				res.Findings = append(res.Findings, Finding{
 					Rule: RuleModuleShellUnset, Severity: check.Warning, Subject: "module " + path,
 					Message: "sets no shell, so its recipes run with just's default (sh -cu), without pipefail",
