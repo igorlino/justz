@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"unicode/utf8"
 
 	"github.com/igorlino/justz/internal/orderedjson"
 )
@@ -168,5 +169,61 @@ func TestFromRegistryErrors(t *testing.T) {
 		if _, err := FromRegistry(doc, "x"); err == nil {
 			t.Errorf("FromRegistry(%s) should fail", in)
 		}
+	}
+}
+
+const longDesc = "Install the global tz and s-*/sbx-* shims, zsh completion, missing AI agent CLIs, VS Code settings, and 7 bundled agent skills"
+
+const wrapRegistry = `{"name":"proj","groups":{"core":{"label":"Core","commands":{"setup":{"desc":"` + longDesc + `","args":[{"name":"-i, --install","desc":"` + longDesc + `"}]}}}}}`
+
+// A long description breaks at the terminal width and the lines after the first
+// start under the description, not at the left edge.
+func TestWrapKeepsContinuationLinesUnderTheDescription(t *testing.T) {
+	p := load(t, wrapRegistry)
+	out := Summary(p, Options{Width: 70, Wrap: true})
+	const indent = 4 + compactName + 3
+	lines := strings.Split(out, "\n")
+	var rows []string
+	for i, l := range lines {
+		if strings.Contains(l, "setup") {
+			rows = append(rows, lines[i:]...)
+			break
+		}
+	}
+	if len(rows) < 3 {
+		t.Fatalf("want the description on several lines:\n%s", out)
+	}
+	for _, l := range rows {
+		if l == "" {
+			break
+		}
+		if utf8.RuneCountInString(l) > 70 {
+			t.Errorf("line is wider than 70: %q", l)
+		}
+	}
+	if !strings.HasPrefix(rows[1], strings.Repeat(" ", indent)) || strings.TrimSpace(rows[1]) == "" || rows[1][indent] == ' ' {
+		t.Errorf("continuation line is not aligned under the description: %q", rows[1])
+	}
+}
+
+func TestWrapIsOffByDefault(t *testing.T) {
+	p := load(t, wrapRegistry)
+	for _, v := range []string{Summary(p, Options{Width: 70}), Expanded(p, Options{Width: 70})} {
+		if !strings.Contains(v, longDesc) {
+			t.Errorf("without Wrap the description must stay on one line:\n%s", v)
+		}
+	}
+}
+
+func TestWrapAlsoAppliesToExpandedRowsAndArguments(t *testing.T) {
+	p := load(t, wrapRegistry)
+	out := Expanded(p, Options{Width: 70, Wrap: true})
+	for _, l := range strings.Split(out, "\n") {
+		if utf8.RuneCountInString(l) > 70 {
+			t.Errorf("line is wider than 70: %q", l)
+		}
+	}
+	if !strings.Contains(out, "\n"+strings.Repeat(" ", 6+fullName+1)) {
+		t.Errorf("argument description continuation is not aligned:\n%s", out)
 	}
 }

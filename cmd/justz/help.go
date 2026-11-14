@@ -85,7 +85,7 @@ func runHelpAt(dir, helpCmd string, args []string, e env) int {
 		fmt.Fprintf(e.stderr, "%s: %v\n", helpCmd, err)
 		return 1
 	}
-	opts := help.Options{Color: e.color, Width: e.width, Wide: wide, HelpCmd: helpCmd}
+	opts := help.Options{Color: e.color, Width: e.width, Wide: wide, Wrap: e.wrap, HelpCmd: helpCmd}
 	if browseMode {
 		return browse(proj, opts, asJSON, e)
 	}

@@ -58,6 +58,9 @@ type env struct {
 	// color and width describe the output for the help views.
 	color bool
 	width int
+	// wrap is true when stdout is a terminal, so long descriptions may be broken
+	// at the width. A pipe or file keeps one line per command.
+	wrap bool
 	// interactive is true when both input and output are a terminal, so it is
 	// safe to prompt. stdin is where an answer is read from.
 	interactive bool
@@ -79,6 +82,7 @@ func osEnv() env {
 		execJust:    execJust,
 		color:       useColor(os.Stdout),
 		width:       terminalWidth(os.Stdout),
+		wrap:        term.IsTerminal(int(os.Stdout.Fd())),
 		interactive: term.IsTerminal(int(os.Stdin.Fd())) && term.IsTerminal(int(os.Stdout.Fd())),
 		stdin:       os.Stdin,
 		runFzf:      runFzf,
