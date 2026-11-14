@@ -21,12 +21,22 @@ Rules:
   module-shell-unset    A module with linewise recipes that sets no shell, so
                         its recipes run with sh -cu and no pipefail. A set
                         shell line is the opt-out; there is no per-recipe one
+  secret-parameter      A parameter with a secret-like name (TOKEN, PASSWORD,
+                        SECRET, API_KEY...): its value is typed on the command
+                        line, so it is in the process list
+  secret-interpolated   A secret-like name inside {{ }} in a recipe that just
+                        runs line by line: the value is in the shell's command
+                        line. Shebang and [script] recipes are not looked at
   ignore-unknown-rule   A justz-ignore value that is not a rule
 
 Every recipe is looked at, private ones and those in nested modules included.
-Silence a rule on one recipe with the attribute that just already has:
+Silence a rule on one recipe with the attribute that just already has (a rule
+for a module has none; set a shell in the module instead):
 
   [metadata('justz-ignore', 'recipe-long')]
+
+The secret rules read names only. They never read, print or store a value, and
+no message carries the text of a recipe line.
 
   --json     Print the findings as JSON
   --strict   Warnings fail the run too

@@ -1,7 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -76,5 +80,66 @@ func TestLintUsageErrors(t *testing.T) {
 		if code := run(args, r.env); code != 2 {
 			t.Errorf("%v: exit %d, want 2", args, code)
 		}
+	}
+}
+
+// The dump shapes the secret rules read (expression trees, assignments, parameter
+// defaults, dependency arguments) come from just, so one test runs a real just.
+func TestLintFindsSecretsInARealJustfile(t *testing.T) {
+	if _, err := exec.LookPath("just"); err != nil {
+		t.Skip("just is not installed")
+	}
+	dir := t.TempDir()
+	if err := os.Mkdir(filepath.Join(dir, ".git"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	writeFile(t, filepath.Join(dir, "justfile"), `gh := env('GH_TOKEN', '')
+alias := gh
+
+typed api-token:
+    @true
+
+direct:
+    @echo {{ quote(alias) }}
+
+via-dep: (target env('DB_PASSWORD'))
+
+target p:
+    @echo {{ p }}
+
+safe path=env('TOKEN_FILE'):
+    @cat {{ path }}
+
+[metadata('justz-ignore', 'secret-interpolated')]
+quiet:
+    @echo {{ gh }}
+
+script:
+    #!/usr/bin/env bash
+    echo {{ gh }}
+`)
+	real := osEnv()
+	var out, errOut bytes.Buffer
+	real.stdout, real.stderr = &out, &errOut
+	t.Chdir(dir)
+	if code := run([]string{"lint", "--json"}, real); code != 0 {
+		t.Fatalf("code %d: %s", code, errOut.String())
+	}
+	var rep struct {
+		Findings []struct{ Rule, Subject, Message string } `json:"findings"`
+	}
+	if err := json.Unmarshal(out.Bytes(), &rep); err != nil {
+		t.Fatalf("%v: %s", err, out.String())
+	}
+	var got []string
+	for _, f := range rep.Findings {
+		got = append(got, f.Rule+" "+f.Subject)
+		if strings.Contains(f.Message, "S3CR3T") {
+			t.Errorf("message leaks: %s", f.Message)
+		}
+	}
+	want := "secret-interpolated just direct,secret-interpolated just target,secret-parameter just typed"
+	if g := strings.Join(got, ","); g != want {
+		t.Errorf("findings = %q\nwant       %q", g, want)
 	}
 }

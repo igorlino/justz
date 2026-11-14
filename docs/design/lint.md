@@ -1,6 +1,6 @@
 # Design note: `justz lint`
 
-Status: proposed, second draft after an independent review against just 1.59.0. Nothing is implemented. The open questions at the end need a decision before the code starts.
+Status: implemented in three steps (`recipe-long` and the opt-out, `module-shell-unset`, the two secret rules). The open questions at the end are decided; question 1 waits for the M9 pilot.
 
 ## Purpose
 
@@ -75,7 +75,9 @@ The first two need no shell parsing, so they are the rules.
 - a call to `env`, `env_var` or `env_var_or_default` whose first argument is a secret-like name;
 - a variable that the dump's `assignments` define, directly or through other variables, by one of the above (`tok := env('GH_TOKEN')`, then `{{ tok }}`).
 
-The fix: use the shell's own variable (`$GH_TOKEN`, or an exported `just` variable as `$tok`) so the value stays in the environment. The message never contains the line text or a value.
+The fix: use the shell's own variable (`$GH_TOKEN`, or an exported `just` variable as `$tok`) so the value stays in the environment. The message never contains the line text or a value. A parameter with a secret-like name is reported by `secret-parameter` only; a use of it in the body is not reported again. A parameter with another name but a default that reads a secret (`tok=env('GH_TOKEN')`) is followed like an assignment, and so are the justfile's own assignments, per module. A dependency argument is evaluated in the caller and handed to the parameter of the receiving recipe, so `dep: (b env('GH_TOKEN'))` makes `b` report its interpolation of that parameter; only dependencies in the same module are followed. Only the branches of an `if` count, not its condition.
+
+Accepted misses: a secret read through a backtick or `shell()` (`x := `echo $GH_TOKEN``), a computed `env` name (`env('A' + '_TOKEN')`), and a dependency on a recipe of another module.
 
 Shebang and `[script]` recipes are not reported by this rule: there the interpolated text goes into a temporary script file, not into an argument list. That is a smaller exposure (a file in the user's runtime directory) and is left out of v1.
 
@@ -114,7 +116,7 @@ A module that has at least one linewise recipe and whose `settings.shell` is `nu
 
 1. `internal/lint` with `recipe-long`, the opt-out and `ignore-unknown-rule`, then `justz lint` with completion entries.
 2. `module-shell-unset` (done).
-3. `secret-parameter` and `secret-interpolated` with the name matcher and its table as tests.
+3. `secret-parameter` and `secret-interpolated` with the name matcher and its table as tests (done).
 
 ## Open questions
 
