@@ -21,10 +21,10 @@ metadata:
 
 ## Rules
 
-- **Check the binary first.** `command -v justz && justz --version`. If it is missing, tell the user how to install it and stop; never install it yourself and never fall back to a hand-written help script. Install options: `brew install igorlino/tap/justz`, `winget install igorlino.justz`, `go install github.com/igorlino/justz/cmd/justz@latest`, or the release archives.
-- **Discover from the CLI, not the source.** `justz --help`, `justz <command> --help`, and `justz help` for the project's own commands. Do not read `commands.json` or the justfile only to learn flags.
-- **Use `--json` in agents.** Every command that reports facts accepts `--json` with stable fields. Parse it; do not scrape the text tables.
-- **Read the exit code.** `0` success, `1` a check failed or an error, `2` usage error. `resolve` adds `3` (no match). `--json` output is still printed when the exit code is non-zero.
+- **Check the binary first.** `command -v justz && justz --version`. If it is missing, tell the user how to install it and stop; never install it yourself and never fall back to a hand-written help script. Install options: `brew install igorlino/tap/justz`, `go install github.com/igorlino/justz/cmd/justz@latest`, the install script, or the release archives (Windows: the release `.zip`).
+- **Discover from the CLI, not the source.** `justz --help`, `justz <command> --help`, and `justz help` for the project's own commands. `doctor` and `shim list` have no `--help` of their own; use `justz --help` and `justz shim --help`. Do not read `commands.json` or the justfile only to learn flags.
+- **Use `--json` in agents.** `doctor`, `check`, `assess`, `resolve`, `setup` and every `shim` command accept `--json` (`help` uses `-j`). `fmt`, `generate` and `completions` do not. Parse the JSON; do not scrape the text tables.
+- **Read the exit code.** `0` success, `1` a check failed or an error, `2` usage error. `resolve` adds `3` (no match). With `--json`, a failed check or no match still prints its JSON document; an operational or usage error prints a plain message on stderr and no JSON. `check` fails only on errors, so warnings (common) exit `0` unless `--strict`.
 - **Run from the project.** Commands read the justfile of the current directory (or `JUSTZ_CONFIG` for the registry). A shim (`tz`, `jz`) runs for its own project from any directory.
 - **Never edit derived files.** `.just-local-rich.json` is written by `justz generate`; re-run it. `justz` refuses to write it when git tracks it.
 
