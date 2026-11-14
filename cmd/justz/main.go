@@ -26,6 +26,7 @@ Commands:
   completions   Print a shell completion script (zsh or bash)
   assess        Report facts about the justfile and which variant fits
   generate      Build the personal .just-local-rich.json from a justfile
+  init [dir]    Scaffold a justfile that documents itself
   resolve NAME  Print the group path a bare command name stands for
   shim add      Register a shim for a project (from any directory)
   shim list     List registered shims
@@ -144,6 +145,8 @@ func run(args []string, e env) int {
 		return runLocal(args[1], args[2:], e)
 	case "generate":
 		return runGenerate(args[1:], e)
+	case "init":
+		return runInit(args[1:], e)
 	case "resolve":
 		return runResolve(args[1:], e)
 	case "doctor":
