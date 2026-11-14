@@ -228,7 +228,7 @@ func TestShimWithoutAProjectOffersFiles(t *testing.T) {
 func TestJustzCommands(t *testing.T) {
 	e := testEnv(t)
 	got := values(Justz([]string{""}, e))
-	for _, want := range []string{"assess", "check", "completions", "fmt", "help", "init", "lint", "setup", "shim", "--version"} {
+	for _, want := range []string{"assess", "check", "completions", "fmt", "help", "init", "lint", "schema", "setup", "shim", "--version"} {
 		if !strings.Contains(" "+got+" ", " "+want+" ") {
 			t.Errorf("top level should offer %q: %s", want, got)
 		}

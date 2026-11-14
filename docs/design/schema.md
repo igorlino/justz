@@ -1,6 +1,6 @@
 # Design note: `justz schema`
 
-Status: proposed.
+Status: implemented in one PR (the schema file, the schema package, the command, completion and the tests). The open questions are decided as recommended.
 
 ## Purpose
 

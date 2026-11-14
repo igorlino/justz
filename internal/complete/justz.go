@@ -14,6 +14,7 @@ var justzCommands = []Candidate{
 	{"init", "Scaffold a justfile that documents itself"},
 	{"lint", "Find antipatterns in the recipes, as advice"},
 	{"resolve", "Print the group path a bare command name stands for"},
+	{"schema", "Print the JSON Schema of the command registry"},
 	{"setup", "Get this machine ready and check it"},
 	{"shim", "Manage shims"},
 	{"--help", "Print the usage"},
