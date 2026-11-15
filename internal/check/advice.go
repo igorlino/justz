@@ -10,7 +10,7 @@ import (
 
 // IgnorableRules lists the rules of check that a recipe may silence with
 // [metadata('justz-ignore', '<rule>')], the attribute justz lint uses.
-var IgnorableRules = []string{RuleVolatileText, RuleDetailFlagNoRow}
+var IgnorableRules = []string{RuleVolatileText, RuleDetailFlagNoRow, RuleDetailLong, RuleDetailNoParagraphs, RuleDetailRestatesDesc}
 
 // IgnoreKey is the first value of that attribute.
 const IgnoreKey = "justz-ignore"
@@ -63,6 +63,7 @@ func adviceRules(entries []registryEntry, items []item) []Finding {
 				}
 			}
 		}
+		out = append(out, detailShapeFindings(e, subject, ignored)...)
 		if !ignored[RuleDetailFlagNoRow] && e.Detail != "" {
 			declared, variadic := declaredFlags(e)
 			if variadic {

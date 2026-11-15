@@ -115,6 +115,7 @@ _default:
 | `registry-desc-long` | A `desc` is over 120 characters (warning). Keep a one-line `desc` equal to the `[doc]` and move the rest to `detail` |
 | `registry-unsorted` | Fixed by `justz fmt` |
 | `volatile-text` | A `desc` or `detail` has text that goes stale (a warning): `TODO`, `FIXME`, `WIP`, `placeholder`, `not implemented`, `coming soon`, a count such as `11 checks` or `six steps` (checks, tests, steps, jobs, stages, phases), a `$` price, an ISO date or a month with a year. Reword it, or silence one command with `[metadata('justz-ignore', 'volatile-text')]` |
+| `detail-long`, `detail-no-paragraphs`, `detail-restates-desc` | The shape of a `detail` (warnings): over 600 characters; over 300 characters with no blank line between paragraphs; or opening with the words of the `desc` again (a `desc` of four or more words). Cut it, split it into paragraphs, or start with what the `desc` does not say. They are warnings, so `--strict` fails on them; a deliberately list-style `detail` with no blank lines is silenced with `[metadata('justz-ignore', '<rule>')]` |
 | `detail-flag-no-row` | A `detail` names a flag (`--long` or `-s`) that no argument row of the command declares (a warning): add the row. A command with no rows is reported too. Silence with `[metadata('justz-ignore', 'detail-flag-no-row')]` |
 | `example-*` | The example rules above, on group `examples` and on each command `example`; `example-flag-unknown` is always a warning |
 
