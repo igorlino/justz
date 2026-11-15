@@ -19,6 +19,8 @@ const (
 	RuleSecretInterpol   = "secret-interpolated"
 	RuleModuleShellUnset = "module-shell-unset"
 	RuleIgnoreUnknown    = "ignore-unknown-rule"
+	RuleModuleNoDispatch = "module-dispatcher-missing"
+	RuleModuleListsRoot  = "module-dispatcher-lists-root"
 )
 
 // MaxBodyLines is the length of a recipe body, in entries of the dump, above
@@ -63,6 +65,7 @@ type dump struct {
 	Assignments map[string]struct {
 		Value any `json:"value"`
 	} `json:"assignments"`
+	First    *string           `json:"first"` // the recipe a bare call runs; null for no recipes
 	Recipes  map[string]recipe `json:"recipes"`
 	Modules  map[string]dump   `json:"modules"`
 	Settings struct {
@@ -71,6 +74,7 @@ type dump struct {
 }
 
 type recipe struct {
+	Private    bool              `json:"private"`
 	Attributes []json.RawMessage `json:"attributes"`
 	Body       []any             `json:"body"`
 	Parameters []struct {
@@ -167,9 +171,91 @@ func moduleRules(d dump, path string, res *Result) {
 			}
 		}
 	}
+	dispatcherRules(d, path, res)
 	for name, sub := range d.Modules {
 		moduleRules(sub, path+" "+name, res)
 	}
+}
+
+// dispatcherRules checks what a bare `just <module>` runs. just runs the
+// recipe the dump calls "first": the one with [default], else the first in the
+// file. One named default or _default is the dispatcher; any other, private
+// or not, is a command that a bare call would run. A dispatcher
+// that lists recipes with just --list and justfile() lists the root justfile,
+// because inside a module justfile() is the root. The root is left alone.
+func dispatcherRules(d dump, path string, res *Result) {
+	if d.First == nil {
+		return
+	}
+	r, ok := d.Recipes[*d.First]
+	if !ok {
+		return
+	}
+	subject := "module " + path
+	if *d.First != "default" && *d.First != "_default" {
+		res.Findings = append(res.Findings, Finding{
+			Rule: RuleModuleNoDispatch, Severity: check.Warning, Subject: subject,
+			Message: fmt.Sprintf("a bare just %s runs %s, which is not a dispatcher", path, *d.First),
+			Fix:     "add a default recipe first in the module (and no [default] on another recipe) that runs justz help " + path + " (see the justfile-authoring skill)",
+		})
+		return
+	}
+	if listsRoot(r) {
+		res.Findings = append(res.Findings, Finding{
+			Rule: RuleModuleListsRoot, Severity: check.Warning, Subject: subject,
+			Message: fmt.Sprintf("its %s recipe runs just --list with justfile(), which inside a module is the root justfile, so a bare just %s lists the root recipes", *d.First, path),
+			Fix:     "make the default recipe run justz help " + path + " (see the justfile-authoring skill)",
+		})
+	}
+}
+
+// listsRoot reports whether a body line has the text --list and a call to
+// justfile() or justfile_directory(), which inside a module are the root's.
+func listsRoot(r recipe) bool {
+	for _, line := range r.Body {
+		parts, ok := line.([]any)
+		if !ok {
+			continue
+		}
+		list, call := false, false
+		for _, p := range parts {
+			switch v := p.(type) {
+			case string:
+				if strings.Contains(v, "--list") {
+					list = true
+				}
+			default:
+				if hasJustfileCall(v) {
+					call = true
+				}
+			}
+		}
+		if list && call {
+			return true
+		}
+	}
+	return false
+}
+
+// hasJustfileCall looks for a call to justfile or justfile_directory anywhere in an expression.
+func hasJustfileCall(v any) bool {
+	arr, ok := v.([]any)
+	if !ok {
+		return false
+	}
+	if len(arr) >= 2 {
+		if tag, _ := arr[0].(string); tag == "call" {
+			if name, _ := arr[1].(string); name == "justfile" || name == "justfile_directory" {
+				return true
+			}
+		}
+	}
+	for _, e := range arr {
+		if hasJustfileCall(e) {
+			return true
+		}
+	}
+	return false
 }
 
 // ignoredRules reads the [metadata('justz-ignore', rule...)] attributes of a

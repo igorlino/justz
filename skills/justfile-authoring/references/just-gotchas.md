@@ -8,7 +8,7 @@ This skill does not teach `just` syntax: run `just --man` or read the manual. Th
 - **`--list` shows only the whole `[doc]` or nothing.** A multi-line `[doc]` prints its block above the recipe and drops the inline description. Keep `[doc]` one line and put long prose elsewhere (`references/variant-native.md`, section 5).
 - **Private is not protected.** `[private]` and a leading underscore hide a recipe from `just --list` and `--summary` only. `just p` and `just _q` still run.
 - **A leading underscore does not hide a module.** `mod _int` still lists as `_int ...`. `[private]` above `mod pm` hides it, and `just pm y` still runs.
-- **`--list` shows a module as `name ...`.** Use `just --list name` or `just --list --list-submodules` to see its recipes. A module with no `_default` runs its first recipe when called bare, so give each module a private `_default`.
+- **`--list` shows a module as `name ...`.** Use `just --list name` or `just --list --list-submodules` to see its recipes. A module with no `_default` runs its first recipe when called bare, so give each module a private `_default` that runs `justz help <module>`. `justz lint` reports a module whose first recipe is not `default` or `_default` (`module-dispatcher-missing`). Do not write `just --list --justfile {{ justfile() }}` there: inside a module `justfile()` and `justfile_directory()` are the root's, so the module lists the root recipes (`module-dispatcher-lists-root`).
 - **A public `default` recipe appears as a row.** Use `_default`, first in the file.
 - **Flag order:** `just --unsorted --list <ns>` works; `just --list --unsorted <ns>` fails because `<ns>` is parsed as a recipe argument.
 

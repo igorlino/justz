@@ -21,6 +21,13 @@ Rules:
   module-shell-unset    A module with linewise recipes that sets no shell, so
                         its recipes run with sh -cu and no pipefail. A set
                         shell line is the opt-out; there is no per-recipe one
+  module-dispatcher-missing
+                        A module with no default recipe, so a bare just <module>
+                        runs a command. Only a first recipe named default or
+                        _default is the dispatcher
+  module-dispatcher-lists-root
+                        A module default that runs just --list with justfile()
+                        or justfile_directory(), the root's inside a module
   secret-parameter      A parameter with a secret-like name (TOKEN, PASSWORD,
                         SECRET, API_KEY...): its value is typed on the command
                         line, so it is in the process list
