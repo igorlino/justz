@@ -54,6 +54,11 @@ vendored-bash renderer:
   the recipe's own doc comment are two copies of one fact, and the guard only
   checked that a JSON entry *existed*, never that it matched. Several
   divergences were semantic, not cosmetic.
+- **Long descriptions make two copies harder to keep equal.** In the largest
+  registry we have seen, 149 of 249 commands had a `desc` over 120 characters.
+  With `justz` 0.7.0 the long text goes in `detail`, so `desc` and `[doc]` stay
+  one short, equal line. That makes the check easier to keep green; it does not
+  make the divergence above any less true.
 - **The drifted copy is the one most tools show.** `just --list`, shell
   completions, the IDE extension and `just --dump` all read the justfile; only
   the custom renderer read the JSON.

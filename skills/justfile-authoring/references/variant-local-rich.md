@@ -42,6 +42,7 @@ With the overlay present and no committed registry, `justz help`, `jz`, `jzh`, s
 - A parameter declared with `value=` is a flag with no placeholder.
 - Hand-added `"values": [...]` lists are **kept** when you regenerate, so enum completion survives.
 - Multi-line `[doc]` text is cut to its first line.
+- `generate` never writes a `detail`, and a hand-added one is **lost** when you regenerate, unlike `values`. Long text for a native justfile belongs in `#` comments above the recipe.
 
 ## Assess before treating the generated file as done
 
