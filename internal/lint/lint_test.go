@@ -243,3 +243,12 @@ func TestDispatcherNestedModule(t *testing.T) {
 		t.Errorf("message = %q", m)
 	}
 }
+
+func TestIgnoreAcceptsTheCheckAdviceRules(t *testing.T) {
+	for _, id := range []string{"volatile-text", "detail-flag-no-row"} {
+		res := run(t, fmt.Sprintf(`{"recipes":{"a":%s},"modules":{}}`, recipeJSON(1, `{"metadata":["justz-ignore","`+id+`"]}`)))
+		if len(res.Findings) != 0 {
+			t.Errorf("%s: findings = %v", id, rules(res))
+		}
+	}
+}

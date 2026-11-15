@@ -42,6 +42,8 @@ const (
 	RuleExampleLongFlag    = "example-long-flag"
 	RuleExampleEnumUnset   = "example-enum-missing"
 	RuleExampleFlagUnknown = "example-flag-unknown"
+	RuleVolatileText       = "volatile-text"
+	RuleDetailFlagNoRow    = "detail-flag-no-row"
 )
 
 // MaxDescLength is the length above which a registry description is a warning.
@@ -275,6 +277,7 @@ type registryEntry struct {
 	Desc       string
 	HasDesc    bool
 	Example    string // the per-command example field
+	Detail     string
 	Extra      bool
 	Args       []argEntry
 }
@@ -303,6 +306,9 @@ func registryEntries(reg *orderedjson.Value) []registryEntry {
 				e := registryEntry{Group: textsafe.Line(g.Key), Key: textsafe.Line(c.Key), Extra: kind == "extra"}
 				if d := c.Val.Get("desc"); d != nil && d.Kind == orderedjson.String {
 					e.Desc, e.HasDesc = textsafe.Line(d.Str), true
+				}
+				if x := c.Val.Get("detail"); x != nil && x.Kind == orderedjson.String {
+					e.Detail = textsafe.Line(x.Str)
 				}
 				if x := c.Val.Get("example"); x != nil && x.Kind == orderedjson.String {
 					e.Example = textsafe.Line(x.Str)
@@ -376,6 +382,8 @@ func registryRules(in Input, items []item) []Finding {
 				descLongFix(in.Variant)})
 		}
 	}
+
+	out = append(out, adviceRules(entries, items)...)
 
 	if f, ok := orderFinding(in.RegistrySource); ok {
 		out = append(out, f)

@@ -39,6 +39,7 @@ deploy token:
 ```
 
 - The first value must be exactly `justz-ignore`. Every further value is one rule id. Several such attributes on a recipe add up.
+- The recipe may also name the two advice rules of `justz check`, `volatile-text` and `detail-flag-no-row`, which apply to the registry entry of the same recipe. `justz check` reads the attribute; `justz lint` accepts the ids so they are not reported as unknown.
 - An id that is not a lint rule, or an attribute that names no rule, is a finding (`ignore-unknown-rule`), so a typo cannot hide a finding.
 - `just` rejects `[metadata]` on a `mod` line (`module has invalid attribute metadata`), so the attribute cannot silence a module rule. The one module rule below has its own opt-out.
 - Verified on just 1.59.0 without `set unstable`. Which older versions have `[metadata]` is not verified; a dump without it means no opt-outs, never an error.
