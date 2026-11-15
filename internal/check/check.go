@@ -34,6 +34,7 @@ const (
 	RuleRegistryStale    = "registry-stale"
 	RuleRegistryDesc     = "registry-desc-diverges"
 	RuleKeySignature     = "registry-key-signature"
+	RuleRegistryShape    = "registry-shape"
 	RuleDescLong         = "registry-desc-long"
 	RuleUnsorted         = "registry-unsorted"
 	RuleExampleBare      = "example-bare-command"
@@ -129,6 +130,7 @@ func Run(in Input) (Result, error) {
 	}
 	if in.Registry != nil {
 		res.Findings = append(res.Findings, registryRules(in, items)...)
+		res.Findings = append(res.Findings, shapeRules(in.Registry)...)
 		res.Findings = append(res.Findings, exampleRules(in.Registry)...)
 	}
 	cleanFindings(res.Findings)

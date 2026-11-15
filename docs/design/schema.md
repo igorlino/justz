@@ -16,7 +16,7 @@ An unknown argument exits `2`, as in the other commands.
 
 ## What the schema is for
 
-The schema answers one question: is the file the right shape? It does not answer whether the registry matches the justfile. That stays in `justz check`, which needs the dump: `registry-missing`, `registry-stale`, `registry-desc-diverges`, `registry-key-signature`, the `example-*` rules and the description length. A schema cannot express any of those, and none of them moves into it.
+The schema answers one question: is the file the right shape? It does not answer whether the registry matches the justfile. That stays in `justz check`, which needs the dump: `registry-missing`, `registry-stale`, `registry-desc-diverges`, `registry-key-signature`, the `example-*` rules and the description length. A schema cannot express any of those, and none of them moves into it. The type mistakes the schema describes are also reported by `justz check` as `registry-shape` (an error that names the command key and the field). `check` reads the embedded schema itself, so the two agree on what is valid, and unknown fields stay allowed.
 
 What the shape check buys that nothing does today: `justz` reads the registry leniently, and a field of the wrong type is mostly skipped without a word. Measured: `"desc": 3` is an empty description, `"args": {}` is no arguments, a `commands` list instead of an object renders an empty group, a group that is not an object is dropped, and a non-string in `values` is dropped. An item of the wrong type inside `args` or `examples` (`[1, "s"]`) is not dropped: it renders a blank row. A `groups` that is not an object is the one loud failure (`help` exits 1). An editor that knows the schema shows each of these where it is typed.
 
