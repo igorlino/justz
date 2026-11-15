@@ -48,6 +48,7 @@ The fields, from `internal/help/model.go` and `internal/registry/canonical.go`:
 | group | `seeAlso` | array of string | |
 | command | `desc`, `example` | string | |
 | command | `detail` | string | optional longer text, shown only in the zoom (added with 0.7.0) |
+| command | `seeAlso` | array of string | keys of related commands, `group.command` (`core.build` for a top-level one); see `docs/design/see-also.md` |
 | command | `args` | array of argument | |
 | argument | `name`, `desc` | string | |
 | argument | `values` | array of string | an enum: drives completion and renders `(a\|b\|c)` |

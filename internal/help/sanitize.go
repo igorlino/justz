@@ -59,6 +59,9 @@ func (c *Command) sanitize() {
 	c.Desc = textsafe.Line(c.Desc)
 	c.Example = textsafe.Line(c.Example)
 	c.Heading = textsafe.Line(c.Heading)
+	for i := range c.SeeAlso {
+		c.SeeAlso[i] = textsafe.Line(c.SeeAlso[i])
+	}
 	c.Detail = textsafe.Text(c.Detail)
 	// A detail of only blanks is no detail: the zoom prints no section for it,
 	// so the JSON must not carry it either.

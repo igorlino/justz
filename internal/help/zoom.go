@@ -194,6 +194,66 @@ func (p *printer) seeAlso(proj *Project, g *Group) {
 	p.line("  %s", p.s.dim("See also: "+strings.Join(refs, ", ")))
 }
 
+// seeAlsoKeys is the list of related commands a view shows: each key once (the
+// first), without a reference to the command itself, sorted by key. The zoom and
+// the JSON both read it, so they agree.
+func seeAlsoKeys(g *Group, c *Command) []string {
+	self := g.Key + "." + c.Name
+	seen := map[string]bool{}
+	var out []string
+	for _, key := range c.SeeAlso {
+		if key == self || seen[key] {
+			continue
+		}
+		seen[key] = true
+		out = append(out, key)
+	}
+	sort.Strings(out)
+	return out
+}
+
+// commandSeeAlso is the cross-reference line of a command. A key that names a
+// command is written as its invocation, one that does not as it is, so a stale
+// reference stays visible. The keys are sorted before they are written, so the
+// order is the one of the JSON.
+func (p *printer) commandSeeAlso(proj *Project, g *Group, c *Command) {
+	keys := seeAlsoKeys(g, c)
+	if len(keys) == 0 {
+		return
+	}
+	refs := make([]string, len(keys))
+	for i, key := range keys {
+		refs[i] = key
+		if path, ok := proj.commandPath(key); ok {
+			refs[i] = proj.CLI + " " + path
+		}
+	}
+	p.line("  %s", p.s.dim("See also: "+strings.Join(refs, ", ")))
+}
+
+// commandPath turns a key (group.command) into the words that run the command:
+// the group key and the command, or only the command for core. It reports
+// false when no command or extra entry has that key.
+func (proj *Project) commandPath(key string) (string, bool) {
+	groups := proj.Groups
+	if proj.Core != nil {
+		groups = append([]*Group{proj.Core}, groups...)
+	}
+	for _, g := range groups {
+		for _, list := range [][]Command{g.Commands, g.Extra} {
+			for _, c := range list {
+				if g.Key+"."+c.Name == key {
+					if g.Key == "core" {
+						return c.Name, true
+					}
+					return g.Key + " " + c.Name, true
+				}
+			}
+		}
+	}
+	return "", false
+}
+
 // GroupView is the detail view of one group: its usage, commands with their
 // arguments, examples, footer and cross-references.
 func GroupView(proj *Project, g *Group, o Options) string {
@@ -340,8 +400,12 @@ func CommandView(proj *Project, g *Group, c *Command, o Options) string {
 		}
 	}
 
-	if g.Key != "core" && len(g.SeeAlso) > 0 {
+	groupLine := g.Key != "core" && len(g.SeeAlso) > 0
+	if len(seeAlsoKeys(g, c)) > 0 || groupLine {
 		p.b.WriteByte('\n')
+	}
+	p.commandSeeAlso(proj, g, c)
+	if groupLine {
 		p.seeAlso(proj, g)
 	}
 	p.b.WriteByte('\n')

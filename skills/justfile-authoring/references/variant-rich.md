@@ -27,7 +27,7 @@ Nothing here is vendored. There is no `help.sh` to copy, keep identical across r
 | Expanded | `justz help --expanded` | Every group with its commands and argument rows. `--wide`, `-w` adds example columns (on by default from 100 columns) |
 | Zoom | `justz help <group>`, `justz help [group] <cmd>` | One group (usage, commands, examples, cross-references) or one command (how to invoke it, examples, options, then its `detail`). An exact name or a unique prefix works; an ambiguous name exits `2` and lists the groups |
 
-Add `-j` (or `--json`) for machine-readable output (a command's zoom carries `detail`; listings and the array printed for an ambiguous name do not), `-b` to browse with `fzf` (or a numbered menu).
+Add `-j` (or `--json`) for machine-readable output (a command's zoom carries `detail` and `seeAlso`; listings and the array printed for an ambiguous name do not), `-b` to browse with `fzf` (or a numbered menu).
 
 The text `justz` itself prints from a registry or a justfile is made safe for a terminal (0.7.0 or newer). The output of `just` and of the recipes passes through unchanged.
 
@@ -45,6 +45,7 @@ For each recipe write a description that says what it does, not just which tool 
 - `detail` is shown only in the zoom (`justz help <group> <cmd>`, after the options, under a **Details** heading) and in that zoom's JSON. Listings, completion and `just --list` never show it. `justz check` compares it with nothing, so keep it current yourself.
 - `detail` is plain text. A newline starts a new line and a blank line separates paragraphs; runs of spaces collapse to one and indentation is lost. No markup is interpreted.
 - With colors on, the zoom colors four things in `detail` and nothing else: a `` `backtick span` `` green (a flag inside it cyan, a `<placeholder>` yellow), a flag such as `--dry-run` cyan, a `<placeholder>` yellow, and a URL underlined. So in `detail`, put commands in backticks. This does not apply to `desc` or `[doc]`.
+- Name a related command in `seeAlso` (not in 0.7.0 or earlier), not in prose. A command's `seeAlso` is a list of keys, `group.command` (`core.build` for a top-level command, and `extra` entries count): use it where a `desc` or `detail` would say "mirrors", "sibling of" or "alias for". The zoom ends with a **See also** line that shows each key as the command to run, `help -j` carries the list, `justz fmt` sorts it, and `justz check` reports a key that names no command or the command itself (`registry-see-also`). Say how two commands relate, if it matters, in `detail`.
 - Add `args` entries for every meaningful flag or positional parameter. Never use one generic `[args]` placeholder.
 - Design short single-letter aliases (`-x, --long`) for every flag whose name has three or more letters. Two-letter names (`--id`, `--ci`, `--ui`) stay long-only unless there is a real UX reason; ask the user.
 - Write the short form first and the value placeholder once, at the end: `-s, --surface <name>`.
@@ -110,6 +111,7 @@ _default:
 | `registry-desc-diverges` | `[doc]` and `desc` differ. The finding prints the exact `[doc(...)]` line to paste (single quotes, or double quotes with `\"` and `\\` when the text has a single quote) and carries it in the `paste` field of the JSON; there is none for a blank description or one with control characters; `justz` never edits the justfile |
 | `registry-shape` | A registry field has the wrong type (`args` as a string, `examples` not an array, a row that is not an object). `justz` reads such a field as absent, so the finding names the command key and the field; unknown fields are allowed, and `justz schema` describes the same shape |
 | `registry-key-signature` | A key carries an argument signature instead of a bare recipe name |
+| `registry-see-also` | A command's `seeAlso` key is not `group.command` of a command or `extra` entry, or names the command itself (an error) |
 | `registry-desc-long` | A `desc` is over 120 characters (warning). Keep a one-line `desc` equal to the `[doc]` and move the rest to `detail` |
 | `registry-unsorted` | Fixed by `justz fmt` |
 | `volatile-text` | A `desc` or `detail` has text that goes stale (a warning): `TODO`, `FIXME`, `WIP`, `placeholder`, `not implemented`, `coming soon`, a count such as `11 checks` or `six steps` (checks, tests, steps, jobs, stages, phases), a `$` price, an ISO date or a month with a year. Reword it, or silence one command with `[metadata('justz-ignore', 'volatile-text')]` |

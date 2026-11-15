@@ -43,6 +43,7 @@ const (
 	RuleExampleEnumUnset   = "example-enum-missing"
 	RuleExampleFlagUnknown = "example-flag-unknown"
 	RuleVolatileText       = "volatile-text"
+	RuleSeeAlso            = "registry-see-also"
 	RuleDetailFlagNoRow    = "detail-flag-no-row"
 )
 
@@ -52,7 +53,7 @@ var Rules = []string{
 	RuleDocMissing, RuleGroupMissing, RuleVariadic, RuleDefaultPublic, RuleRegistryMissing,
 	RuleRegistryStale, RuleRegistryDesc, RuleKeySignature, RuleRegistryShape, RuleDescLong,
 	RuleUnsorted, RuleExampleBare, RuleExampleSingle, RuleExampleLongFlag, RuleExampleEnumUnset,
-	RuleExampleFlagUnknown, RuleVolatileText, RuleDetailFlagNoRow, RuleDocMultiline,
+	RuleExampleFlagUnknown, RuleVolatileText, RuleDetailFlagNoRow, RuleDocMultiline, RuleSeeAlso,
 }
 
 // MaxDescLength is the length above which a registry description is a warning.
@@ -287,6 +288,7 @@ type registryEntry struct {
 	DescUnsafe bool   // the description has control characters the terminal-safe text replaced
 	Example    string // the per-command example field
 	Detail     string
+	SeeAlso    []string
 	Extra      bool
 	Args       []argEntry
 }
@@ -316,6 +318,13 @@ func registryEntries(reg *orderedjson.Value) []registryEntry {
 				if d := c.Val.Get("desc"); d != nil && d.Kind == orderedjson.String {
 					e.Desc, e.HasDesc = textsafe.Line(d.Str), true
 					e.DescUnsafe = e.Desc != d.Str
+				}
+				if sa := c.Val.Get("seeAlso"); sa != nil && sa.Kind == orderedjson.Array {
+					for _, s := range sa.Arr {
+						if s.Kind == orderedjson.String {
+							e.SeeAlso = append(e.SeeAlso, textsafe.Line(s.Str))
+						}
+					}
 				}
 				if x := c.Val.Get("detail"); x != nil && x.Kind == orderedjson.String {
 					e.Detail = textsafe.Line(x.Str)
@@ -397,6 +406,7 @@ func registryRules(in Input, items []item) []Finding {
 		}
 	}
 
+	out = append(out, seeAlsoRules(entries)...)
 	out = append(out, adviceRules(entries, items)...)
 
 	if f, ok := orderFinding(in.RegistrySource); ok {
