@@ -135,6 +135,13 @@ type item struct {
 	R        recipe
 }
 
+// nested reports a recipe in a module below the top-level ones. The registry
+// has no group for it, and its group and name can equal a parent recipe's, so
+// a map keyed by pathOf must skip it.
+func (it item) nested() bool {
+	return !it.TopLevel && strings.Count(it.Path, " ") > 1
+}
+
 // Run checks a project.
 func Run(in Input) (Result, error) {
 	var d dump
@@ -405,7 +412,7 @@ func registryRules(in Input, items []item) []Finding {
 		byPath[pathOf(e.Group, e.Key)] = e
 	}
 	for _, it := range items {
-		if !it.TopLevel && strings.Count(it.Path, " ") > 1 {
+		if it.nested() {
 			continue // nested modules have no registry group
 		}
 		e, ok := byPath[pathOf(it.Group, it.Name)]
@@ -432,6 +439,9 @@ func registryRules(in Input, items []item) []Finding {
 
 	recipePaths := map[string]bool{}
 	for _, it := range items {
+		if it.nested() {
+			continue // would mask a stale entry for a parent recipe of the same name
+		}
 		recipePaths[pathOf(it.Group, it.Name)] = true
 	}
 	for _, e := range entries {

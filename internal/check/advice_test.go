@@ -105,3 +105,39 @@ func TestVolatileTextReportsEveryHit(t *testing.T) {
 		t.Errorf("message = %q, want %q", msgs[0], want)
 	}
 }
+
+func nestedAdviceRun(t *testing.T, parent, nested []map[string]any, parentDesc string) Result {
+	t.Helper()
+	dump := dumpOf(t, map[string]any{},
+		map[string]any{"tool": map[string]any{
+			"recipes": map[string]any{"x": rc("X", parent)},
+			"modules": map[string]any{"sub": module(map[string]any{"x": rc("X", nested)})},
+		}})
+	s := `{"groups":{"tool":{"commands":{"x":{"desc":"` + parentDesc + `"}}}}}`
+	return run(t, Input{Dump: dump, Variant: "rich", Registry: parse(t, s), RegistrySource: []byte(s)})
+}
+
+func TestAdviceIgnoreNestedSameNameRecipe(t *testing.T) {
+	const vol = "Runs 11 checks"
+	// An ignore on the nested recipe must not silence the parent.
+	if res := nestedAdviceRun(t, nil, ignoreAttr(RuleVolatileText), vol); !has(res, RuleVolatileText, "tool.x") {
+		t.Errorf("ignore on the nested recipe silenced the parent: %v", rules(res))
+	}
+	// An ignore on the parent still applies, whatever the nested recipe has.
+	if res := nestedAdviceRun(t, ignoreAttr(RuleVolatileText), nil, vol); has(res, RuleVolatileText, "") {
+		t.Errorf("ignore on the parent shadowed by the nested recipe: %v", rules(res))
+	}
+}
+
+func TestRegistryStaleNotMaskedByNestedRecipe(t *testing.T) {
+	dump := dumpOf(t, map[string]any{},
+		map[string]any{"tool": map[string]any{
+			"recipes": map[string]any{},
+			"modules": map[string]any{"sub": module(map[string]any{"x": rc("X", nil)})},
+		}})
+	s := `{"groups":{"tool":{"commands":{"x":{"desc":"X"}}}}}`
+	res := run(t, Input{Dump: dump, Variant: "rich", Registry: parse(t, s), RegistrySource: []byte(s)})
+	if !has(res, RuleRegistryStale, "tool.x") {
+		t.Errorf("nested recipe masked the stale entry: %v", rules(res))
+	}
+}
