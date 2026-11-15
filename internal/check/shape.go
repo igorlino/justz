@@ -40,8 +40,7 @@ func capShape(in []Finding) []Finding {
 	}
 	for _, f := range in { // one summary per subject, in first-seen order
 		if n := seen[f.Subject] - maxShapePerSubject; n > 0 {
-			out = append(out, Finding{RuleRegistryShape, Error, f.Subject,
-				fmt.Sprintf("%d more type mistakes in %s", n, f.Subject), f.Fix})
+			out = append(out, Finding{Rule: RuleRegistryShape, Severity: Error, Subject: f.Subject, Message: fmt.Sprintf("%d more type mistakes in %s", n, f.Subject), Fix: f.Fix})
 			seen[f.Subject] = 0
 		}
 	}
@@ -122,9 +121,7 @@ func (w *shapeWalker) report(path []string, what string) {
 	} else {
 		name = fmt.Sprintf("%q", name)
 	}
-	w.out = append(w.out, Finding{RuleRegistryShape, Error, subject,
-		fmt.Sprintf("%s %s", name, what),
-		"justz schema prints the expected shape (unknown fields are allowed)"})
+	w.out = append(w.out, Finding{Rule: RuleRegistryShape, Severity: Error, Subject: subject, Message: fmt.Sprintf("%s %s", name, what), Fix: "justz schema prints the expected shape (unknown fields are allowed)"})
 }
 
 func joinPath(p []string) string {

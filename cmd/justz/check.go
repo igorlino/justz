@@ -31,6 +31,10 @@ It reads the justfile through just --dump and, when there is one, the registry
              findings that are shown. An unknown name is a usage error that
              lists the valid names
 
+A registry-desc-diverges finding prints the [doc(...)] line to paste on its own
+line and has it in the paste field of the JSON (none for a blank description or
+one with control characters). justz never edits the justfile.
+
 The text output prints a fix once for a run of findings of one rule that share
 it. The JSON keeps the fix on every finding.
 
@@ -151,6 +155,9 @@ func printCheck(e env, r checkReport) {
 	show, count := fixRuns(rules, fixes)
 	for i, f := range r.Findings {
 		fmt.Fprintf(e.stdout, "  %-7s %s: %s  [%s]\n", f.Severity, f.Subject, f.Message, f.Rule)
+		if f.Paste != "" {
+			fmt.Fprintf(e.stdout, "          paste: %s\n", f.Paste)
+		}
 		if f.Fix != "" && show[i] {
 			fmt.Fprintf(e.stdout, "          %s\n", fixLine(f.Fix, count[i]))
 		}

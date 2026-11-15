@@ -34,9 +34,7 @@ func docMultilineFindings(items []item, sources map[string]string) []Finding {
 			continue
 		}
 		if n := commentLines(text, it.Name); n >= 2 {
-			out = append(out, Finding{RuleDocMultiline, Warning, "just " + it.Path,
-				fmt.Sprintf("the doc is a comment block of %d lines, and just uses only the last line as the recipe doc", n),
-				"add [doc('one-line description')] above the recipe, and keep the longer text in a runbook"})
+			out = append(out, Finding{Rule: RuleDocMultiline, Severity: Warning, Subject: "just " + it.Path, Message: fmt.Sprintf("the doc is a comment block of %d lines, and just uses only the last line as the recipe doc", n), Fix: "add [doc('one-line description')] above the recipe, and keep the longer text in a runbook"})
 		}
 	}
 	return out
