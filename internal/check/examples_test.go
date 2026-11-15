@@ -50,25 +50,46 @@ func TestExampleFlagUnknownStaysQuiet(t *testing.T) {
 }
 
 func TestExampleEnvPrefixIsStripped(t *testing.T) {
-	for _, ex := range []string{`PORT=9000 just tool scan`, `env PORT=9000 FOO="a b" just tool scan`} {
+	// The flag rules read the command through the prefix.
+	for _, ex := range []string{`PORT=9000 just tool start --port 3 --nope`, `env PORT=9000 FOO="a b" just tool start --nope`} {
 		res := exampleRun(t, toolCmds, `[{"cmd":"`+strings.ReplaceAll(ex, `"`, `\"`)+`"}]`)
-		if !has(res, RuleExampleBare, "tool.examples") {
-			t.Errorf("%s: bare command not found: %v", ex, rules(res))
+		if !has(res, RuleExampleFlagUnknown, "tool.examples") {
+			t.Errorf("%s: flag rule under an env prefix: %v", ex, rules(res))
 		}
 	}
-	res := exampleRun(t, toolCmds, `[{"cmd":"PORT=9000 just tool start --port 3 --nope"}]`)
-	if !has(res, RuleExampleFlagUnknown, "tool.examples") {
-		t.Errorf("flag rule under an env prefix: %v", rules(res))
+	// A prefix is information the rows do not show: bare and single stay quiet.
+	for _, ex := range []string{`PORT=9000 just tool scan`, `env PORT=9000 FOO="a b" just tool scan`, `PORT=9000 just tool scan -s`, `env PORT=9000 just tool scan -s`} {
+		res := exampleRun(t, toolCmds, `[{"cmd":"`+strings.ReplaceAll(ex, `"`, `\"`)+`"}]`)
+		if has(res, RuleExampleBare, "") || has(res, RuleExampleSingle, "") {
+			t.Errorf("%s: bare/single under an env prefix: %v", ex, rules(res))
+		}
 	}
-	res = exampleRun(t, toolCmds, `[{"cmd":"PORT=9000 just tool scan -s"}]`)
-	if !has(res, RuleExampleSingle, "tool.examples") {
-		t.Errorf("single flag under an env prefix: %v", rules(res))
+	// env with no assignment sets nothing: bare and single still fire.
+	for _, ex := range []string{`env just tool scan`, `env -i just tool scan`} {
+		if res := exampleRun(t, toolCmds, `[{"cmd":"`+ex+`"}]`); !has(res, RuleExampleBare, "tool.examples") {
+			t.Errorf("%s: bare: %v", ex, rules(res))
+		}
+	}
+	if res := exampleRun(t, toolCmds, `[{"cmd":"env -i just tool scan -s"}]`); !has(res, RuleExampleSingle, "tool.examples") {
+		t.Errorf("env -i single: %v", rules(res))
+	}
+	if res := exampleRun(t, toolCmds, `[{"cmd":"env -i A=1 just tool scan"}]`); has(res, RuleExampleBare, "") {
+		t.Errorf("env -i A=1: %v", rules(res))
+	}
+	// Without a prefix both still fire.
+	if res := exampleRun(t, toolCmds, `[{"cmd":"just tool scan"}]`); !has(res, RuleExampleBare, "tool.examples") {
+		t.Errorf("bare: %v", rules(res))
+	}
+	if res := exampleRun(t, toolCmds, `[{"cmd":"just tool scan -s"}]`); !has(res, RuleExampleSingle, "tool.examples") {
+		t.Errorf("single: %v", rules(res))
 	}
 }
 
 func TestCommandExampleFieldGoesThroughTheRules(t *testing.T) {
 	cmds := `{"start":{"desc":"S","example":"… --nope","args":[{"name":"-p, --port <n>"}]},
-		"scan":{"desc":"Sc","example":"PORT=1 just tool scan","args":[{"name":"-s, --silent"}]},
+		"scan":{"desc":"Sc","example":"just tool scan","args":[{"name":"-s, --silent"}]},
+		"envbare":{"desc":"E","example":"PORT=1 just tool envbare"},
+		"envone":{"desc":"E1","example":"env PORT=1 just tool envone -s","args":[{"name":"-s"}]},
 		"stop":{"desc":"St","example":"… -s"}}`
 	res := exampleRun(t, cmds, `[]`)
 	if !has(res, RuleExampleFlagUnknown, "tool.start") {
@@ -76,6 +97,9 @@ func TestCommandExampleFieldGoesThroughTheRules(t *testing.T) {
 	}
 	if !has(res, RuleExampleBare, "tool.scan") {
 		t.Errorf("bare example field: %v", rules(res))
+	}
+	if has(res, RuleExampleBare, "tool.envbare") || has(res, RuleExampleSingle, "tool.envone") {
+		t.Errorf("env prefix in example field: %v", rules(res))
 	}
 	if has(res, RuleExampleFlagUnknown, "tool.stop") {
 		t.Errorf("a command with no rows must stay quiet: %v", rules(res))

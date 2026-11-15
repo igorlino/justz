@@ -47,6 +47,7 @@ func exampleRules(reg *orderedjson.Value) []Finding {
 			}
 		}
 		for i := range found {
+			_, found[i].HasEnv = envPrefix(strings.TrimSpace(found[i].Raw))
 			found[i].Text = stripEnv(found[i].Text)
 		}
 		var examples []string
@@ -75,6 +76,9 @@ func exampleRules(reg *orderedjson.Value) []Finding {
 
 		for _, e := range found {
 			ex, subject := e.Text, e.Subject
+			if e.HasEnv {
+				continue // the environment is what the argument rows do not show
+			}
 			if bare.MatchString(ex) {
 				out = append(out, Finding{Rule: RuleExampleBare, Severity: sev, Subject: subject, Message: fmt.Sprintf("%q is a bare command with no flags or arguments", e.Raw), Fix: "remove it, or show multi-flag, value or environment usage"})
 				continue
@@ -128,8 +132,12 @@ func exampleRules(reg *orderedjson.Value) []Finding {
 }
 
 // example is one example line: Text is what the rules read (an environment
-// prefix removed, a leading ellipsis expanded), Raw is what the project wrote.
-type example struct{ Text, Raw, Subject string }
+// prefix removed, a leading ellipsis expanded), Raw is what the project wrote,
+// HasEnv is true when Raw leads with a NAME=value assignment (after env or not).
+type example struct {
+	Text, Raw, Subject string
+	HasEnv             bool
+}
 
 // stripEnv removes the environment words that lead a command line: NAME=value
 // (the value may be quoted, with escaped quotes), env and its options (-i, -u
@@ -141,6 +149,13 @@ func stripEnv(s string) string {
 
 // envPrefixLen is the length of the leading environment words of s.
 func envPrefixLen(s string) int {
+	n, _ := envPrefix(s)
+	return n
+}
+
+// envPrefix is envPrefixLen, plus whether a NAME=value assignment was in the
+// prefix (a bare env or env options alone set no variable).
+func envPrefix(s string) (length int, assigned bool) {
 	pos := 0
 	next := func() (word string, end int) { // the word at pos, and where it ends
 		i := pos
@@ -173,7 +188,7 @@ func envPrefixLen(s string) int {
 		w, end := next()
 		switch {
 		case w == "":
-			return pos
+			return pos, assigned
 		case !sawEnv && w == "env":
 			sawEnv = true
 		case sawEnv && (w == "-u" || w == "-C" || w == "--unset" || w == "--chdir"):
@@ -181,8 +196,9 @@ func envPrefixLen(s string) int {
 			_, end = next() // the option's argument
 		case sawEnv && strings.HasPrefix(w, "-") && w != "-" && w != "--":
 		case assign.MatchString(w):
+			assigned = true
 		default:
-			return pos
+			return pos, assigned
 		}
 		pos = end
 	}
