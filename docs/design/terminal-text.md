@@ -1,6 +1,6 @@
 # Design note: terminal-safe text, and highlighting in `detail`
 
-Status: part 1 (sanitization) is implemented; part 2 (highlighting) is not started. Two changes in one note, in two PRs. The first is a security fix and stands without the second.
+Status: part 1 (sanitization) is implemented; part 2 (highlighting) is implemented too. Two changes in one note, in two PRs. The first is a security fix and stands without the second.
 
 ## 1. Text from a project must not control the terminal
 
@@ -118,6 +118,10 @@ The word-by-word idea in the first draft was the wrong unit: a backtick can sit 
 The span styling does not reuse `colorizeCmd`: it wraps a whole line in green and restores green after a flag, which assumes it is inside a command, and quote handling is wrong for prose (apostrophes). The span applies the same colors with its own small scanner.
 
 This is a larger change than a line count suggests: the `wrap` refactor and the tests, about 150 lines.
+
+### As built
+
+One deviation from the sketch above: a span also colours the blanks inside it, so a wrapped span stays green on every line it covers, and each line opens and closes its own styles. The angle brackets of `<https://x>` are not underlined, only the URL. The classifier is `classify` in `internal/help/highlight.go`; `wrapRunes` is `wrap` with the source position of each rune, and `wrap` is a thin caller of it, so the line breaks of `desc` and the option rows did not change.
 
 ### Where it shows
 

@@ -122,7 +122,7 @@ func TestZoomDetailWorksForExtraEntries(t *testing.T) {
 	}
 }
 
-func TestZoomDetailColorIsOnlyOnTheHeading(t *testing.T) {
+func TestZoomDetailColorIsOnlyAddedAndOnlyOnTokens(t *testing.T) {
 	plain := detailView(t, "ops deploy", Options{Width: 60})
 	colored := detailView(t, "ops deploy", Options{Width: 60, Color: true})
 	if got := ansi.ReplaceAllString(colored, ""); got != plain {
@@ -130,6 +130,24 @@ func TestZoomDetailColorIsOnlyOnTheHeading(t *testing.T) {
 	}
 	if !strings.Contains(colored, "\x1b[1mDetails\x1b[0m") {
 		t.Errorf("the Details heading is not bold in:\n%q", colored)
+	}
+}
+
+func TestZoomDetailHighlightsItsTokens(t *testing.T) {
+	p := load(t, `{"groups":{"ops":{"commands":{"go":{"desc":"Go","detail":"Run `+"`dm ops go --now <slug>`"+` or pass --dry-run. Docs: https://example.test/x."}}}}}`)
+	g := p.Group("ops")
+	colored := CommandView(p, g, g.FindCommand("go"), Options{Width: 100, Color: true})
+	for _, want := range []string{"\x1b[32m`dm ops go \x1b[36m--now\x1b[32m \x1b[33m<slug>\x1b[32m`\x1b[39m", "\x1b[36m--dry-run\x1b[39m", "\x1b[4mhttps://example.test/x\x1b[24m."} {
+		if !strings.Contains(colored, want) {
+			t.Errorf("missing %q in:\n%q", want, colored)
+		}
+	}
+	plain := CommandView(p, g, g.FindCommand("go"), Options{Width: 100})
+	if strings.Contains(plain, "\x1b") {
+		t.Errorf("colors off must not print an escape:\n%q", plain)
+	}
+	if got := ansi.ReplaceAllString(colored, ""); got != plain {
+		t.Errorf("stripped colored view differs from plain:\n%q\n%q", got, plain)
 	}
 }
 
