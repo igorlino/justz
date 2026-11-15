@@ -65,6 +65,9 @@ type Finding struct {
 	Subject  string   `json:"subject"`
 	Message  string   `json:"message"`
 	Fix      string   `json:"fix,omitempty"`
+	// Paste is the exact attribute line to put above the recipe, when the
+	// finding can say it (registry-desc-diverges). justz never edits the justfile.
+	Paste string `json:"paste,omitempty"`
 }
 
 // Input is everything the checks need.
@@ -194,9 +197,7 @@ func publicDefaults(d dump, prefix string) []Finding {
 		if prefix != "" {
 			path = prefix + " default"
 		}
-		out = append(out, Finding{RuleDefaultPublic, Warning, "just " + path,
-			"a public default recipe is a row in every listing",
-			"rename it _default and keep it first in the file, so it is private"})
+		out = append(out, Finding{Rule: RuleDefaultPublic, Severity: Warning, Subject: "just " + path, Message: "a public default recipe is a row in every listing", Fix: "rename it _default and keep it first in the file, so it is private"})
 	}
 	for mod, sub := range d.Modules {
 		p := mod
@@ -213,15 +214,13 @@ func recipeRules(it item, variant string) []Finding {
 	subject := "just " + it.Path
 
 	if it.R.Doc == nil || strings.TrimSpace(*it.R.Doc) == "" {
-		out = append(out, Finding{RuleDocMissing, Error, subject, "no [doc]", "add [doc('one-line description')] above the recipe"})
+		out = append(out, Finding{Rule: RuleDocMissing, Severity: Error, Subject: subject, Message: "no [doc]", Fix: "add [doc('one-line description')] above the recipe"})
 	}
 	if variant == "native" && it.TopLevel && !hasGroup(it.R) {
-		out = append(out, Finding{RuleGroupMissing, Error, subject, "no [group]", "add [group('name')] above the recipe"})
+		out = append(out, Finding{Rule: RuleGroupMissing, Severity: Error, Subject: subject, Message: "no [group]", Fix: "add [group('name')] above the recipe"})
 	}
 	if v := interpolatedVariadic(it.R); v != "" {
-		out = append(out, Finding{RuleVariadic, Error, subject,
-			fmt.Sprintf("interpolates {{ %s }}, which splits on whitespace", v),
-			`add 'set positional-arguments' and use "$@"`})
+		out = append(out, Finding{Rule: RuleVariadic, Severity: Error, Subject: subject, Message: fmt.Sprintf("interpolates {{ %s }}, which splits on whitespace", v), Fix: `add 'set positional-arguments' and use "$@"`})
 	}
 	return out
 }
@@ -285,6 +284,7 @@ type registryEntry struct {
 	Group, Key string
 	Desc       string
 	HasDesc    bool
+	DescUnsafe bool   // the description has control characters the terminal-safe text replaced
 	Example    string // the per-command example field
 	Detail     string
 	Extra      bool
@@ -315,6 +315,7 @@ func registryEntries(reg *orderedjson.Value) []registryEntry {
 				e := registryEntry{Group: textsafe.Line(g.Key), Key: textsafe.Line(c.Key), Extra: kind == "extra"}
 				if d := c.Val.Get("desc"); d != nil && d.Kind == orderedjson.String {
 					e.Desc, e.HasDesc = textsafe.Line(d.Str), true
+					e.DescUnsafe = e.Desc != d.Str
 				}
 				if x := c.Val.Get("detail"); x != nil && x.Kind == orderedjson.String {
 					e.Detail = textsafe.Line(x.Str)
@@ -360,14 +361,22 @@ func registryRules(in Input, items []item) []Finding {
 		e, ok := byPath[pathOf(it.Group, it.Name)]
 		subject := "just " + it.Path
 		if !ok {
-			out = append(out, Finding{RuleRegistryMissing, Error, subject, "missing from the registry",
-				"add it to commands.json (or regenerate the overlay with: justz generate)"})
+			out = append(out, Finding{Rule: RuleRegistryMissing, Severity: Error, Subject: subject, Message: "missing from the registry", Fix: "add it to commands.json (or regenerate the overlay with: justz generate)"})
 			continue
 		}
 		if it.R.Doc != nil && e.HasDesc && strings.TrimSpace(*it.R.Doc) != "" && strings.TrimSpace(textsafe.Line(*it.R.Doc)) != strings.TrimSpace(e.Desc) {
-			out = append(out, Finding{RuleRegistryDesc, Error, subject,
-				fmt.Sprintf("[doc] diverges from the registry description\n      justfile: %s\n      registry: %s", textsafe.Line(*it.R.Doc), e.Desc),
-				descDivergesFix(in.Variant)})
+			f := Finding{Rule: RuleRegistryDesc, Severity: Error, Subject: subject,
+				Message: fmt.Sprintf("[doc] diverges from the registry description\n      justfile: %s\n      registry: %s", textsafe.Line(*it.R.Doc), e.Desc),
+				Fix:     descDivergesFix(in.Variant)}
+			// The overlay of local-rich is derived from the [doc], so the way
+			// out there is to regenerate it, not to edit the [doc]. A blank
+			// description would make the recipe undocumented, and one with
+			// control characters is not the text that was read (they are
+			// replaced to keep the terminal safe), so there is no exact line.
+			if in.Variant != "local-rich" && strings.TrimSpace(e.Desc) != "" && !e.DescUnsafe {
+				f.Paste = DocLine(e.Desc)
+			}
+			out = append(out, f)
 		}
 	}
 
@@ -378,17 +387,13 @@ func registryRules(in Input, items []item) []Finding {
 	for _, e := range entries {
 		subject := fmt.Sprintf("%s.%s", e.Group, e.Key)
 		if strings.ContainsAny(e.Key, " <>[]*+") {
-			out = append(out, Finding{RuleKeySignature, Error, subject, "the key carries an argument signature, not a bare recipe name",
-				"use the recipe name as the key and put the arguments in args"})
+			out = append(out, Finding{Rule: RuleKeySignature, Severity: Error, Subject: subject, Message: "the key carries an argument signature, not a bare recipe name", Fix: "use the recipe name as the key and put the arguments in args"})
 		}
 		if !e.Extra && !recipePaths[pathOf(e.Group, e.Key)] && e.Key != "default" {
-			out = append(out, Finding{RuleRegistryStale, Error, subject, "in the registry, but the justfile has no such recipe",
-				"remove the entry, or restore the recipe"})
+			out = append(out, Finding{Rule: RuleRegistryStale, Severity: Error, Subject: subject, Message: "in the registry, but the justfile has no such recipe", Fix: "remove the entry, or restore the recipe"})
 		}
 		if n := utf8.RuneCountInString(e.Desc); n > MaxDescLength {
-			out = append(out, Finding{RuleDescLong, Warning, subject,
-				fmt.Sprintf("the description is %d characters long (over %d)", n, MaxDescLength),
-				descLongFix(in.Variant)})
+			out = append(out, Finding{Rule: RuleDescLong, Severity: Warning, Subject: subject, Message: fmt.Sprintf("the description is %d characters long (over %d)", n, MaxDescLength), Fix: descLongFix(in.Variant)})
 		}
 	}
 
@@ -424,7 +429,7 @@ func orderFinding(src []byte) (Finding, bool) {
 	if err1 != nil || err2 != nil || string(as) == string(bs) {
 		return Finding{}, false
 	}
-	return Finding{RuleUnsorted, Error, "registry", "the registry is not in canonical order", "run: justz fmt"}, true
+	return Finding{Rule: RuleUnsorted, Severity: Error, Subject: "registry", Message: "the registry is not in canonical order", Fix: "run: justz fmt"}, true
 }
 
 func sortFindings(f []Finding) {
@@ -466,6 +471,7 @@ func cleanFindings(fs []Finding) {
 		fs[i].Subject = textsafe.Line(fs[i].Subject)
 		fs[i].Message = cleanLines(fs[i].Message)
 		fs[i].Fix = cleanLines(fs[i].Fix)
+		fs[i].Paste = textsafe.Line(fs[i].Paste)
 	}
 }
 

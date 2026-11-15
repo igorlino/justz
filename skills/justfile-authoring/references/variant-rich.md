@@ -107,7 +107,7 @@ _default:
 | `default-public` | A public `default` recipe (a warning): it is a dispatcher, left out of the counts, but shows as a row; rename it `_default`; `--strict` fails on it |
 | `variadic-interpolation` | A variadic parameter is interpolated and so split on whitespace |
 | `registry-missing`, `registry-stale` | A recipe has no registry entry, or an entry has no recipe |
-| `registry-desc-diverges` | `[doc]` and `desc` differ |
+| `registry-desc-diverges` | `[doc]` and `desc` differ. The finding prints the exact `[doc(...)]` line to paste (single quotes, or double quotes with `\"` and `\\` when the text has a single quote) and carries it in the `paste` field of the JSON; there is none for a blank description or one with control characters; `justz` never edits the justfile |
 | `registry-shape` | A registry field has the wrong type (`args` as a string, `examples` not an array, a row that is not an object). `justz` reads such a field as absent, so the finding names the command key and the field; unknown fields are allowed, and `justz schema` describes the same shape |
 | `registry-key-signature` | A key carries an argument signature instead of a bare recipe name |
 | `registry-desc-long` | A `desc` is over 120 characters (warning). Keep a one-line `desc` equal to the `[doc]` and move the rest to `detail` |

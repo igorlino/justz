@@ -76,16 +76,12 @@ func exampleRules(reg *orderedjson.Value) []Finding {
 		for _, e := range found {
 			ex, subject := e.Text, e.Subject
 			if bare.MatchString(ex) {
-				out = append(out, Finding{RuleExampleBare, sev, subject,
-					fmt.Sprintf("%q is a bare command with no flags or arguments", e.Raw),
-					"remove it, or show multi-flag, value or environment usage"})
+				out = append(out, Finding{Rule: RuleExampleBare, Severity: sev, Subject: subject, Message: fmt.Sprintf("%q is a bare command with no flags or arguments", e.Raw), Fix: "remove it, or show multi-flag, value or environment usage"})
 				continue
 			}
 			if m := single.FindStringSubmatch(ex); m != nil {
 				if c, ok := byKey[m[1]]; ok && isBooleanFlag(c, m[2]) {
-					out = append(out, Finding{RuleExampleSingle, sev, subject,
-						fmt.Sprintf("%q only passes the single boolean flag %s, which the argument rows already show", e.Raw, m[2]),
-						"remove it, or combine flags, values or environment"})
+					out = append(out, Finding{Rule: RuleExampleSingle, Severity: sev, Subject: subject, Message: fmt.Sprintf("%q only passes the single boolean flag %s, which the argument rows already show", e.Raw, m[2]), Fix: "remove it, or combine flags, values or environment"})
 				}
 			}
 		}
@@ -103,9 +99,7 @@ func exampleRules(reg *orderedjson.Value) []Finding {
 					long := regexp.MustCompile(`(^| )` + regexp.QuoteMeta(m[2]) + `([ =]|$)`)
 					for _, e := range found {
 						if ex := e.Text; onCmd.MatchString(ex) && long.MatchString(ex) {
-							out = append(out, Finding{RuleExampleLongFlag, sev, e.Subject,
-								fmt.Sprintf("%q uses the long flag %s", e.Raw, m[2]),
-								"prefer the short alias " + m[1]})
+							out = append(out, Finding{Rule: RuleExampleLongFlag, Severity: sev, Subject: e.Subject, Message: fmt.Sprintf("%q uses the long flag %s", e.Raw, m[2]), Fix: "prefer the short alias " + m[1]})
 						}
 					}
 				}
@@ -124,9 +118,7 @@ func exampleRules(reg *orderedjson.Value) []Finding {
 						}
 					}
 					if !shown {
-						out = append(out, Finding{RuleExampleEnumUnset, sev, fmt.Sprintf("%s.%s", g.Key, c.Key),
-							fmt.Sprintf("%s declares the values %s, but no example in %s.examples uses it", a.Name, strings.Join(a.Values, "|"), textsafe.Line(g.Key)),
-							"add an example that passes the flag"})
+						out = append(out, Finding{Rule: RuleExampleEnumUnset, Severity: sev, Subject: fmt.Sprintf("%s.%s", g.Key, c.Key), Message: fmt.Sprintf("%s declares the values %s, but no example in %s.examples uses it", a.Name, strings.Join(a.Values, "|"), textsafe.Line(g.Key)), Fix: "add an example that passes the flag"})
 					}
 				}
 			}
@@ -307,9 +299,7 @@ func unknownFlags(c registryEntry, path string, found []example) []Finding {
 			unknown = append(unknown, textsafe.Line(name))
 		}
 		for _, f := range unknown {
-			out = append(out, Finding{RuleExampleFlagUnknown, Warning, e.Subject,
-				fmt.Sprintf("%q passes %s, which no argument row of %s declares", e.Raw, f, c.Key),
-				"add an argument row for the flag, or fix the example"})
+			out = append(out, Finding{Rule: RuleExampleFlagUnknown, Severity: Warning, Subject: e.Subject, Message: fmt.Sprintf("%q passes %s, which no argument row of %s declares", e.Raw, f, c.Key), Fix: "add an argument row for the flag, or fix the example"})
 		}
 	}
 	return out

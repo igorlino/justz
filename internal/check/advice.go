@@ -59,9 +59,7 @@ func adviceRules(entries []registryEntry, items []item) []Finding {
 		if !ignored[RuleVolatileText] {
 			for _, f := range []struct{ field, text string }{{"desc", e.Desc}, {"detail", e.Detail}} {
 				if hits := volatileMatches(f.text); len(hits) > 0 {
-					out = append(out, Finding{RuleVolatileText, Warning, subject,
-						fmt.Sprintf("%s has text that goes stale: %s", f.field, strings.Join(hits, ", ")),
-						"say what the command does, not a status, count, price or date, or add [metadata('" + IgnoreKey + "', '" + RuleVolatileText + "')] to the recipe if the text is stable"})
+					out = append(out, Finding{Rule: RuleVolatileText, Severity: Warning, Subject: subject, Message: fmt.Sprintf("%s has text that goes stale: %s", f.field, strings.Join(hits, ", ")), Fix: "say what the command does, not a status, count, price or date, or add [metadata('" + IgnoreKey + "', '" + RuleVolatileText + "')] to the recipe if the text is stable"})
 				}
 			}
 		}
@@ -74,9 +72,7 @@ func adviceRules(entries []registryEntry, items []item) []Finding {
 			for _, m := range detailFlag.FindAllStringSubmatch(e.Detail, -1) {
 				if f := m[1]; !declared[f] && !seen[f] {
 					seen[f] = true
-					out = append(out, Finding{RuleDetailFlagNoRow, Warning, subject,
-						fmt.Sprintf("detail names the flag %s, but no argument row declares it", f),
-						"add an argument row for the flag, or reword the detail, or add [metadata('" + IgnoreKey + "', '" + RuleDetailFlagNoRow + "')] to the recipe"})
+					out = append(out, Finding{Rule: RuleDetailFlagNoRow, Severity: Warning, Subject: subject, Message: fmt.Sprintf("detail names the flag %s, but no argument row declares it", f), Fix: "add an argument row for the flag, or reword the detail, or add [metadata('" + IgnoreKey + "', '" + RuleDetailFlagNoRow + "')] to the recipe"})
 				}
 			}
 		}

@@ -178,3 +178,28 @@ func TestRuleRepeatedNameIsShownOnce(t *testing.T) {
 		t.Errorf("header repeats the rule:\n%s", out)
 	}
 }
+
+func TestCheckTextPrintsThePasteLineOnItsOwnLine(t *testing.T) {
+	dir := gitProject(t)
+	writeFile(t, dir+"/config/commands.json", `{"groups":{"core":{"commands":{"build":{"desc":"It's new"}}}}}`)
+	t.Chdir(dir)
+	r := checkEnv(`{"recipes":{"build":{"private":false,"doc":"Old","body":[],"parameters":[],"attributes":[]}},"modules":{}}`)
+	run([]string{"check"}, r.env)
+	out := r.out.String()
+	if !strings.Contains(out, "\n          paste: [doc(\"It's new\")]\n") {
+		t.Errorf("paste line:\n%s", out)
+	}
+	for _, line := range strings.Split(out, "\n") {
+		if strings.Contains(line, "paste:") && strings.Contains(line, "[registry-desc-diverges]") {
+			t.Errorf("the rule tag follows the paste line: %q", line)
+		}
+	}
+	r = checkEnv(`{"recipes":{"build":{"private":false,"doc":"Old","body":[],"parameters":[],"attributes":[]}},"modules":{}}`)
+	run([]string{"check", "--json"}, r.env)
+	var rep struct {
+		Findings []struct{ Message, Paste string }
+	}
+	if err := json.Unmarshal(r.out.Bytes(), &rep); err != nil || rep.Findings[0].Paste != `[doc("It's new")]` || strings.Contains(rep.Findings[0].Message, "paste") {
+		t.Errorf("json = %s", r.out.String())
+	}
+}
