@@ -1,6 +1,6 @@
 # Design note: `justz lint`
 
-Status: implemented in three steps (`recipe-long` and the opt-out, `module-shell-unset`, the two secret rules). The open questions at the end are decided; question 1 waits for the M9 pilot.
+Status: implemented in three steps (`recipe-long` and the opt-out, `module-shell-unset`, the two secret rules). The open questions at the end are decided; question 1 waits for real use of the rules.
 
 ## Purpose
 
@@ -131,7 +131,7 @@ When the dispatcher's body has a line with the text `--list` and a call to `just
 
 ## Open questions
 
-1. **Secrets in shell text (`ssh host "run $TOKEN"`, `curl -H "Authorization: Bearer $TOKEN"`, `docker run -e`, `sshpass -p`).** This is the shape the plan's audit found, and the two rules above catch it only when the secret arrives through a parameter or `{{ … }}`. Finding `$NAME` in the arguments of an external command means parsing shell: quoting, heredocs, `$( … )`, prefixes such as `timeout` and `exec`, and strings over several lines. The review built wrong results for each. Recommendation: not in v1. Run the M9 pilot with the two structural rules, look at what they miss in the real file, and design a shell-text rule against that evidence, or keep the guidance in the skill.
+1. **Secrets in shell text (`ssh host "run $TOKEN"`, `curl -H "Authorization: Bearer $TOKEN"`, `docker run -e`, `sshpass -p`).** This is the shape the plan's audit found, and the two rules above catch it only when the secret arrives through a parameter or `{{ … }}`. Finding `$NAME` in the arguments of an external command means parsing shell: quoting, heredocs, `$( … )`, prefixes such as `timeout` and `exec`, and strings over several lines. The review built wrong results for each. Recommendation: not in v1. Try the two structural rules on a real file, look at what they miss, and design a shell-text rule against that evidence, or keep the guidance in the skill.
 2. **Shebang recipes in `secret-interpolated`.** Recommendation: leave them out of v1, as above.
 3. **Line limit.** Recommendation: 40 body entries, identical to `assess`.
 4. **`secret-parameter` when the parameter has a default from the environment** (`deploy token=env('GH_TOKEN')`). The usual call types nothing, but the parameter still invites it. Recommendation: report it; the opt-out exists.
