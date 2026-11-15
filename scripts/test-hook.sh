@@ -89,8 +89,11 @@ else
 fi
 
 # 6. No justfile: nothing to check, so skip with a short note, even without justz.
+n=0
 for name in justfile Justfile JUSTFILE .justfile; do
-    d="$tmp/has-$name"
+    n=$((n + 1))
+    # numbered, so that the directories stay distinct on a case-insensitive filesystem
+    d="$tmp/has-$n"
     mkdir "$d"
     : > "$d/$name"
     set +e
