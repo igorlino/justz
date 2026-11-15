@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/igorlino/justz/internal/help"
+	"github.com/igorlino/justz/internal/textsafe"
 )
 
 // browse lets a person pick a group or command and shows it. It never prompts
@@ -34,7 +35,7 @@ func browse(proj *help.Project, opts help.Options, asJSON bool, e env) int {
 		self, _ := os.Executable()
 		lines := make([]string, len(rows))
 		for i, r := range rows {
-			lines[i] = r.Path() + "\t" + proj.CLI + " " + r.Path() + " — " + r.Desc
+			lines[i] = textsafe.Line(r.Path()) + "\t" + textsafe.Line(proj.CLI+" "+r.Path()+" — "+r.Desc)
 		}
 		var chosen string
 		if chosen, err = e.runFzf(fzf, self, lines); err == nil {

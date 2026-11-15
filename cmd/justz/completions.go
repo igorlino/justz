@@ -54,6 +54,11 @@ func completionNames() []string {
 	if d, err := shim.DefaultDirs(); err == nil {
 		if reg, err := d.Load(); err == nil {
 			for _, s := range reg.Shims {
+				// shims.json can be edited by hand and the names end up in a script
+				// that is eval'd, so only a name `shim add` would accept goes in.
+				if !shim.ValidPattern(s.Name) || !shim.ValidPattern(s.HelpName()) {
+					continue
+				}
 				set[s.Name], set[s.HelpName()] = true, true
 			}
 		}

@@ -93,6 +93,11 @@ func runGenerate(args []string, e env) int {
 		return 1
 	}
 
+	// A [doc] can hold DEL, C1 or bidi characters, which the JSON encoding leaves
+	// raw. The structure is ASCII, so cleaning the bytes is safe, and the overlay
+	// file gets the same text as the terminal.
+	data = []byte(textsafe.Text(string(data)))
+
 	if toStdout {
 		e.stdout.Write(data)
 		return 0

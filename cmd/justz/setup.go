@@ -107,6 +107,11 @@ func runSetup(args []string, e env) int {
 
 // pathHint is a command the user can run themselves. justz never runs it.
 func pathHint(d shim.Dirs) string {
+	// The hint is meant to be pasted into a shell, so a directory with a quote,
+	// a dollar sign, a backtick or a backslash would change what it runs.
+	if textsafe.Line(d.Shim) != d.Shim || strings.ContainsAny(d.Shim, "'\"$`\\") {
+		return fmt.Sprintf("add this directory to your PATH: %s", textsafe.Line(d.Shim))
+	}
 	if d.GOOS == "windows" {
 		return fmt.Sprintf(`[Environment]::SetEnvironmentVariable("Path", $env:Path + ";%s", "User")   (PowerShell, then open a new terminal)`, d.Shim)
 	}

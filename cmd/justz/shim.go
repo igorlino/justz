@@ -69,7 +69,11 @@ func runShim(args []string, e env) int {
 }
 
 func printJSON(e env, v any) int {
-	enc := json.NewEncoder(e.stdout)
+	// The strings come from a project, a registry or the environment. Go's JSON
+	// encoder escapes ESC and BEL but leaves DEL, C1 and bidi characters raw, and
+	// a tool that decodes the field and prints it sends them to a terminal. The
+	// structure is ASCII, so cleaning the encoded bytes is safe.
+	enc := json.NewEncoder(textsafe.NewWriter(e.stdout))
 	enc.SetIndent("", "  ")
 	if err := enc.Encode(v); err != nil {
 		fmt.Fprintf(e.stderr, "justz: %v\n", err)

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 
@@ -38,11 +37,8 @@ func runDoctor(args []string, e env) int {
 	}
 
 	if asJSON {
-		enc := json.NewEncoder(e.stdout)
-		enc.SetIndent("", "  ")
-		if err := enc.Encode(report); err != nil {
-			fmt.Fprintf(e.stderr, "justz doctor: %v\n", err)
-			return 1
+		if code := printJSON(e, report); code != 0 {
+			return code
 		}
 	} else {
 		fmt.Fprintf(e.stdout, "justz %s\n", report.Version)
