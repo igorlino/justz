@@ -16,7 +16,12 @@ for documentation; lint is about the recipes themselves.
 
 Rules:
 
-  recipe-long           A recipe body over 40 lines
+  recipe-long           A recipe body over 40 lines. The message counts the {{ }}
+                        interpolations, and those in single quotes or a quoted
+                        here-document, which cannot be moved to a script by
+                        exporting the value (JSON: interpolations,
+                        quotedInterpolations, escapedBraces). A flat list of
+                        invocations is the case for justz-ignore
   module-shell-unset    A module with linewise recipes that sets no shell, so
                         its recipes run with sh -cu and no pipefail. A set
                         shell line is the opt-out; there is no per-recipe one

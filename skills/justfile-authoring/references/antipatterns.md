@@ -137,7 +137,7 @@ for file in src/**/*.go; do
 done
 ```
 
-See: [recipe-patterns.md](recipe-patterns.md#script-extraction) for when to extract. `justz lint` reports a recipe body over 40 lines (`recipe-long`); the count includes blank lines and comments, the same measure as `justz assess`.
+See: [recipe-patterns.md](recipe-patterns.md#script-extraction) for when to extract. `justz lint` reports a recipe body over 40 lines (`recipe-long`); the count includes blank lines and comments, the same measure as `justz assess`. The finding also counts the `{{ }}` interpolations: one in single quotes or a quoted here-document cannot be moved by exporting the value and reading an environment variable, so find those first. Move the body behind a shebang wrapper that `exec`s the script, which keeps the error output identical, where a one-line wrapper adds "on line N". A flat list of invocations that other tests look up in the justfile is the case for `[metadata('justz-ignore', 'recipe-long')]`.
 
 ---
 
