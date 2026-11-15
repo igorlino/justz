@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 )
 
@@ -25,38 +26,95 @@ func (o Options) viewWidth() int {
 // word that is longer than a line. Trailing blanks are stripped. A newline in
 // the text starts a new line.
 func wrap(width int, text string) []string {
-	var out []string
-	for _, para := range strings.Split(text, "\n") {
-		line := ""
-		flush := func() {
-			out = append(out, strings.TrimRight(line, " "))
-			line = ""
-		}
-		for _, word := range strings.Fields(para) {
-			for utf8.RuneCountInString(word) > width {
-				if line != "" {
-					flush()
-				}
-				cut := string([]rune(word)[:width])
-				word = string([]rune(word)[width:])
-				out = append(out, cut)
-			}
-			switch {
-			case line == "":
-				line = word
-			case utf8.RuneCountInString(line)+1+utf8.RuneCountInString(word) <= width:
-				line += " " + word
-			default:
-				flush()
-				line = word
-			}
-		}
-		flush()
-	}
-	if len(out) == 0 {
-		return []string{""}
+	lines := wrapRunes(width, text)
+	out := make([]string, len(lines))
+	for i, l := range lines {
+		out[i] = string(l.runes)
 	}
 	return out
+}
+
+// wrapLine is one wrapped line. src[i] is the index, in the runes of the
+// original text, of the rune runes[i] came from. The space that joins two words
+// comes from the first blank of the run between them.
+type wrapLine struct {
+	runes []rune
+	src   []int
+}
+
+// wrapRunes is wrap with the source position of every rune, so a caller can
+// style the output by what the text said at that place.
+func wrapRunes(width int, text string) []wrapLine {
+	src := []rune(text)
+	var out []wrapLine
+	start := 0
+	for start <= len(src) {
+		end := start
+		for end < len(src) && src[end] != '\n' {
+			end++
+		}
+		out = append(out, wrapParagraph(width, src, start, end)...)
+		start = end + 1
+	}
+	if len(out) == 0 {
+		return []wrapLine{{}}
+	}
+	return out
+}
+
+// wrapParagraph wraps src[from:to], which holds no newline.
+func wrapParagraph(width int, src []rune, from, to int) []wrapLine {
+	var out []wrapLine
+	var line wrapLine
+	flush := func() {
+		out = append(out, line)
+		line = wrapLine{}
+	}
+	i := from
+	for i < to {
+		if unicode.IsSpace(src[i]) {
+			i++
+			continue
+		}
+		// A word: the run of non-blanks from i, and the blank before it.
+		gap := i - 1
+		for gap > from && unicode.IsSpace(src[gap-1]) {
+			gap--
+		}
+		j := i
+		for j < to && !unicode.IsSpace(src[j]) {
+			j++
+		}
+		for j-i > width {
+			if len(line.runes) > 0 {
+				flush()
+			}
+			out = append(out, wrapLine{runes: src[i : i+width], src: seq(i, i+width)})
+			i += width
+		}
+		word := wrapLine{runes: src[i:j], src: seq(i, j)}
+		switch {
+		case len(line.runes) == 0:
+			line = word
+		case len(line.runes)+1+len(word.runes) <= width:
+			line.runes = append(append(line.runes[:len(line.runes):len(line.runes)], ' '), word.runes...)
+			line.src = append(append(line.src, gap), word.src...)
+		default:
+			flush()
+			line = word
+		}
+		i = j
+	}
+	flush()
+	return out
+}
+
+func seq(a, b int) []int {
+	s := make([]int, b-a)
+	for i := range s {
+		s[i] = a + i
+	}
+	return s
 }
 
 var (
@@ -273,7 +331,7 @@ func CommandView(proj *Project, g *Group, c *Command, o Options) string {
 	if detail := cleanDetail(c.Detail); detail != "" {
 		p.b.WriteByte('\n')
 		p.line("  %s", p.s.bold("Details"))
-		for _, l := range wrap(w-6, detail) {
+		for _, l := range p.s.highlightLines(w-6, detail) {
 			if l == "" {
 				p.b.WriteByte('\n')
 				continue
