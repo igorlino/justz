@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -14,6 +15,9 @@ const escDir = "bad\x1b[31mdir\x1b]0;T\x07"
 
 func escProject(t *testing.T) string {
 	t.Helper()
+	if runtime.GOOS == "windows" {
+		t.Skip("Windows does not allow control characters in a file name")
+	}
 	dir := filepath.Join(t.TempDir(), escDir)
 	if err := os.MkdirAll(filepath.Join(dir, ".git"), 0o755); err != nil {
 		t.Fatal(err)
