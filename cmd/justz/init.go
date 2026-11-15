@@ -11,6 +11,9 @@ import (
 	"github.com/igorlino/justz/internal/textsafe"
 )
 
+// hooksDoc is the page with the pre-commit hook and the CI step.
+const hooksDoc = "https://github.com/igorlino/justz/blob/main/docs/hooks-and-ci.md"
+
 const initUsage = `Usage: justz init [--variant native|rich] [--name NAME] [--module NAME]... [--dry-run] [dir]
 
 Scaffold a justfile that documents itself, in dir (default: the current
@@ -150,6 +153,7 @@ func runInit(args []string, e env) int {
 	} else {
 		fmt.Fprintln(e.stdout, "next: add recipes with [doc] and [group], then run: just")
 	}
+	fmt.Fprintf(e.stdout, "then: run justz check before commits and in CI (a pre-commit hook and a GitHub Actions step to copy: %s)\n", hooksDoc)
 	return 0
 }
 

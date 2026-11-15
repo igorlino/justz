@@ -1,0 +1,19 @@
+# Hook definitions for the pre-commit framework (https://pre-commit.com).
+# Use it from a project's .pre-commit-config.yaml:
+#
+#   repos:
+#     - repo: https://github.com/igorlino/justz
+#       rev: vX.Y.Z   # the first release that ships this hook, then pin
+#       hooks:
+#         - id: justz-check
+#
+# language: system runs the justz that is on PATH. If it is not installed,
+# pre-commit stops with "Executable `justz` not found" and the commit fails:
+# the hook never passes silently.
+- id: justz-check
+  name: justz check
+  description: Check that the justfile, its [doc] lines and the command registry agree.
+  entry: justz check
+  language: system
+  pass_filenames: false
+  files: '(^|/)(justfile|Justfile|JUSTFILE|\.justfile)$|\.just$|(^|/)commands\.json$|(^|/)\.just-local-rich\.json$'

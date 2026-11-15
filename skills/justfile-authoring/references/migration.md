@@ -17,7 +17,8 @@ Do this as one reviewed change:
 6. **Replace the legacy shims.** A wrapper script that exec'd the skill's `jz` or `just --justfile …` becomes `justz shim add <root> --soft`. `justz` will not overwrite a file it did not write, so remove the old wrapper first. Replace the `source …/completion.zsh` line in the shell startup file with `eval "$(justz completions zsh)"` (bash: `bash`).
 7. **Run `justz fmt`**, then `justz check`, and fix what it reports: `[doc]` divergences, missing `[group]`, bare or long-flag examples.
 8. **Update docs.** README and `AGENTS.md` should say discovery is `just`, `just <ns>`, `justz help [group] <cmd>`; delete any instruction to read `commands.json` or `scripts/lib/help.sh`. Record the shape and the reason in `AGENTS.md`.
-9. **Verify** `just`, `just help`, `just <ns>`, `justz help <group> <cmd>`, `justz shim doctor`, and that completion works in a fresh shell. Then add an undocumented recipe, confirm `just check` fails, and remove it.
+9. **Enforce it.** Removing the old runtime guard also removes its coverage in CI and in commits, so add `justz check` back: a pre-commit hook (`justz-check` from the `igorlino/justz` repository, or the plain `scripts/pre-commit-hook.sh`) and a GitHub Actions job that installs a pinned `justz`. The snippets are in `docs/hooks-and-ci.md` of the `justz` repository. A hook must fail, not skip, when `justz` is missing; `JUSTZ_HOOK_SKIP_MISSING=1` is the explicit, loud opt-out.
+10. **Verify** `just`, `just help`, `just <ns>`, `justz help <group> <cmd>`, `justz shim doctor`, and that completion works in a fresh shell. Then add an undocumented recipe, confirm `just check` fails, and remove it.
 
 Withdrawn advice from older versions: "do not run `just --help`, read `commands.json`." `just --list --list-submodules` and `just --dump --dump-format json` cannot be stale; prefer them for discovery in any repo.
 

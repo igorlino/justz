@@ -35,6 +35,7 @@ metadata:
 |---|---|
 | What can this project do? | `justz help` (summary), `justz help --expanded`, `justz help <group>`, `justz help [group] <command>`, add `-j` for JSON |
 | Focused docs for one command, examples first | `justz help [group] <command>` (exact name or unique prefix; an ambiguous name exits `2` and lists the groups). After the options it prints the command's longer **Details**, if the project wrote any; `-j` carries it as `detail` (not in the array printed for an ambiguous name) |
+| Run the check before commits and in CI | the snippets in `docs/hooks-and-ci.md` of the `justz` repository: a pre-commit hook (`justz-check`), a plain git hook that fails loudly without `justz` (`JUSTZ_HOOK_SKIP_MISSING=1` skips), a GitHub Actions job |
 | Is the documentation in sync? | `justz check` (`--json`, `--strict` makes warnings fail, `--rule <name>` shows one rule; counts and the exit code follow the shown findings, so it is for reading, not for gating CI: it can hide errors and exit `0`; an unknown name exits `2` and lists the valid ones) |
 | Advice on the recipes (long bodies, secrets, a module with no shell) | `justz lint` (`--json`, `--strict` makes warnings fail, `--rule <name>` as in `check`) |
 | Start a project with a self-documenting justfile | `justz init [dir]` (`--variant native\|rich`, `--name`, `--module` repeated, `--dry-run` writes nothing) |
