@@ -1,0 +1,18 @@
+
+  dm ops check
+  ────────────────────────────────────────────────────────
+  Check the docs
+
+  Options
+    --strict  Warnings fail
+
+  Exit codes
+    0   no errors
+    1   an error�[31m
+    2   usage error
+    10  a rare code with a long meaning that has to wrap
+        onto a second line at the zoom width
+
+  Details
+    A detail.
+

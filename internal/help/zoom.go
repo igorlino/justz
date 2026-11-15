@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -382,6 +383,29 @@ func CommandView(proj *Project, g *Group, c *Command, o Options) string {
 		for _, a := range c.Args {
 			lines := wrap(dw, argDescription(a))
 			p.line("    %s%s", p.s.cyan(pad(a.Name, col)), p.s.dim(lines[0]))
+			for _, l := range lines[1:] {
+				p.line("    %s%s", strings.Repeat(" ", col), p.s.dim(l))
+			}
+		}
+	}
+
+	if len(c.Exits) > 0 {
+		p.b.WriteByte('\n')
+		p.line("  %s", p.s.bold("Exit codes"))
+		col := 0
+		for _, e := range c.Exits {
+			if n := len(strconv.Itoa(e.Code)); n > col {
+				col = n
+			}
+		}
+		col += 2
+		mw := w - 4 - col
+		if mw < 24 {
+			mw = 24
+		}
+		for _, e := range c.Exits {
+			lines := wrap(mw, e.Meaning)
+			p.line("    %s%s", p.s.cyan(pad(strconv.Itoa(e.Code), col)), p.s.dim(lines[0]))
 			for _, l := range lines[1:] {
 				p.line("    %s%s", strings.Repeat(" ", col), p.s.dim(l))
 			}

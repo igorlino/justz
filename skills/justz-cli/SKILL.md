@@ -13,7 +13,7 @@ description: >
 metadata:
   author: igorlino
   domain: tooling
-  version: "0.3.0"
+  version: "0.4.0"
 ---
 
 # `justz` CLI Skill
@@ -22,10 +22,11 @@ metadata:
 
 ## Rules
 
-- **Check the binary first.** `command -v justz && justz --version`. If `justz` is missing, tell the user how to install it and stop; never install it yourself and never fall back to a hand-written help script. Install options: `brew install igorlino/tap/justz`, `go install github.com/igorlino/justz/cmd/justz@latest`, the install script, or the release archives (Windows: the release `.zip`). `init`, `lint` and `schema` need 0.6.0 or newer; a command's `detail` text and the terminal-safe output need 0.7.0 or newer.
+- **Check the binary first.** `command -v justz && justz --version`. If `justz` is missing, tell the user how to install it and stop; never install it yourself and never fall back to a hand-written help script. Install options: `brew install igorlino/tap/justz`, `go install github.com/igorlino/justz/cmd/justz@latest`, the install script, or the release archives (Windows: the release `.zip`). `init`, `lint` and `schema` need 0.6.0 or newer; a command's `detail` text and the terminal-safe output need 0.7.0 or newer; `hasDetail`, `exits` and a command's `seeAlso` need the release after 0.7.0.
 - **Discover from the CLI, not the source.** `justz --help`, `justz <command> --help`, and `justz help` for the project's own commands. `doctor` and `shim list` have no `--help` of their own; use `justz --help` and `justz shim --help`. Do not read `commands.json` or the justfile only to learn flags.
 - **Use `--json` in agents.** `doctor`, `check`, `lint`, `assess`, `resolve`, `setup` and every `shim` command accept `--json` (`help` uses `-j`). `fmt`, `generate`, `completions`, `init` and `schema` do not. Parse the JSON; do not scrape the text tables.
 - **Read a command's text with `justz help <group> <command> -j`.** Its JSON is the supported way to read what a command is documented as, in a script, a test or an agent. `desc` plus `detail` is the text of a command: the long text of a command can move from `desc` to `detail`, so match on both, never on `desc` alone. Reading `config/commands.json` (or `just --list` text) directly is not part of the contract. Example: `justz help core test -j | jq '{desc, detail}'` prints `{"desc": "Run the test suite", "detail": "Runs only the unit tests; ..."}`.
+- **Before running a command, read its zoom when it has one.** `justz help <group> -j` lists a group's commands, each with `hasDetail`: when it is true, `justz help <group> <command> -j` has a `detail` with facts the `desc` leaves out (what it needs, what it changes). The same zoom has `exits`, an object from exit code to meaning, when the command documents its codes: read it to know which codes are expected and what to do on each. `exits` and `detail` are only as current as their author, so a command without them is not documented as safe or as failing in any way.
 - **Read the exit code.** `0` success, `1` a check failed or an error, `2` usage error. `resolve` adds `3` (no match). With `--json`, a failed check or no match still prints its JSON document; an operational or usage error prints a plain message on stderr and no JSON. `check` fails only on errors, so warnings (common) exit `0` unless `--strict`. `lint` reports only warnings, so it exits `0` unless `--strict`. `init` exits `1` when it refuses to write because a file is in the way, and `2` for a bad name or option.
 - **Run from the project.** Commands read the justfile of the current directory (or `JUSTZ_CONFIG` for the registry). A shim (`tz`, `jz`) runs for its own project from any directory.
 - **Never edit derived files.** `.just-local-rich.json` is written by `justz generate`; re-run it. `justz` refuses to write it when git tracks it.

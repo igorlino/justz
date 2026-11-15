@@ -18,7 +18,7 @@ It reads the justfile through just --dump and, when there is one, the registry
   registry-missing, registry-stale, registry-desc-diverges,
   registry-key-signature, registry-shape, registry-desc-long, registry-unsorted
   example-bare-command, example-single-flag, example-long-flag,
-  example-enum-missing, example-flag-unknown (a warning), volatile-text and
+  example-enum-missing, example-flag-unknown (a warning), registry-exits, volatile-text and
   detail-flag-no-row, detail-long, detail-no-paragraphs, detail-restates-desc
   (advice, warnings), default-public (a public default recipe: a warning,
   so check --strict fails on it; it is a dispatcher, not a command, so it is

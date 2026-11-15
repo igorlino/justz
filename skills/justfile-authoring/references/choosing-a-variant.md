@@ -55,7 +55,7 @@ vendored-bash renderer:
   checked that a JSON entry *existed*, never that it matched. Several
   divergences were semantic, not cosmetic.
 - **Long descriptions make two copies harder to keep equal.** In the largest
-  registry we have seen, 149 of 249 commands had a `desc` over 120 characters.
+  registry we have seen, most commands had a `desc` over 120 characters.
   With `justz` 0.7.0 the long text goes in `detail`, so `desc` and `[doc]` stay
   one short, equal line. That makes the check easier to keep green; it does not
   make the divergence above any less true.

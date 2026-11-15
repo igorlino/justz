@@ -59,6 +59,9 @@ func (c *Command) sanitize() {
 	c.Desc = textsafe.Line(c.Desc)
 	c.Example = textsafe.Line(c.Example)
 	c.Heading = textsafe.Line(c.Heading)
+	for i := range c.Exits {
+		c.Exits[i].Meaning = textsafe.Line(c.Exits[i].Meaning)
+	}
 	for i := range c.SeeAlso {
 		c.SeeAlso[i] = textsafe.Line(c.SeeAlso[i])
 	}

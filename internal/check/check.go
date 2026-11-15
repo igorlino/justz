@@ -44,6 +44,7 @@ const (
 	RuleExampleFlagUnknown = "example-flag-unknown"
 	RuleVolatileText       = "volatile-text"
 	RuleSeeAlso            = "registry-see-also"
+	RuleExits              = "registry-exits"
 	RuleDetailLong         = "detail-long"
 	RuleDetailNoParagraphs = "detail-no-paragraphs"
 	RuleDetailRestatesDesc = "detail-restates-desc"
@@ -56,7 +57,7 @@ var Rules = []string{
 	RuleDocMissing, RuleGroupMissing, RuleVariadic, RuleDefaultPublic, RuleRegistryMissing,
 	RuleRegistryStale, RuleRegistryDesc, RuleKeySignature, RuleRegistryShape, RuleDescLong,
 	RuleUnsorted, RuleExampleBare, RuleExampleSingle, RuleExampleLongFlag, RuleExampleEnumUnset,
-	RuleExampleFlagUnknown, RuleVolatileText, RuleDetailFlagNoRow, RuleDocMultiline, RuleSeeAlso,
+	RuleExampleFlagUnknown, RuleVolatileText, RuleDetailFlagNoRow, RuleDocMultiline, RuleSeeAlso, RuleExits,
 	RuleDetailLong, RuleDetailNoParagraphs, RuleDetailRestatesDesc,
 }
 
@@ -294,6 +295,8 @@ type registryEntry struct {
 	Detail     string
 	DetailText string // the detail with its line breaks, for the paragraph rule
 	SeeAlso    []string
+	ExitKeys   []string // the keys of the exits map, as written
+	ExitBlank  []string // the keys whose meaning is blank
 	Extra      bool
 	Args       []argEntry
 }
@@ -328,6 +331,14 @@ func registryEntries(reg *orderedjson.Value) []registryEntry {
 					for _, s := range sa.Arr {
 						if s.Kind == orderedjson.String {
 							e.SeeAlso = append(e.SeeAlso, textsafe.Line(s.Str))
+						}
+					}
+				}
+				if ex := c.Val.Get("exits"); ex != nil && ex.Kind == orderedjson.Object {
+					for _, m := range ex.Obj {
+						e.ExitKeys = append(e.ExitKeys, textsafe.Line(m.Key))
+						if m.Val != nil && m.Val.Kind == orderedjson.String && strings.TrimSpace(m.Val.Str) == "" {
+							e.ExitBlank = append(e.ExitBlank, textsafe.Line(m.Key))
 						}
 					}
 				}
@@ -413,6 +424,7 @@ func registryRules(in Input, items []item) []Finding {
 	}
 
 	out = append(out, seeAlsoRules(entries)...)
+	out = append(out, exitsRules(entries)...)
 	out = append(out, adviceRules(entries, items)...)
 
 	if f, ok := orderFinding(in.RegistrySource); ok {

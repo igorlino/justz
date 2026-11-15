@@ -73,7 +73,7 @@ One line, equal to the `[doc]` (`check` requires it). It is what a reader sees i
 
 Empty is correct for most commands. Write one only when a reader who has found the command still needs a fact that `desc` cannot carry.
 
-- Aim for about 400 characters. The advice rules below warn over 600.
+- Aim for about 400 characters. 400 is what to aim for; `check` only warns at 600, so a `detail` between the two is acceptable but should earn its length.
 - Facts, not narrative: no history, no "we", no tour of the script.
 - In this order, and stop when the facts run out:
   1. What the command does not do.
@@ -110,7 +110,7 @@ Do it by hand, one command at a time: read what the recipe does, write the `desc
 ## Plan
 
 1. `Detail` on the help model, the zoom section, the JSON field, the schema property and the new `registry-desc-long` fix text, with tests. One PR.
-2. At release time, the docs that describe the field wait for the release that ships it, as before: `skills/justfile-authoring/references/variant-rich.md` (the `desc` bullet, the check table and the schema reference), `SKILL.md` (the description rules), `references/choosing-a-variant.md` (a note beside the 20-of-32 evidence), `docs/design/schema.md` (its field table, which says to update it), and the `justz-cli` skill only if it names description length. The README has no such text.
+2. The docs that describe the field exist now: `skills/justfile-authoring/references/variant-rich.md` (the `desc` and `detail` rules, the check table and the schema reference), `SKILL.md` (the description rules), `references/choosing-a-variant.md` (a note beside the 20-of-32 evidence), `docs/design/schema.md` (its field table), the `justz-cli` skill and the README. Keep them in step with this note.
 3. In a consumer: rewrite the long descriptions by hand, as in "Moving existing long descriptions".
 
 ### Drift
