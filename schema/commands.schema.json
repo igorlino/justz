@@ -114,6 +114,11 @@
           "description": "Environment variables the command reads, as rows. A flag goes in args, a variable here. justz check reports a row without a name, a duplicate name and a wrong type; it cannot tell whether the command reads the variable.",
           "items": { "$ref": "#/definitions/envVar" }
         },
+        "tags": {
+          "type": "array",
+          "description": "What the command touches, as free strings such as read-only, destructive, production, spends, asks-first. A tag is a claim: a missing tag means not declared, never safe. justz check keeps asks-first in step with the recipe's [confirm] and reports contradictions and duplicates; it does not restrict the words.",
+          "items": { "type": "string", "description": "A tag, lower case with dashes by convention." }
+        },
         "seeAlso": {
           "type": "array",
           "description": "Keys of related commands, as group.command (core.build for a top-level command). justz check reports a key that does not exist.",

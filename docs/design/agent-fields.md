@@ -1,6 +1,6 @@
 # Design note: structured fields for agents (`hasDetail`, `exits`, `env`, `tags`)
 
-Status: proposal. Step 1 of the plan (`hasDetail` and `exits`) and step 2 (`env` rows) are implemented, on the recommended answers to open questions 1 to 3 and, for step 2, on the answers to questions 4 to 6 that the maintainer accepted; `tags` is not. The open questions at the end are recommendations that need the maintainer's decision, not decisions.
+Status: all three steps of the plan are implemented (`hasDetail` and `exits`, `env` rows, `tags`). Step 1 follows the recommended answers to open questions 1 to 3; steps 2 and 3 follow the answers to questions 4 to 11 that the maintainer accepted. The advice rule that a `detail` names a variable without an `env` row (question 6) is a remaining follow-up. In `check`, the contradiction and duplicate rule is `registry-tags` and the `[confirm]` rule is `tags-confirm`, both warnings; `tags-confirm` can be silenced per recipe with `justz-ignore`, and an `extra` entry, which has no recipe, gets no `tags-confirm`.
 
 ## Problem
 
@@ -152,7 +152,7 @@ Each step updates the README, the `justz-cli` skill, the variant-rich reference 
 
 ## Open questions
 
-These are recommendations for the maintainer to confirm or change. None is decided.
+These were recommendations for the maintainer. The maintainer accepted questions 4 to 11 as recommended; questions 1 to 3 were implemented as recommended.
 
 1. **`hasDetail` always present, or only when true.** Recommendation: always present, so a reader can tell "no detail" from "an older `justz`".
 2. **`exits` keys.** Integers only, or also a word such as `other`. Recommendation: integers only, 0 to 255; it can be extended later.

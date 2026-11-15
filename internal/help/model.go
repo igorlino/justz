@@ -5,6 +5,7 @@ package help
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/igorlino/justz/internal/orderedjson"
 	"github.com/igorlino/justz/internal/registry"
@@ -28,6 +29,9 @@ type Command struct {
 	Exits []ExitCode
 	// Env is the environment variables the command reads, in name order.
 	Env []EnvVar
+	// Tags is what the command touches, in the order of the registry. It is a
+	// claim: absence means not declared, never safe.
+	Tags []string
 	// SeeAlso lists keys (group.command) of related commands.
 	SeeAlso []string
 	Heading string // a display heading from a [group] attribute (native projects)
@@ -201,6 +205,13 @@ func readCommands(v *orderedjson.Value) []Command {
 				c.Env = append(c.Env, v)
 			}
 			sort.SliceStable(c.Env, func(i, j int) bool { return c.Env[i].Name < c.Env[j].Name })
+		}
+		if tg := m.Val.Get("tags"); tg != nil && tg.Kind == orderedjson.Array {
+			for _, s := range tg.Arr {
+				if s != nil && s.Kind == orderedjson.String && strings.TrimSpace(s.Str) != "" {
+					c.Tags = append(c.Tags, s.Str)
+				}
+			}
 		}
 		if sa := m.Val.Get("seeAlso"); sa != nil && sa.Kind == orderedjson.Array {
 			for _, s := range sa.Arr {

@@ -65,6 +65,7 @@ type CommandNode struct {
 	Desc     string        `json:"desc"`
 	Detail   string        `json:"detail,omitempty"`
 	SeeAlso  []string      `json:"seeAlso,omitempty"`
+	Tags     []string      `json:"tags,omitempty"`
 	Exits    ExitCodes     `json:"exits,omitempty"`
 	Env      []EnvVar      `json:"env,omitempty"`
 	Args     []ArgNode     `json:"args"`
@@ -114,6 +115,7 @@ func CommandJSON(proj *Project, g *Group, c *Command) CommandNode {
 		Args: []ArgNode{}, Examples: []ExampleNode{},
 	}
 	n.SeeAlso = seeAlsoKeys(g, c)
+	n.Tags = c.Tags
 	n.Exits = c.Exits
 	n.Env = c.Env
 	for _, a := range c.Args {

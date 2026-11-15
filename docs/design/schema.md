@@ -50,6 +50,7 @@ The fields, from `internal/help/model.go` and `internal/registry/canonical.go`:
 | command | `detail` | string | optional longer text, shown only in the zoom (added with 0.7.0) |
 | command | `exits` | object of string | exit code (an integer 0 to 255, as a string key) to meaning; the key rule is in `check` (`registry-exits`), not in the schema |
 | command | `env` | array of env row | environment variables the command reads; a flag goes in `args`, a variable here |
+| command | `tags` | array of string | what the command touches; free words (the recommended ones are in the `justfile-authoring` skill), absence means not declared; `check` keeps `asks-first` in step with `[confirm]` (`tags-confirm`) and warns on contradictions and duplicates (`registry-tags`) |
 | command | `seeAlso` | array of string | keys of related commands, `group.command` (`core.build` for a top-level one); see `docs/design/see-also.md` |
 | command | `args` | array of argument | |
 | argument | `name`, `desc` | string | |
