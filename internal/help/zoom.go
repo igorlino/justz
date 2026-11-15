@@ -412,6 +412,29 @@ func CommandView(proj *Project, g *Group, c *Command, o Options) string {
 		}
 	}
 
+	if len(c.Env) > 0 {
+		p.b.WriteByte('\n')
+		p.line("  %s", p.s.bold("Environment"))
+		col := 0
+		for _, e := range c.Env {
+			if n := utf8.RuneCountInString(e.Name); n > col {
+				col = n
+			}
+		}
+		col += 2
+		dw := w - 4 - col
+		if dw < 24 {
+			dw = 24
+		}
+		for _, e := range c.Env {
+			lines := wrap(dw, envDescription(e))
+			p.line("    %s%s", p.s.cyan(pad(e.Name, col)), p.s.dim(lines[0]))
+			for _, l := range lines[1:] {
+				p.line("    %s%s", strings.Repeat(" ", col), p.s.dim(l))
+			}
+		}
+	}
+
 	if detail := cleanDetail(c.Detail); detail != "" {
 		p.b.WriteByte('\n')
 		p.line("  %s", p.s.bold("Details"))
@@ -467,4 +490,17 @@ func Overview(proj *Project, o Options) string {
 	p.line("  %s %s  %s  %s %s", p.s.dim("Next:"), p.s.green(o.helpCmd()+" <group>"), p.s.green(o.helpCmd()+" [group] <command>"), p.s.green(o.helpCmd()+" --browse"), p.s.dim("(browse)"))
 	p.b.WriteByte('\n')
 	return p.b.String()
+}
+
+// envDescription is the text of an env row: the description, then (required)
+// or (default: ...). A required variable has no default worth showing.
+func envDescription(e EnvVar) string {
+	d := e.Desc
+	switch {
+	case e.Required:
+		d = strings.TrimSpace(d + " (required)")
+	case e.Default != "":
+		d = strings.TrimSpace(d + " (default: " + e.Default + ")")
+	}
+	return d
 }

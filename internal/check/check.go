@@ -45,6 +45,7 @@ const (
 	RuleVolatileText       = "volatile-text"
 	RuleSeeAlso            = "registry-see-also"
 	RuleExits              = "registry-exits"
+	RuleEnv                = "registry-env"
 	RuleDetailLong         = "detail-long"
 	RuleDetailNoParagraphs = "detail-no-paragraphs"
 	RuleDetailRestatesDesc = "detail-restates-desc"
@@ -57,7 +58,7 @@ var Rules = []string{
 	RuleDocMissing, RuleGroupMissing, RuleVariadic, RuleDefaultPublic, RuleRegistryMissing,
 	RuleRegistryStale, RuleRegistryDesc, RuleKeySignature, RuleRegistryShape, RuleDescLong,
 	RuleUnsorted, RuleExampleBare, RuleExampleSingle, RuleExampleLongFlag, RuleExampleEnumUnset,
-	RuleExampleFlagUnknown, RuleVolatileText, RuleDetailFlagNoRow, RuleDocMultiline, RuleSeeAlso, RuleExits,
+	RuleExampleFlagUnknown, RuleVolatileText, RuleDetailFlagNoRow, RuleDocMultiline, RuleSeeAlso, RuleExits, RuleEnv,
 	RuleDetailLong, RuleDetailNoParagraphs, RuleDetailRestatesDesc,
 }
 
@@ -297,6 +298,7 @@ type registryEntry struct {
 	SeeAlso    []string
 	ExitKeys   []string // the keys of the exits map, as written
 	ExitBlank  []string // the keys whose meaning is blank
+	EnvNames   []string // the name of each env row as written, "" when it has none
 	Extra      bool
 	Args       []argEntry
 }
@@ -340,6 +342,18 @@ func registryEntries(reg *orderedjson.Value) []registryEntry {
 						if m.Val != nil && m.Val.Kind == orderedjson.String && strings.TrimSpace(m.Val.Str) == "" {
 							e.ExitBlank = append(e.ExitBlank, textsafe.Line(m.Key))
 						}
+					}
+				}
+				if ev := c.Val.Get("env"); ev != nil && ev.Kind == orderedjson.Array {
+					for _, r := range ev.Arr {
+						if r == nil || r.Kind != orderedjson.Object {
+							continue
+						}
+						name := ""
+						if n := r.Get("name"); n != nil && n.Kind == orderedjson.String {
+							name = textsafe.Line(n.Str)
+						}
+						e.EnvNames = append(e.EnvNames, name)
 					}
 				}
 				if x := c.Val.Get("detail"); x != nil && x.Kind == orderedjson.String {
@@ -425,6 +439,7 @@ func registryRules(in Input, items []item) []Finding {
 
 	out = append(out, seeAlsoRules(entries)...)
 	out = append(out, exitsRules(entries)...)
+	out = append(out, envRules(entries)...)
 	out = append(out, adviceRules(entries, items)...)
 
 	if f, ok := orderFinding(in.RegistrySource); ok {

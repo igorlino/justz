@@ -1,0 +1,23 @@
+
+  dm ops deploy
+  ────────────────────────────────────────────────────────
+  Deploy
+
+  Options
+    --dry  Do not copy
+
+  Exit codes
+    0  ok
+
+  Environment
+    BAD�[31m              Control� char (default: x�]0;t�)
+    DEPLOY_LEGACY_STATIC  Also copy the legacy static files
+                          (default: unset)
+    PLAIN                 No marker
+    STORAGE_HOST          Host of the storage box, which is
+                          long enough to wrap onto a second
+                          line (required)
+
+  Details
+    A detail.
+

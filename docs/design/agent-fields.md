@@ -1,6 +1,6 @@
 # Design note: structured fields for agents (`hasDetail`, `exits`, `env`, `tags`)
 
-Status: proposal. Step 1 of the plan (`hasDetail` and `exits`) is implemented on the recommended answers to open questions 1 to 3, as assumptions pending the maintainer's decision; env rows and `tags` are not. The open questions at the end are recommendations that need the maintainer's decision, not decisions.
+Status: proposal. Step 1 of the plan (`hasDetail` and `exits`) and step 2 (`env` rows) are implemented, on the recommended answers to open questions 1 to 3 and, for step 2, on the answers to questions 4 to 6 that the maintainer accepted; `tags` is not. The open questions at the end are recommendations that need the maintainer's decision, not decisions.
 
 ## Problem
 
