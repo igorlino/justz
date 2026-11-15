@@ -102,6 +102,16 @@ Then check your setup:
 justz doctor
 ```
 
+### Run `justz check` before commits and in CI
+
+A project that drops its own documentation guard needs something that runs `justz check` automatically. [`docs/hooks-and-ci.md`](docs/hooks-and-ci.md) has snippets to copy:
+
+- a hook for the [pre-commit](https://pre-commit.com) framework (`.pre-commit-hooks.yaml` in this repository, hook id `justz-check`);
+- a plain git hook, `scripts/pre-commit-hook.sh`, for projects without the framework;
+- a GitHub Actions job that installs a pinned `justz` with the verifying install script and runs `justz check`.
+
+Neither hook passes silently when `justz` is missing: the commit fails, and `JUSTZ_HOOK_SKIP_MISSING=1` skips it with a loud warning on stderr.
+
 ### Verify a download
 
 Releases include SHA256 checksums and build provenance attestations. To check an archive you downloaded:

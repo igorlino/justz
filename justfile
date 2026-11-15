@@ -56,6 +56,18 @@ test-install:
 test-install:
     @echo "install.sh is for macOS, Linux and WSL2; skipping on Windows"
 
+[doc('Test the pre-commit hook script: fails loudly without justz, skips only on request')]
+[group('check')]
+[unix]
+test-hook:
+    sh scripts/test-hook.sh
+
+[doc('Test the pre-commit hook script (skipped on Windows)')]
+[group('check')]
+[windows]
+test-hook:
+    @echo "the hook script is for macOS, Linux and WSL2; skipping on Windows"
+
 [doc('Run the shim collision checks in a clean container (needs Docker)')]
 [group('check')]
 [unix]
@@ -73,6 +85,6 @@ test-completion-containers:
 verify-install:
     sh scripts/verify-install.sh
 
-[doc('Everything CI runs: format check, vet, test, build, install script')]
+[doc('Everything CI runs: format check, vet, test, build, install script, hook script')]
 [group('check')]
-ci: fmt-check vet test build test-install
+ci: fmt-check vet test build test-install test-hook

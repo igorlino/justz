@@ -29,6 +29,9 @@ func TestInitWritesNativeProject(t *testing.T) {
 	if !strings.Contains(out.String(), "wrote just/build.just") {
 		t.Errorf("stdout: %s", out)
 	}
+	if !strings.Contains(out.String(), "then: run justz check before commits and in CI") || !strings.Contains(out.String(), "docs/hooks-and-ci.md") {
+		t.Errorf("init should point at the hook and CI snippets: %s", out)
+	}
 }
 
 func TestInitRichWritesRegistry(t *testing.T) {
