@@ -20,7 +20,7 @@ It reads the justfile through just --dump and, when there is one, the registry
   example-bare-command, example-single-flag, example-long-flag,
   example-enum-missing, example-flag-unknown (a warning), registry-exits,
   registry-env, registry-tags (a warning), volatile-text and
-  detail-flag-no-row, detail-long, detail-no-paragraphs, detail-restates-desc,
+  detail-flag-no-row, detail-env-no-row, detail-long, detail-no-paragraphs, detail-restates-desc,
   tags-confirm (advice, warnings), default-public (a public default recipe: a warning,
   so check --strict fails on it; it is a dispatcher, not a command, so it is
   not counted)
@@ -43,7 +43,11 @@ it. The JSON keeps the fix on every finding.
 volatile-text finds text in a desc or detail that goes stale (TODO, FIXME, WIP,
 placeholder, not implemented, coming soon, a count such as "11 checks", a
 price, a date). detail-flag-no-row finds a flag that a detail names but no
-argument row declares. detail-long (over 600 characters), detail-no-paragraphs
+argument row declares. detail-env-no-row finds an environment variable that a
+detail names but no env row declares: an upper case name with an underscore
+(NO_COLOR), or one written as $NAME, ${NAME}, export NAME or NAME= (acronyms
+like HTTP, flags, paths and file names do not count; a constant like UTF_8 can fire, so silence it;
+a name under 3 characters is not caught). detail-long (over 600 characters), detail-no-paragraphs
 (over 300 with no blank line) and detail-restates-desc (the detail opens with
 the words of the desc, for a desc of four words or more) are about the shape of
 a detail. They are warnings, so check --strict fails on them; a detail that is

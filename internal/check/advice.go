@@ -6,11 +6,13 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 )
 
 // IgnorableRules lists the rules of check that a recipe may silence with
 // [metadata('justz-ignore', '<rule>')], the attribute justz lint uses.
-var IgnorableRules = []string{RuleVolatileText, RuleDetailFlagNoRow, RuleDetailLong, RuleDetailNoParagraphs, RuleDetailRestatesDesc, RuleTagsConfirm}
+var IgnorableRules = []string{RuleVolatileText, RuleDetailFlagNoRow, RuleDetailEnvNoRow, RuleDetailLong, RuleDetailNoParagraphs, RuleDetailRestatesDesc, RuleTagsConfirm}
 
 // IgnoreKey is the first value of that attribute.
 const IgnoreKey = "justz-ignore"
@@ -40,6 +42,59 @@ var volatilePatterns = []*regexp.Regexp{
 // path or a URL is not read as a flag. A short flag is one letter.
 var detailFlag = regexp.MustCompile("(?:^|[\\s(\\[`'\"])(--[A-Za-z][A-Za-z0-9-]*|-[A-Za-z])(?:[=\\s,.;:)\\]`'\"]|$)")
 
+// envToken is a candidate environment variable name in prose: upper case
+// letters, digits and underscores, three characters or more.
+var envToken = regexp.MustCompile(`[A-Z][A-Z0-9_]+[A-Z0-9]`)
+
+// detailEnvNames lists the environment variables a detail names, in order. A
+// name counts when it has an underscore (NO_COLOR, API_TOKEN), or when it is
+// written as a variable: after $ or ${, after export, or before = (HOME=/x).
+// An acronym (HTTP, JSON, TLS) therefore never counts, nor a word such as
+// README, unless it is written as a variable. A token inside another word, after
+// a hyphen, slash, dot, ? or & (a flag, a path, a dotted name, a URL query key)
+// or before a dot and a letter or a slash (a file name) is skipped, unless it is
+// written as $NAME or ${NAME}, so $HOME/bin is reported. Prose constants with an
+// underscore (UTF_8, SHA_256, READ_ONLY) can fire; justz-ignore is the opt-out.
+// A name of fewer than three characters ($CI) is not caught.
+func detailEnvNames(s string) []string {
+	var out []string
+	seen := map[string]bool{}
+	isWord := func(r rune) bool { return r == '_' || unicode.IsLetter(r) || unicode.IsDigit(r) }
+	for _, m := range envToken.FindAllStringIndex(s, -1) {
+		start, end := m[0], m[1]
+		name := s[start:end]
+		if seen[name] {
+			continue
+		}
+		before, after := s[:start], s[end:]
+		if r, _ := utf8.DecodeLastRuneInString(before); start > 0 && isWord(r) {
+			continue
+		}
+		if r, _ := utf8.DecodeRuneInString(after); end < len(s) && isWord(r) {
+			continue
+		}
+		dollar := strings.HasSuffix(before, "$") || strings.HasSuffix(before, "${")
+		asVar := dollar || strings.HasSuffix(before, "export ") || strings.HasPrefix(after, "=") && !strings.HasPrefix(after, "==")
+		if !dollar {
+			if strings.HasSuffix(before, "-") || strings.HasSuffix(before, "/") || strings.HasSuffix(before, ".") || strings.HasSuffix(before, "?") || strings.HasSuffix(before, "&") {
+				continue
+			}
+			if strings.HasPrefix(after, "/") {
+				continue
+			}
+			if r, _ := utf8.DecodeRuneInString(after[min(1, len(after)):]); strings.HasPrefix(after, ".") && isWord(r) {
+				continue
+			}
+		}
+		if !asVar && !strings.Contains(name, "_") {
+			continue
+		}
+		seen[name] = true
+		out = append(out, name)
+	}
+	return out
+}
+
 // adviceRules reports volatile text in desc and detail, and flags that detail
 // names without an argument row. Both are warnings. A recipe silences either
 // with [metadata('justz-ignore', '<rule>')].
@@ -67,6 +122,17 @@ func adviceRules(entries []registryEntry, items []item) []Finding {
 			}
 		}
 		out = append(out, detailShapeFindings(e, subject, ignored)...)
+		if !ignored[RuleDetailEnvNoRow] && e.Detail != "" {
+			rows := map[string]bool{}
+			for _, n := range e.EnvNames {
+				rows[n] = true
+			}
+			for _, n := range detailEnvNames(e.Detail) {
+				if !rows[n] {
+					out = append(out, Finding{Rule: RuleDetailEnvNoRow, Severity: Warning, Subject: subject, Message: fmt.Sprintf("detail names the environment variable %s, but no env row declares it", n), Fix: "add an env row for the variable, or reword the detail (a prose constant such as UTF_8 is a false hit), or add [metadata('" + IgnoreKey + "', '" + RuleDetailEnvNoRow + "')] to the recipe"})
+				}
+			}
+		}
 		if !ignored[RuleDetailFlagNoRow] && e.Detail != "" {
 			declared, variadic := declaredFlags(e)
 			if variadic {

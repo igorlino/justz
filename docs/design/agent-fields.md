@@ -72,7 +72,7 @@ A row has `name` (a string), `desc` (a string), and optionally `required` (a boo
 **`check`.** What can be derived from the justfile is little. The dump has `export` assignments and `env('NAME')` calls in a recipe body, but a script that the recipe runs reads its own variables, so the absence of a name from the body proves nothing. So:
 
 - Shape: a row without a `name`, a duplicate name and a name that is not an identifier of upper case letters, digits and underscores are findings (`registry-env`, a warning for the name pattern, an error for the rest).
-- A possible advice rule, in the style of `detail-flag-no-row`: a `detail` that names an upper case variable that has no row. It is noisy (acronyms, other tools' variables), so it needs the opt-out that `volatile-text` has, and it is a follow-up, not part of the first step.
+- Advice rule `detail-env-no-row` (implemented as the follow-up, a warning, in the style of `detail-flag-no-row`): a `detail` that names an upper case variable that has no row. To keep the noise low it matches only a name with an underscore, or one written as `$NAME`, `${NAME}`, `export NAME` or `NAME=`; acronyms, flags, paths and file names do not count. It has the opt-out that `volatile-text` has: `[metadata('justz-ignore', 'detail-env-no-row')]`.
 - It cannot verify that the command reads the variable.
 
 **Schema.** `env`: array of rows with the four properties. **`fmt`.** Sorts rows by `name`, as `args` is sorted by name. **Risk.** A second place that says what a flag-like input is; the guidance in the skill has to say which goes where.
