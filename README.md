@@ -72,6 +72,21 @@ Describe your commands once, next to your justfile:
 
 Then `justz help`, `justz check`, `justz fmt` and `justz completions` work from that file and from your justfile. To start a new project with this layout, run `justz init --variant rich`. To get completion and type checks for the registry in your editor, save the schema with `justz schema > commands.schema.json` and point your editor at it, or add a `"$schema"` line at the top of the registry with `https://raw.githubusercontent.com/igorlino/justz/main/schema/commands.schema.json`.
 
+### Read a command's text from a script or a test
+
+`justz help <group> <command> -j` is the supported way to read what a command is documented as: the JSON has `desc`, and `detail` when the command has one (`seeAlso` and the arguments are there too). **`desc` plus `detail` is the text of a command.** A command's long text can move from `desc` to `detail` without any change to the command, so code that asserts a phrase in `desc` alone breaks when it does. Reading the registry file (`config/commands.json`) directly is not part of the contract: its layout, and where a given sentence lives in it, can change, and for a native project it does not exist. This is the call, with its output, run against the demo registry in `testdata/help-reference/demo` after adding a `detail` to its `test` command:
+
+```sh
+justz help core test -j | jq '{desc, detail}'
+```
+
+```json
+{
+  "desc": "Run the test suite",
+  "detail": "Runs only the unit tests; integration tests need `test --integration`.\n\nNeeds no network."
+}
+```
+
 ## Install
 
 `justz` needs [`just`](https://github.com/casey/just) on your PATH.
