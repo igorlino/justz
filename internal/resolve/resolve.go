@@ -53,6 +53,11 @@ func Exact(doc *orderedjson.Value, rootRecipes map[string]bool, name string) Res
 	if rootRecipes[name] {
 		return Result{Kind: None, Reason: ReasonRoot}
 	}
+	// A match is printed for a shell to consume, so a name that is not plain is
+	// never one, whatever the registry holds.
+	if !textsafe.IsName(name) {
+		return Result{Kind: None, Reason: ReasonUnknown}
+	}
 	groups := doc.Get("groups")
 	if groups == nil || groups.Kind != orderedjson.Object {
 		return Result{Kind: None, Reason: ReasonUnknown}

@@ -1,6 +1,10 @@
 package help
 
-import "github.com/igorlino/justz/internal/textsafe"
+import (
+	"strings"
+
+	"github.com/igorlino/justz/internal/textsafe"
+)
 
 // sanitize makes every string of the model safe to print: the registry or the
 // justfile is project text, and a terminal acts on escape sequences in it. The
@@ -56,6 +60,11 @@ func (c *Command) sanitize() {
 	c.Example = textsafe.Line(c.Example)
 	c.Heading = textsafe.Line(c.Heading)
 	c.Detail = textsafe.Text(c.Detail)
+	// A detail of only blanks is no detail: the zoom prints no section for it,
+	// so the JSON must not carry it either.
+	if strings.TrimSpace(c.Detail) == "" {
+		c.Detail = ""
+	}
 	for i := range c.Args {
 		a := &c.Args[i]
 		a.Name = textsafe.Line(a.Name)

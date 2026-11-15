@@ -212,3 +212,15 @@ func TestExtraEntryDetailIsInTheJSON(t *testing.T) {
 		t.Errorf("extra entry JSON = %v", n)
 	}
 }
+
+func TestABlankDetailIsInNeitherTheZoomNorTheJSON(t *testing.T) {
+	p := load(t, `{"groups":{"ops":{"commands":{"go":{"desc":"Go","detail":" \n\t\r\n "}}}}}`)
+	g := p.Group("ops")
+	c := g.FindCommand("go")
+	if view := CommandView(p, g, c, Options{Width: 80}); strings.Contains(view, "Details") {
+		t.Errorf("a blank detail printed a section:\n%s", view)
+	}
+	if n := toMap(t, CommandJSON(p, g, c)); n["detail"] != nil {
+		t.Errorf("a blank detail is in the JSON: %v", n)
+	}
+}
