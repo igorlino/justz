@@ -24,7 +24,7 @@ func TestLintWarningsOnlyFailWithStrict(t *testing.T) {
 		t.Errorf("exit %d, want 0 (warnings do not fail)", code)
 	}
 	out := r.out.String()
-	for _, want := range []string{"justz lint: 1 warning", "warning just deploy: body has 45 lines (limit 40)  [recipe-long]", "fix: move the logic to scripts/"} {
+	for _, want := range []string{"justz lint: 1 warning", "warning just deploy: body has 45 lines (limit 40), no interpolations  [recipe-long]", "fix: move the logic to scripts/"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("output should contain %q:\n%s", want, out)
 		}

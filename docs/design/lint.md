@@ -58,7 +58,9 @@ deploy token:
 
 ### `recipe-long`
 
-The count is the number of body entries in the dump, the same measure `justz assess` uses (`long.over40`), so the two agree on a recipe. Blank lines, comments, the shebang line and continuation lines all count: subtracting some of them needs rules for `[script]` recipes (no shebang line in the body) and for continuations, and buys little at a threshold of 40. `assess` counts public recipes only; `lint` reports private ones too. The fix names `scripts/<group>/<name>.sh` and a thin recipe.
+The count is the number of body entries in the dump, the same measure `justz assess` uses (`long.over40`), so the two agree on a recipe. Blank lines, comments, the shebang line and continuation lines all count: subtracting some of them needs rules for `[script]` recipes (no shebang line in the body) and for continuations, and buys little at a threshold of 40. `assess` counts public recipes only; `lint` reports private ones too. The fix names `scripts/<group>/<name>.sh` behind a shebang wrapper that `exec`s it (the error output stays identical, where a one-line wrapper adds "on line N"), and names the flat list of invocations that other tests look up in the justfile as the case for `justz-ignore`. The fix is the same for every finding, so the per-recipe numbers are in the message and in three additive JSON fields: `interpolations`, `quotedInterpolations` and `escapedBraces`.
+
+**Interpolations.** Whether a move is mechanical depends on `{{ }}` in the body: a value can be exported and read from the environment, except inside single quotes or a quoted here-document (`<<'EOF'`, `<<"EOF"`, `<<-'EOF'`), where the shell does not expand it. The dump gives each line as fragments, text or an interpolation, so no justfile text is parsed. `{{{{` (kept as text) and `{{"{{"}}` (an interpolation of the string `{{`) are not interpolations and are counted as escapes. Quote state is followed roughly: across lines in a shebang recipe, per line otherwise, with comment lines not scanned and here-documents only in shebang recipes. It is advice, not a shell parser, so a count can be off in unusual quoting.
 
 ### The two secret rules
 

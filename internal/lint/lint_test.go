@@ -252,3 +252,90 @@ func TestIgnoreAcceptsTheCheckAdviceRules(t *testing.T) {
 		}
 	}
 }
+
+// longWith is a recipe of 41 lines: padding plus the given body lines (JSON).
+func longWith(shebang bool, lines ...string) string {
+	all := strings.Split(strings.TrimSuffix(strings.Repeat(`["echo"],`, 41-len(lines)), ","), ",")
+	all = append(all, lines...)
+	return fmt.Sprintf(`{"attributes":[],"shebang":%v,"body":[%s]}`, shebang, strings.Join(all, ","))
+}
+
+func longFinding(t *testing.T, recipe string) Finding {
+	t.Helper()
+	res := run(t, `{"recipes":{"r":`+recipe+`},"modules":{}}`)
+	for _, f := range res.Findings {
+		if f.Rule == RuleRecipeLong {
+			return f
+		}
+	}
+	t.Fatalf("no recipe-long finding: %v", rules(res))
+	return Finding{}
+}
+
+func TestRecipeLongInterpolationCounts(t *testing.T) {
+	v := `[["variable","x"]]`
+	tests := []struct {
+		name, recipe           string
+		total, quoted, escaped int
+		message                string
+	}{
+		{"none", longWith(false), 0, 0, 0, ", no interpolations"},
+		{"some", longWith(false, `["echo ",`+v+`," and ",`+v+`]`), 2, 0, 0, ", 2 interpolations"},
+		{"one", longWith(false, `["echo ",`+v+`]`), 1, 0, 0, ", 1 interpolation"},
+		{"in double quotes is fine", longWith(false, `["echo \"",`+v+`,"\""]`), 1, 0, 0, ", 1 interpolation"},
+		{"in single quotes", longWith(false, `["echo '",`+v+`,"' ",`+v+`]`), 2, 1, 0, "(1 in single quotes or a quoted here-document: not mechanical to move)"},
+		{"quote closed before", longWith(false, `["echo 'a' ",`+v+`]`), 1, 0, 0, ", 1 interpolation"},
+		{"a new line starts a new shell", longWith(false, `["echo 'open"]`, `["echo ",`+v+`]`), 1, 0, 0, ", 1 interpolation"},
+		{"single quote carries across lines in a script", longWith(true, `["echo 'open"]`, `[`+v+`]`), 1, 1, 0, "1 in single quotes"},
+		{"escaped braces", longWith(false, `["echo {{{{ lit }}}} ",["{{"]," ",`+v+`]`), 1, 0, 2, ", 2 escaped"},
+		{"quoted heredoc", longWith(true, `["cat <<'EOF'"]`, `[`+v+`]`, `["EOF"]`, `[`+v+`]`), 2, 1, 0, "1 in single quotes or a quoted here-document"},
+		{"double-quoted dash heredoc", longWith(true, `["cat <<-\"EOF\""]`, `[`+v+`]`, `["\tEOF"]`, `[`+v+`]`), 2, 1, 0, "not mechanical to move"},
+		{"unquoted heredoc expands", longWith(true, `["cat <<EOF"]`, `[`+v+`]`, `["EOF"]`), 1, 0, 0, ", 1 interpolation"},
+		{"trailing comment apostrophe", longWith(false, `["echo x # it's"]`, `["echo ",`+v+`]`), 1, 0, 0, ", 1 interpolation"},
+		{"trailing comment apostrophe in a script", longWith(true, `["echo x # it's"]`, `["echo ",`+v+`]`), 1, 0, 0, ", 1 interpolation"},
+		{"interpolation inside a comment is not quoted", longWith(false, `["echo 'a' # '",`+v+`]`), 1, 0, 0, ", 1 interpolation"},
+		{"hash inside a word is not a comment", longWith(false, `["echo a#b '",`+v+`,"'"]`), 1, 1, 0, "1 in single quotes"},
+		{"hash inside quotes is not a comment", longWith(false, `["echo '# ",`+v+`,"'"]`), 1, 1, 0, "1 in single quotes"},
+		{"here-string is not a here-document", longWith(true, `["cat <<< \"hi\""]`, `[`+v+`]`, `["EOF"]`), 1, 0, 0, ", 1 interpolation"},
+		{"here-string with a quoted word", longWith(true, `["cat <<<'hi'"]`, `["echo ",`+v+`]`), 1, 0, 0, ", 1 interpolation"},
+		{"arithmetic shift is not a here-document", longWith(true, `["n=$((a<<b))"]`, `["echo ",`+v+`]`), 1, 0, 0, ", 1 interpolation"},
+		{"here-document after a shift", longWith(true, `["n=$((1<<2)); cat <<'EOF'"]`, `[`+v+`]`, `["EOF"]`), 1, 1, 0, "1 in single quotes"},
+		{"ansi-c string with an escaped quote", longWith(true, `["x=$'a\\'b ",`+v+`," c'"]`), 1, 1, 0, "1 in single quotes"},
+		{"ansi-c string closed", longWith(true, `["x=$'a\\'b' ",`+v+`]`), 1, 0, 0, ", 1 interpolation"},
+		{"backslash does not escape in plain single quotes", longWith(true, `["x='a\\' ",`+v+`]`), 1, 0, 0, ", 1 interpolation"},
+		{"comment apostrophe", longWith(true, `["# don't"]`, `["echo ",`+v+`]`), 1, 0, 0, ", 1 interpolation"},
+	}
+	for _, tt := range tests {
+		f := longFinding(t, tt.recipe)
+		if f.Interpolations == nil || *f.Interpolations != tt.total || *f.QuotedInterpolations != tt.quoted || *f.EscapedBraces != tt.escaped {
+			t.Errorf("%s: counts = %v %v %v, want %d %d %d", tt.name, deref(f.Interpolations), deref(f.QuotedInterpolations), deref(f.EscapedBraces), tt.total, tt.quoted, tt.escaped)
+		}
+		if !strings.Contains(f.Message, tt.message) || !strings.HasPrefix(f.Message, "body has 41 lines (limit 40)") {
+			t.Errorf("%s: message = %q, want it to contain %q", tt.name, f.Message, tt.message)
+		}
+	}
+}
+
+func deref(p *int) any {
+	if p == nil {
+		return nil
+	}
+	return *p
+}
+
+func TestRecipeLongFixNamesTheIgnoreCaseOnceAndHasNoNumbers(t *testing.T) {
+	f := longFinding(t, longWith(false, `["echo ",[["variable","x"]]]`))
+	for _, want := range []string{"shebang wrapper that execs", "on line N", "flat list", "justz-ignore"} {
+		if !strings.Contains(f.Fix, want) {
+			t.Errorf("fix lacks %q: %s", want, f.Fix)
+		}
+	}
+	g := longFinding(t, longWith(false))
+	if f.Fix != g.Fix {
+		t.Errorf("the fix must not carry per-finding numbers:\n%s\n%s", f.Fix, g.Fix)
+	}
+	b, _ := json.Marshal(f)
+	if !strings.Contains(string(b), `"interpolations":1`) || !strings.Contains(string(b), `"quotedInterpolations":0`) {
+		t.Errorf("json = %s", b)
+	}
+}

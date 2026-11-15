@@ -49,6 +49,12 @@ type Finding struct {
 	Message  string         `json:"message"`
 	Fix      string         `json:"fix,omitempty"`
 	Line     int            `json:"line,omitempty"` // 1-based index into the recipe body as dumped
+	// The next three are on recipe-long only: how many {{ }} the body has, how
+	// many of them are in single quotes or a quoted here-document, and how many
+	// escapes ({{{{, {{"{{"}}) it has.
+	Interpolations       *int `json:"interpolations,omitempty"`
+	QuotedInterpolations *int `json:"quotedInterpolations,omitempty"`
+	EscapedBraces        *int `json:"escapedBraces,omitempty"`
 }
 
 // Result is the outcome of Run.
@@ -141,10 +147,13 @@ func walk(d dump, prefix string, res *Result) {
 			})
 		}
 		if n := len(r.Body); n > MaxBodyLines && !ignored[RuleRecipeLong] {
+			in := countInterpolations(r.Body, r.Shebang)
 			res.Findings = append(res.Findings, Finding{
 				Rule: RuleRecipeLong, Severity: check.Warning, Subject: subject,
-				Message: fmt.Sprintf("body has %d lines (limit %d)", n, MaxBodyLines),
-				Fix:     "move the logic to scripts/<group>/<name>.sh and keep the recipe thin, or add [metadata('" + IgnoreKey + "', '" + RuleRecipeLong + "')]",
+				Message: fmt.Sprintf("body has %d lines (limit %d)%s", n, MaxBodyLines, in.describe()),
+				Fix: "move the logic to scripts/<group>/<name>.sh, behind a shebang wrapper that execs it (error output stays identical; a one-line wrapper adds \"on line N\"). " +
+					"A flat list of invocations that other tests look up in the justfile is the case for [metadata('" + IgnoreKey + "', '" + RuleRecipeLong + "')]",
+				Interpolations: &in.Total, QuotedInterpolations: &in.Quoted, EscapedBraces: &in.Escaped,
 			})
 		}
 		secretRules(d, r, subject, ignored, injected[name], res)
