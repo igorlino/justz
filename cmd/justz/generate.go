@@ -10,6 +10,7 @@ import (
 	"github.com/igorlino/justz/internal/generate"
 	"github.com/igorlino/justz/internal/orderedjson"
 	"github.com/igorlino/justz/internal/shim"
+	"github.com/igorlino/justz/internal/textsafe"
 )
 
 const generateUsage = `Usage: justz generate [--stdout] [path]
@@ -84,7 +85,7 @@ func runGenerate(args []string, e env) int {
 		return 1
 	}
 	for _, w := range res.Warnings {
-		fmt.Fprintf(e.stderr, "justz generate: warning: %s\n", w)
+		fmt.Fprintf(e.stderr, "justz generate: warning: %s\n", textsafe.Line(w))
 	}
 	data, err := orderedjson.Marshal(res.Doc)
 	if err != nil {
@@ -92,21 +93,26 @@ func runGenerate(args []string, e env) int {
 		return 1
 	}
 
+	// A [doc] can hold DEL, C1 or bidi characters, which the JSON encoding leaves
+	// raw. The structure is ASCII, so cleaning the bytes is safe, and the overlay
+	// file gets the same text as the terminal.
+	data = []byte(textsafe.Text(string(data)))
+
 	if toStdout {
 		e.stdout.Write(data)
 		return 0
 	}
 	if _, err := e.runCmd("git", "-C", root, "ls-files", "--error-unmatch", "--", target); err == nil {
-		fmt.Fprintf(e.stderr, "justz generate: %s is tracked by git. The overlay is personal, so justz will not write it there. Pass another path, or untrack it first.\n", target)
+		fmt.Fprintf(e.stderr, "justz generate: %s is tracked by git. The overlay is personal, so justz will not write it there. Pass another path, or untrack it first.\n", textsafe.Line(target))
 		return 1
 	}
 	if err := atomicfile.Write(target, data, 0o644); err != nil {
 		fmt.Fprintf(e.stderr, "justz generate: %v\n", err)
 		return 1
 	}
-	fmt.Fprintf(e.stdout, "wrote %s\n", target)
+	fmt.Fprintf(e.stdout, "wrote %s\n", textsafe.Line(target))
 	if _, err := e.runCmd("git", "-C", root, "check-ignore", "-q", "--", target); err != nil {
-		fmt.Fprintf(e.stdout, "note: %s is not ignored by git. Add it to your global ignore file, for example:\n  echo %s >> ~/.gitignore_global\n", target, filepath.Base(target))
+		fmt.Fprintf(e.stdout, "note: %s is not ignored by git. Add it to your global ignore file, for example:\n  echo %s >> ~/.gitignore_global\n", textsafe.Line(target), textsafe.Line(filepath.Base(target)))
 	}
 	return 0
 }

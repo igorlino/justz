@@ -10,6 +10,7 @@ import (
 	"sort"
 
 	"github.com/igorlino/justz/internal/orderedjson"
+	"github.com/igorlino/justz/internal/textsafe"
 )
 
 // Kind is the outcome of an exact lookup.
@@ -63,6 +64,11 @@ func Exact(doc *orderedjson.Value, rootRecipes map[string]bool, name string) Res
 	var matches []Match
 	for _, g := range groups.Obj {
 		if g.Val == nil || g.Val.Kind != orderedjson.Object {
+			continue
+		}
+		// The group key is printed for a shell to consume, so only a key that
+		// is a plain name can be reported.
+		if g.Key != "core" && !textsafe.IsName(g.Key) {
 			continue
 		}
 		if g.Key == "core" {

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/igorlino/justz/internal/assess"
+	"github.com/igorlino/justz/internal/textsafe"
 )
 
 const assessUsage = `Usage: justz assess [--json]
@@ -67,7 +68,7 @@ func printAssess(e env, justfile string, r assess.Report) {
 	p := func(label, format string, a ...any) {
 		fmt.Fprintf(e.stdout, "%-14s "+format+"\n", append([]any{label}, a...)...)
 	}
-	p("justfile", "%s", justfile)
+	p("justfile", "%s", textsafe.Line(justfile))
 	if r.RegistryPath != "" {
 		p("variant", "%s (%s)", r.Variant, r.RegistryPath)
 	} else {

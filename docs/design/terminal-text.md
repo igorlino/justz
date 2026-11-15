@@ -1,6 +1,6 @@
 # Design note: terminal-safe text, and highlighting in `detail`
 
-Status: proposed. Two changes in one note, in two PRs: first the sanitization, then the highlighting. The first is a security fix and stands without the second.
+Status: part 1 (sanitization) is implemented; part 2 (highlighting) is not started. Two changes in one note, in two PRs. The first is a security fix and stands without the second.
 
 ## 1. Text from a project must not control the terminal
 
@@ -55,14 +55,18 @@ Replacing with U+FFFD and not deleting is deliberate: `\u001b[31mRED` becomes `ï
 - **The finished help model, at the end of both loaders.** One pass over the `*Project` after `FromRegistry` and after `FromDump` (which sets the name, and the `[group]` heading, after `FromRegistry` has returned, so cleaning only inside `FromRegistry` would miss native). Completion, browse and every help view read the model.
 - **Names that are inserted or consumed.** Completion and `resolve` only offer or report a group or command key that matches `^[A-Za-z0-9_][A-Za-z0-9_.-]*$`. Other keys, such as one with a space or an escape, still show in the help (cleaned) but are never inserted on a command line or printed for a shell to consume. `resolve` reads the raw document today; it uses the same rule. This also stops a key that looks like one command and is another.
 - **`check` and `assess`, at construction.** Finding subjects, messages and fixes, and the missing and stale lists, are cleaned where they are built, so text and JSON agree. A finding that carries a registry key or a description is not an exact copy any more when it held a control character; that is the point.
-- **Messages that echo what the user typed or a path** use `%q`, as `resolve` already does for its argument. Paths in `assess`, `fmt`, `generate` and `shim` messages go through the same quoting.
+- **Messages that echo what the user typed or a path** go through `Line`, not `%q`: a normal word or path prints exactly as before (`%q` would add quotes to every message and change the formats that tests and scripts read), and a control character shows as U+FFFD. `resolve` keeps its `%q`. This covers the no-match and ambiguous messages of `help`, and the paths in `assess`, `fmt`, `generate`, `init`, `doctor` and `shim`.
+- **Standard error.** The real binary writes its own messages through `textsafe.NewWriter`, which applies `Text`, so a path in an error (the working directory in "no commands.json found in %s", a PATH entry, an `err` from the OS) cannot reach the terminal raw. The output of `just` itself is passed through untouched.
+- **JSON written by justz, and the overlay.** Every `--json` output goes through `printJSON`, which writes through `NewWriter`: Go's encoder escapes ESC and BEL but leaves DEL, C1 and bidi characters raw. `generate` cleans the registry it writes in the same way, for `--stdout` and for the file. The structure of both is ASCII, so cleaning the bytes cannot break it.
+- **Pasteable and eval'd text.** The `setup` PATH hint is a command to paste, so a directory with a quote, `$`, backtick, backslash or control character gets a plain sentence instead. The completion script lists shim names without quotes and is `eval`'d, so a name from `shims.json` that `shim add` would not accept is left out.
+- **Option values.** Completion offers an enum value only when it is made of letters, digits and `_ . , : @ % + = / ~ -` (`textsafe.IsValue`), so a value with a space, `;`, `$(...)` or a newline is not inserted on a command line. Flag names already match `-{1,2}[A-Za-z0-9][A-Za-z0-9-]*`.
 - **`help -j`** carries the cleaned strings. One cleaned text everywhere is simpler to reason about than two.
 
 `orderedjson.Parse` must not clean: `fmt` and `generate` write the same tree back to disk and would rewrite the user's file.
 
 ### A contract change
 
-`help -j` carried `\r\n` inside a `detail` verbatim. After this change it carries `\n`, and any string with a character from the lists above carries U+FFFD. The JSON shapes are documented as a contract, so this is stated here and in the release notes.
+`help -j` carried `\r\n` inside a `detail` verbatim. After this change it carries `\n`, a newline or tab inside a single-line field (`desc`, `example`, a label) becomes a space, and any string with a character from the lists above carries U+FFFD. The JSON shapes are documented as a contract, so this is stated here and in the release notes.
 
 ### Not in scope
 

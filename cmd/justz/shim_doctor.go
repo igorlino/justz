@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/igorlino/justz/internal/shim"
+	"github.com/igorlino/justz/internal/textsafe"
 )
 
 const shimDoctorUsage = `Usage: justz shim doctor [--json]
@@ -70,6 +71,6 @@ func printFindings(e env, findings []shim.Finding) {
 		if f.Shim != "" {
 			label = f.Shim + ": " + f.Check
 		}
-		fmt.Fprintf(e.stdout, "[%s] %s: %s\n", status, label, f.Detail)
+		fmt.Fprintf(e.stdout, "[%s] %s: %s\n", status, textsafe.Line(label), textsafe.Line(f.Detail))
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/igorlino/justz/internal/shim"
+	"github.com/igorlino/justz/internal/textsafe"
 )
 
 const setupUsage = `Usage: justz setup [--dry-run] [--json]
@@ -87,15 +88,15 @@ func runSetup(args []string, e env) int {
 	} else {
 		switch {
 		case report.Created && dryRun:
-			fmt.Fprintf(e.stdout, "would create %s\n", d.Shim)
+			fmt.Fprintf(e.stdout, "would create %s\n", textsafe.Line(d.Shim))
 		case report.Created:
-			fmt.Fprintf(e.stdout, "created %s\n", d.Shim)
+			fmt.Fprintf(e.stdout, "created %s\n", textsafe.Line(d.Shim))
 		default:
-			fmt.Fprintf(e.stdout, "%s already exists\n", d.Shim)
+			fmt.Fprintf(e.stdout, "%s already exists\n", textsafe.Line(d.Shim))
 		}
 		printFindings(e, report.Findings)
 		if report.PathHint != "" {
-			fmt.Fprintf(e.stdout, "\n%s is not on your PATH. To add it:\n  %s\n", d.Shim, report.PathHint)
+			fmt.Fprintf(e.stdout, "\n%s is not on your PATH. To add it:\n  %s\n", textsafe.Line(d.Shim), textsafe.Line(report.PathHint))
 		}
 	}
 	if !report.OK {
@@ -106,6 +107,11 @@ func runSetup(args []string, e env) int {
 
 // pathHint is a command the user can run themselves. justz never runs it.
 func pathHint(d shim.Dirs) string {
+	// The hint is meant to be pasted into a shell, so a directory with a quote,
+	// a dollar sign, a backtick or a backslash would change what it runs.
+	if textsafe.Line(d.Shim) != d.Shim || strings.ContainsAny(d.Shim, "'\"$`\\") {
+		return fmt.Sprintf("add this directory to your PATH: %s", textsafe.Line(d.Shim))
+	}
 	if d.GOOS == "windows" {
 		return fmt.Sprintf(`[Environment]::SetEnvironmentVariable("Path", $env:Path + ";%s", "User")   (PowerShell, then open a new terminal)`, d.Shim)
 	}

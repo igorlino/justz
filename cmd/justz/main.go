@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/igorlino/justz/internal/textsafe"
 	"golang.org/x/term"
 )
 
@@ -76,7 +77,7 @@ type env struct {
 func osEnv() env {
 	return env{
 		stdout:   os.Stdout,
-		stderr:   os.Stderr,
+		stderr:   textsafe.NewWriter(os.Stderr),
 		lookPath: exec.LookPath,
 		runCmd: func(name string, args ...string) (string, error) {
 			out, err := exec.Command(name, args...).Output()

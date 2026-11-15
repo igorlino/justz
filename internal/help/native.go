@@ -35,5 +35,6 @@ func FromDump(dumpJSON []byte, name string) (*Project, error) {
 			p.Core.Commands[i].Heading = headings[p.Core.Commands[i].Name]
 		}
 	}
+	p.sanitize()
 	return p, nil
 }

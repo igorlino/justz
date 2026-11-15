@@ -13,6 +13,7 @@ import (
 
 	"github.com/igorlino/justz/internal/orderedjson"
 	"github.com/igorlino/justz/internal/registry"
+	"github.com/igorlino/justz/internal/textsafe"
 )
 
 // Severity of a finding.
@@ -128,6 +129,7 @@ func Run(in Input) (Result, error) {
 		res.Findings = append(res.Findings, registryRules(in, items)...)
 		res.Findings = append(res.Findings, exampleRules(in.Registry)...)
 	}
+	cleanFindings(res.Findings)
 	sortFindings(res.Findings)
 	if res.Findings == nil {
 		res.Findings = []Finding{}
@@ -267,20 +269,20 @@ func registryEntries(reg *orderedjson.Value) []registryEntry {
 				continue
 			}
 			for _, c := range cmds.Obj {
-				e := registryEntry{Group: g.Key, Key: c.Key, Extra: kind == "extra"}
+				e := registryEntry{Group: textsafe.Line(g.Key), Key: textsafe.Line(c.Key), Extra: kind == "extra"}
 				if d := c.Val.Get("desc"); d != nil && d.Kind == orderedjson.String {
-					e.Desc, e.HasDesc = d.Str, true
+					e.Desc, e.HasDesc = textsafe.Line(d.Str), true
 				}
 				if args := c.Val.Get("args"); args != nil && args.Kind == orderedjson.Array {
 					for _, a := range args.Arr {
 						ae := argEntry{}
 						if n := a.Get("name"); n != nil && n.Kind == orderedjson.String {
-							ae.Name = n.Str
+							ae.Name = textsafe.Line(n.Str)
 						}
 						if vals := a.Get("values"); vals != nil && vals.Kind == orderedjson.Array {
 							for _, v := range vals.Arr {
 								if v.Kind == orderedjson.String {
-									ae.Values = append(ae.Values, v.Str)
+									ae.Values = append(ae.Values, textsafe.Line(v.Str))
 								}
 							}
 						}
@@ -313,9 +315,9 @@ func registryRules(in Input, items []item) []Finding {
 				"add it to commands.json (or regenerate the overlay with: justz generate)"})
 			continue
 		}
-		if it.R.Doc != nil && e.HasDesc && strings.TrimSpace(*it.R.Doc) != "" && strings.TrimSpace(*it.R.Doc) != strings.TrimSpace(e.Desc) {
+		if it.R.Doc != nil && e.HasDesc && strings.TrimSpace(*it.R.Doc) != "" && strings.TrimSpace(textsafe.Line(*it.R.Doc)) != strings.TrimSpace(e.Desc) {
 			out = append(out, Finding{RuleRegistryDesc, Error, subject,
-				fmt.Sprintf("[doc] diverges from the registry description\n      justfile: %s\n      registry: %s", *it.R.Doc, e.Desc),
+				fmt.Sprintf("[doc] diverges from the registry description\n      justfile: %s\n      registry: %s", textsafe.Line(*it.R.Doc), e.Desc),
 				descDivergesFix(in.Variant)})
 		}
 	}
@@ -403,4 +405,26 @@ func descLongFix(variant string) string {
 		return "shorten the [doc] in the justfile, then run: justz generate"
 	}
 	return `keep a one-line description equal to the [doc], and move the rest to "detail" in the registry`
+}
+
+// cleanFindings makes the text of the findings safe to print. A finding can
+// carry registry keys and descriptions, and a terminal acts on escape
+// sequences in them. The newlines the messages use themselves stay.
+func cleanFindings(fs []Finding) {
+	for i := range fs {
+		fs[i].Subject = textsafe.Line(fs[i].Subject)
+		fs[i].Message = cleanLines(fs[i].Message)
+		fs[i].Fix = cleanLines(fs[i].Fix)
+	}
+}
+
+func cleanLines(s string) string {
+	if s == "" {
+		return s
+	}
+	lines := strings.Split(s, "\n")
+	for i, l := range lines {
+		lines[i] = textsafe.Line(l)
+	}
+	return strings.Join(lines, "\n")
 }

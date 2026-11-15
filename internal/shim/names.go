@@ -28,6 +28,10 @@ func init() {
 	}
 }
 
+// ValidPattern reports whether name has the shape of a shim name, ignoring the
+// reserved list: lower-case letters, digits and dashes, at most 32 characters.
+func ValidPattern(name string) bool { return validName.MatchString(name) }
+
 // ValidateName checks one name against the allowed pattern and the reserved list.
 func ValidateName(name string) error {
 	if !validName.MatchString(name) {

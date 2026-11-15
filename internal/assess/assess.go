@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/igorlino/justz/internal/orderedjson"
+	"github.com/igorlino/justz/internal/textsafe"
 )
 
 type dump struct {
@@ -83,7 +84,7 @@ func Assess(in Input) (Report, error) {
 	if err := json.Unmarshal(in.Dump, &d); err != nil {
 		return Report{}, fmt.Errorf("could not understand the output of just --dump: %v", err)
 	}
-	r := Report{Variant: in.Variant, RegistryPath: in.RegistryPath, Modules: len(d.Modules)}
+	r := Report{Variant: in.Variant, RegistryPath: textsafe.Line(in.RegistryPath), Modules: len(d.Modules)}
 
 	public := map[string]bool{} // "group command" paths of public recipes, for the coverage check
 	var walk func(prefix string, mod dump)
@@ -203,7 +204,8 @@ func coverage(reg *orderedjson.Value, public map[string]bool) *Coverage {
 	}
 	for p := range listed {
 		if !public[p] {
-			cov.Stale = append(cov.Stale, p)
+			// A stale entry is a registry key, which is project text.
+			cov.Stale = append(cov.Stale, textsafe.Line(p))
 		}
 	}
 	sort.Strings(cov.Missing)
