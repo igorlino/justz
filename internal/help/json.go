@@ -1,5 +1,12 @@
 package help
 
+import (
+	"bytes"
+	"encoding/json"
+	"strconv"
+	"strings"
+)
+
 // The JSON nodes of the help views, for tools and agents. The shapes are part
 // of the contract of justz: add fields, do not rename or remove them.
 
@@ -21,6 +28,9 @@ type OverviewItem struct {
 type CommandSummary struct {
 	Name string `json:"name"`
 	Desc string `json:"desc"`
+	// HasDetail is true when the command has a detail text, so a reader knows
+	// its zoom is worth a call. It is always present.
+	HasDetail bool `json:"hasDetail"`
 }
 
 // ExampleNode is an example with its command ready to type.
@@ -55,6 +65,7 @@ type CommandNode struct {
 	Desc     string        `json:"desc"`
 	Detail   string        `json:"detail,omitempty"`
 	SeeAlso  []string      `json:"seeAlso,omitempty"`
+	Exits    ExitCodes     `json:"exits,omitempty"`
 	Args     []ArgNode     `json:"args"`
 	Examples []ExampleNode `json:"examples"`
 }
@@ -81,7 +92,7 @@ func GroupJSON(proj *Project, g *Group) GroupNode {
 		Commands: []CommandSummary{}, Examples: []ExampleNode{}, SeeAlso: []string{},
 	}
 	for _, c := range append(append([]Command{}, g.Commands...), g.Extra...) {
-		n.Commands = append(n.Commands, CommandSummary{Name: c.Name, Desc: c.Desc})
+		n.Commands = append(n.Commands, CommandSummary{Name: c.Name, Desc: c.Desc, HasDetail: strings.TrimSpace(c.Detail) != ""})
 	}
 	sortSummaries(n.Commands)
 	for _, e := range g.Examples {
@@ -102,6 +113,7 @@ func CommandJSON(proj *Project, g *Group, c *Command) CommandNode {
 		Args: []ArgNode{}, Examples: []ExampleNode{},
 	}
 	n.SeeAlso = seeAlsoKeys(g, c)
+	n.Exits = c.Exits
 	for _, a := range c.Args {
 		n.Args = append(n.Args, ArgNode{Name: a.Name, Desc: a.Desc, Values: a.Values})
 	}
@@ -117,4 +129,28 @@ func sortSummaries(s []CommandSummary) {
 			s[j], s[j-1] = s[j-1], s[j]
 		}
 	}
+}
+
+// ExitCodes marshals as a JSON object from the code, as a string, to its
+// meaning, in numeric order. A Go map would sort the keys as text ("10" before
+// "2"). Nothing reads the order, but a reader sees the codes as they are
+// documented.
+type ExitCodes []ExitCode
+
+// MarshalJSON writes the object.
+func (e ExitCodes) MarshalJSON() ([]byte, error) {
+	var b bytes.Buffer
+	b.WriteByte('{')
+	for i, x := range e {
+		if i > 0 {
+			b.WriteByte(',')
+		}
+		k, _ := json.Marshal(strconv.Itoa(x.Code))
+		v, _ := json.Marshal(x.Meaning)
+		b.Write(k)
+		b.WriteByte(':')
+		b.Write(v)
+	}
+	b.WriteByte('}')
+	return b.Bytes(), nil
 }

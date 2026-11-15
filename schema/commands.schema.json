@@ -104,6 +104,11 @@
         "desc": { "type": "string", "description": "What the command does, imperative, with no trailing period." },
         "detail": { "type": "string", "description": "Longer prose about the command. Only the zoom (justz help <group> <command>) shows it. Keep desc to one line." },
         "example": { "type": "string", "description": "A usage example, prefixed with the ellipsis mark." },
+        "exits": {
+          "type": "object",
+          "description": "Exit codes and what they mean, as {\"0\": \"done\"}. A key is an integer from 0 to 255; justz check reports any other key. The schema cannot express that, so it only says object of strings.",
+          "additionalProperties": { "type": "string", "description": "What the exit code means, one line." }
+        },
         "seeAlso": {
           "type": "array",
           "description": "Keys of related commands, as group.command (core.build for a top-level command). justz check reports a key that does not exist.",

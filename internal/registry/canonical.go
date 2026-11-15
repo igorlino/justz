@@ -16,6 +16,7 @@ import (
 //   - commands and extra in each group: keys A to Z
 //   - args of each command: positional arguments first, then flags, each
 //     ignoring case
+//   - exits of a command: by numeric code, keys that are not codes last
 //   - examples: by their cmd; seeAlso of a group and of a command: A to Z
 //   - tiers[].groups, dispatchers and lab: A to Z; order: "core" first
 //
@@ -87,6 +88,21 @@ func canonicalizeGroup(g *orderedjson.Value) {
 func canonicalizeCommand(c *orderedjson.Value) {
 	if c == nil || c.Kind != orderedjson.Object {
 		return
+	}
+	if exits := c.Get("exits"); exits != nil && exits.Kind == orderedjson.Object {
+		// By numeric code; a key that is not an exit code (check reports it)
+		// goes after them, A to Z.
+		sortMembers(exits, func(a, b *orderedjson.Member) bool {
+			ca, oka := ExitCode(a.Key)
+			cb, okb := ExitCode(b.Key)
+			switch {
+			case oka && okb:
+				return ca < cb
+			case oka != okb:
+				return oka
+			}
+			return a.Key < b.Key
+		})
 	}
 	if see := c.Get("seeAlso"); see != nil && see.Kind == orderedjson.Array {
 		sortValues(see)

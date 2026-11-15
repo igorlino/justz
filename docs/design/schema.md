@@ -48,6 +48,7 @@ The fields, from `internal/help/model.go` and `internal/registry/canonical.go`:
 | group | `seeAlso` | array of string | |
 | command | `desc`, `example` | string | |
 | command | `detail` | string | optional longer text, shown only in the zoom (added with 0.7.0) |
+| command | `exits` | object of string | exit code (an integer 0 to 255, as a string key) to meaning; the key rule is in `check` (`registry-exits`), not in the schema |
 | command | `seeAlso` | array of string | keys of related commands, `group.command` (`core.build` for a top-level one); see `docs/design/see-also.md` |
 | command | `args` | array of argument | |
 | argument | `name`, `desc` | string | |
@@ -85,6 +86,6 @@ A third check is by hand and part of review: when a field is added to `internal/
 
 ## Open questions
 
-1. **Should `justz init --variant rich` write a `"$schema"` line?** New files would get editor completion for free, and `fmt` keeps unknown fields. The cost is a URL in every scaffolded registry, and a changed output that the init tests pin. Recommendation: not in v1. The skill shows the line; add it to `init` if the pilot shows people want it.
+1. **Should `justz init --variant rich` write a `"$schema"` line?** New files would get editor completion for free, and `fmt` keeps unknown fields. The cost is a URL in every scaffolded registry, and a changed output that the init tests pin. Recommendation: not in v1. The skill shows the line; add it to `init` if real use shows people want it.
 2. **Aliases `title` and `subtitle`.** `justz` reads them, no documentation mentions them, and the real registries use `name`. Recommendation: list them in the schema as they are read, and say in the description that `name` and `tagline` are the documented names.
-3. **`order`, `dispatchers`, `lab`.** They come from a large registry that was audited; `fmt` sorts them and nothing reads them. Recommendation: type them as arrays with no item type, and ask at the M9 pilot whether they belong in the registry at all.
+3. **`order`, `dispatchers`, `lab`.** They come from a large registry that was audited; `fmt` sorts them and nothing reads them. Recommendation: type them as arrays with no item type, and ask the users of a large registry whether they belong in the registry at all.

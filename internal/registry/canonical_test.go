@@ -84,3 +84,29 @@ func TestCanonicalSortsCommandSeeAlso(t *testing.T) {
 		t.Errorf("seeAlso not sorted: %s", out)
 	}
 }
+
+func TestCanonicalSortsExitsByNumericCode(t *testing.T) {
+	out := string(canonical(t, []byte(`{"groups":{"core":{"commands":{"b":{"desc":"B","exits":{"10":"j","zed":"z","2":"b","alpha":"a","0":"a"}}}}}}`)))
+	var pos []int
+	for _, k := range []string{`"0"`, `"2"`, `"10"`, `"alpha"`, `"zed"`} {
+		pos = append(pos, strings.Index(out, k))
+	}
+	for i := 1; i < len(pos); i++ {
+		if pos[i-1] < 0 || pos[i] < pos[i-1] {
+			t.Fatalf("exits not in order 0, 2, 10, alpha, zed: %s", out)
+		}
+	}
+}
+
+func TestExitCodeKeys(t *testing.T) {
+	for key, want := range map[string]int{"0": 0, "7": 7, "10": 10, "255": 255} {
+		if got, ok := ExitCode(key); !ok || got != want {
+			t.Errorf("ExitCode(%q) = %d, %v", key, got, ok)
+		}
+	}
+	for _, key := range []string{"", "00", "01", "256", "-1", "+1", "1 ", "a", "1000", "0x1", "١"} {
+		if _, ok := ExitCode(key); ok {
+			t.Errorf("ExitCode(%q) should be false", key)
+		}
+	}
+}

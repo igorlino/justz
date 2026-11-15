@@ -306,7 +306,7 @@ func TestEveryDocumentedFieldIsTyped(t *testing.T) {
 		"tiers": [{"label": "L", "hint": "h", "groups": ["a"]}], "order": ["core", 1], "dispatchers": [{}], "lab": [],
 		"groups": {"a": {"label": "A", "title": "T", "desc": "d", "footer": "f", "seeAlso": ["b"],
 			"examples": [{"cmd": "just a x", "desc": "d"}],
-			"commands": {"x": {"desc": "d", "detail": "long text\\nmore", "example": "… e", "seeAlso": ["a.y", "core.b"], "args": [{"name": "--env <e>", "desc": "d", "type": "string", "values": ["a", "b"]}]}},
+			"commands": {"x": {"desc": "d", "detail": "long text\\nmore", "example": "… e", "seeAlso": ["a.y", "core.b"], "exits": {"0": "ok", "2": "usage"}, "args": [{"name": "--env <e>", "desc": "d", "type": "string", "values": ["a", "b"]}]}},
 			"extra": {"y": {"desc": "d"}}}}}`
 	if err := check(t, newValidator(t), doc); err != nil {
 		t.Error(err)
@@ -332,6 +332,8 @@ func TestWrongShapesFail(t *testing.T) {
 		{"detail is a number", `{"groups": {"a": {"commands": {"x": {"detail": 3}}}}}`, "$.groups.a.commands.x.detail: want string, got number"},
 		{"seeAlso is a string", `{"groups": {"a": {"commands": {"x": {"seeAlso": "a.y"}}}}}`, "$.groups.a.commands.x.seeAlso: want array, got string"},
 		{"seeAlso item is a number", `{"groups": {"a": {"commands": {"x": {"seeAlso": ["a.y", 1]}}}}}`, "$.groups.a.commands.x.seeAlso[1]: want string, got number"},
+		{"exits is an array", `{"groups": {"a": {"commands": {"x": {"exits": ["0"]}}}}}`, "$.groups.a.commands.x.exits: want object, got array"},
+		{"exits meaning is a number", `{"groups": {"a": {"commands": {"x": {"exits": {"0": 1}}}}}}`, "$.groups.a.commands.x.exits.0: want string, got number"},
 		{"detail on an extra entry", `{"groups": {"a": {"extra": {"y": {"detail": []}}}}}`, "$.groups.a.extra.y.detail: want string, got array"},
 		{"null desc", `{"groups": {"a": {"commands": {"x": {"desc": null}}}}}`, "$.groups.a.commands.x.desc: want string, got null"},
 		{"null args entry", `{"groups": {"a": {"commands": {"x": {"args": [null]}}}}}`, "$.groups.a.commands.x.args[0]: want object, got null"},

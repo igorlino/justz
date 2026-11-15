@@ -24,10 +24,18 @@ type Command struct {
 	Example string
 	// Detail is longer prose about the command, shown only in its zoom.
 	Detail string
+	// Exits is what each exit code means, in numeric order.
+	Exits []ExitCode
 	// SeeAlso lists keys (group.command) of related commands.
 	SeeAlso []string
 	Heading string // a display heading from a [group] attribute (native projects)
 	Args    []Arg
+}
+
+// ExitCode is one row of a command's exits.
+type ExitCode struct {
+	Code    int
+	Meaning string
 }
 
 // Example is a worked example of a group.
@@ -159,6 +167,14 @@ func readCommands(v *orderedjson.Value) []Command {
 				}
 				c.Args = append(c.Args, arg)
 			}
+		}
+		if ex := m.Val.Get("exits"); ex != nil && ex.Kind == orderedjson.Object {
+			for _, e := range ex.Obj {
+				if code, ok := registry.ExitCode(e.Key); ok && e.Val != nil && e.Val.Kind == orderedjson.String {
+					c.Exits = append(c.Exits, ExitCode{Code: code, Meaning: e.Val.Str})
+				}
+			}
+			sort.SliceStable(c.Exits, func(i, j int) bool { return c.Exits[i].Code < c.Exits[j].Code })
 		}
 		if sa := m.Val.Get("seeAlso"); sa != nil && sa.Kind == orderedjson.Array {
 			for _, s := range sa.Arr {
