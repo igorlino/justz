@@ -27,16 +27,24 @@ Nothing here is vendored. There is no `help.sh` to copy, keep identical across r
 | Expanded | `justz help --expanded` | Every group with its commands and argument rows. `--wide`, `-w` adds example columns (on by default from 100 columns) |
 | Zoom | `justz help <group>`, `justz help [group] <cmd>` | One group (usage, commands, examples, cross-references) or one command (how to invoke it, examples, options, then its `detail`). An exact name or a unique prefix works; an ambiguous name exits `2` and lists the groups |
 
-Add `-j` (or `--json`) for machine-readable output (a command's zoom carries `detail`; listings do not), `-b` to browse with `fzf` (or a numbered menu).
+Add `-j` (or `--json`) for machine-readable output (a command's zoom carries `detail`; listings and the array printed for an ambiguous name do not), `-b` to browse with `fzf` (or a numbered menu).
 
-Everything `justz` prints from a registry or a justfile is made safe for a terminal (0.7.0 or newer): an escape sequence, a control character or a bidirectional override in a description is shown as U+FFFD, and a group or command key that is not a plain name (`A-Z a-z 0-9 _ . -`) is never offered by completion or `justz resolve`. The cleaned text is also what `-j` and `--json` carry, so a `\r\n` in a `detail` reads `\n`.
+The text `justz` itself prints from a registry or a justfile is made safe for a terminal (0.7.0 or newer). The output of `just` and of the recipes passes through unchanged.
+
+- An escape sequence, a control character, a bidirectional override or invalid UTF-8 in a description is shown as U+FFFD.
+- A group or command key that is not a plain name (letters, digits, `_`, `.` and `-`, not starting with `.` or `-`) still shows in the help, but completion never offers it and `justz resolve` never reports it.
+- Completion offers an enum value from `values` only when it is one shell-safe word (letters, digits and `_ . , : @ % + = / ~ -`). A value with a space or a `;` is shown in the help and never inserted.
+- `-j` and `--json` carry the same cleaned text: a `\r\n` in a `detail` reads `\n`, and a newline or tab in a single-line field such as `desc` reads as a space.
 
 ## 1. Create `config/commands.json`
 
 For each recipe write a description that says what it does, not just which tool it calls:
 
 - `desc` is imperative, specific and has no trailing period: `Type-check then bundle → dist/static/` beats `Build the project`. Keep it to one line of 120 characters or fewer, and the same text as the recipe's `[doc]`.
-- Put anything longer in `detail` (0.7.0 or newer): what the command does step by step, what it needs, which environment variable changes it. Write it after `desc`. It is shown only in the zoom (`justz help <group> <cmd>`, after the options, under a **Details** heading) and in that zoom's JSON, never in listings, completion or `just --list`, and `justz check` compares it with nothing, so keep it current yourself. Blank lines separate paragraphs; no markup is interpreted. With colors on, the zoom colors a `` `backtick span` `` green (flags inside it cyan, `<placeholders>` yellow), a flag such as `--dry-run` cyan, a `<placeholder>` yellow and a URL underlined, and nothing else, so write commands in backticks. An older `justz` ignores the field and shows the short `desc`.
+- Put anything longer in `detail` (0.7.0 or newer), written after `desc`: what the command does step by step, what it needs, which environment variable changes it. It works on `commands` and on `extra` entries. An older `justz` ignores the field and shows the short `desc`.
+- `detail` is shown only in the zoom (`justz help <group> <cmd>`, after the options, under a **Details** heading) and in that zoom's JSON. Listings, completion and `just --list` never show it. `justz check` compares it with nothing, so keep it current yourself.
+- `detail` is plain text. A newline starts a new line and a blank line separates paragraphs; runs of spaces collapse to one and indentation is lost. No markup is interpreted.
+- With colors on, the zoom colors four things in `detail` and nothing else: a `` `backtick span` `` green (a flag inside it cyan, a `<placeholder>` yellow), a flag such as `--dry-run` cyan, a `<placeholder>` yellow, and a URL underlined. So in `detail`, put commands in backticks. This does not apply to `desc` or `[doc]`.
 - Add `args` entries for every meaningful flag or positional parameter. Never use one generic `[args]` placeholder.
 - Design short single-letter aliases (`-x, --long`) for every flag whose name has three or more letters. Two-letter names (`--id`, `--ci`, `--ui`) stay long-only unless there is a real UX reason; ask the user.
 - Write the short form first and the value placeholder once, at the end: `-s, --surface <name>`.
@@ -131,7 +139,7 @@ Wire `justz check` and `justz fmt --check` into `check` and `ci`, then add a del
             { "name": "-s, --surface <name>", "desc": "Short first, value once at the end" },
             { "name": "-y", "desc": "Short-only flags stay as they are" },
             { "name": "--env <name>", "desc": "Target environment",
-              "values": ["demo", "int", "production"] }   // drives enum completion and renders (a|b|c)
+              "values": ["demo", "int", "production"] }   // drives enum completion and renders (a|b|c); one shell-safe word each
           ]
         }
       }

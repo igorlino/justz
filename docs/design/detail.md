@@ -1,6 +1,6 @@
 # Design note: a `detail` field for long command descriptions
 
-Status: implemented in one PR (the field, the zoom section, the JSON, the schema property, the check fix text and the tests). The open questions are decided as recommended.
+Status: implemented in one PR (the field, the zoom section, the JSON, the schema property, the check fix text and the tests). The open questions are decided as recommended. Later changes: with colors on, the zoom highlights command spans, flags, placeholders and URLs in `detail` (`docs/design/terminal-text.md`, part 2), which replaces the "no markup" line under "Not in scope" for those four; and the README now has an entry for the field.
 
 ## Problem
 
