@@ -98,7 +98,7 @@ _default:
 
 ## 3. The checks
 
-`justz check` reads the justfile through `just --dump` and the registry, and fails on errors (`--strict` makes warnings fail too, `--json` gives machine-readable findings with `rule`, `severity`, `subject`, `message` and `fix`):
+`justz check` reads the justfile through `just --dump` and the registry, and fails on errors (`--strict` makes warnings fail too, `--rule <name>` shows one rule and the exit code follows what is shown, `--json` gives machine-readable findings with `rule`, `severity`, `subject`, `message` and `fix`):
 
 | Rule | Meaning |
 |---|---|

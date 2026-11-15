@@ -2,12 +2,11 @@ package main
 
 import (
 	"fmt"
-	"strings"
 
 	chk "github.com/igorlino/justz/internal/check"
 )
 
-const checkUsage = `Usage: justz check [--json] [--strict]
+const checkUsage = `Usage: justz check [--json] [--strict] [--rule NAME]...
 
 Check how the current project documents its commands, so a pre-commit hook or
 CI job can fail on drift instead of a guard running inside recipes.
@@ -26,6 +25,14 @@ It reads the justfile through just --dump and, when there is one, the registry
 
   --json     Print the findings as JSON
   --strict   Warnings fail the check too
+  --rule     Show only the findings of this rule. It is for reading, not for
+             gating CI: it can hide errors and exit 0. Repeat the flag or separate
+             names with commas. The counts and the exit code follow the
+             findings that are shown. An unknown name is a usage error that
+             lists the valid names
+
+The text output prints a fix once for a run of findings of one rule that share
+it. The JSON keeps the fix on every finding.
 
 volatile-text finds text in a desc or detail that goes stale (TODO, FIXME, WIP,
 placeholder, not implemented, coming soon, a count such as "11 checks", a
@@ -43,11 +50,21 @@ type checkReport struct {
 	Errors   int           `json:"errors"`
 	Warnings int           `json:"warnings"`
 	Findings []chk.Finding `json:"findings"`
+	Rules    []string      `json:"rules,omitempty"` // the --rule filter, when one was given
 }
 
 func runCheck(args []string, e env) int {
 	asJSON, strict := false, false
-	for _, a := range args {
+	var rules []string
+	for i := 0; i < len(args); i++ {
+		a := args[i]
+		if ok, msg := ruleFlag(args, &i, &rules); ok {
+			if msg != "" {
+				fmt.Fprintf(e.stderr, "justz check: %s\n", msg)
+				return 2
+			}
+			continue
+		}
 		switch a {
 		case "--help", "-h":
 			fmt.Fprint(e.stdout, checkUsage)
@@ -62,6 +79,11 @@ func runCheck(args []string, e env) int {
 		}
 	}
 
+	if msg := unknownRule("check", rules, chk.Rules); msg != "" {
+		fmt.Fprintln(e.stderr, msg)
+		return 2
+	}
+
 	ctx, err := loadProjectCtx(e)
 	if err != nil {
 		fmt.Fprintf(e.stderr, "justz check: %v\n", err)
@@ -73,9 +95,27 @@ func runCheck(args []string, e env) int {
 		return 1
 	}
 
+	if want := ruleSet(rules); want != nil {
+		kept := []chk.Finding{}
+		for _, f := range res.Findings {
+			if want[f.Rule] {
+				kept = append(kept, f)
+			}
+		}
+		hidden, hiddenErrors := len(res.Findings)-len(kept), 0
+		for _, f := range res.Findings {
+			if !want[f.Rule] && f.Severity == chk.Error {
+				hiddenErrors++
+			}
+		}
+		res.Findings = kept
+		if note := hiddenNote(hidden, hiddenErrors); note != "" && !asJSON {
+			fmt.Fprintln(e.stderr, note)
+		}
+	}
 	errs, warns := res.Count(chk.Error), res.Count(chk.Warning)
 	failed := errs > 0 || (strict && warns > 0)
-	report := checkReport{OK: !failed, Variant: ctx.Variant, Checked: res.Checked, Errors: errs, Warnings: warns, Findings: res.Findings}
+	report := checkReport{OK: !failed, Variant: ctx.Variant, Checked: res.Checked, Errors: errs, Warnings: warns, Findings: res.Findings, Rules: rules}
 
 	if asJSON {
 		if code := printJSON(e, report); code != 0 {
@@ -92,14 +132,27 @@ func runCheck(args []string, e env) int {
 
 func printCheck(e env, r checkReport) {
 	if len(r.Findings) == 0 {
+		if len(r.Rules) > 0 {
+			fmt.Fprintf(e.stdout, "ok: %d public recipes checked (%s), no findings for rule %s\n", r.Checked, r.Variant, ruleScope(r.Rules))
+			return
+		}
 		fmt.Fprintf(e.stdout, "ok: %d public recipes checked (%s), no problems\n", r.Checked, r.Variant)
 		return
 	}
-	fmt.Fprintf(e.stdout, "justz check: %s, %s (%d public recipes checked, %s)\n\n", plural(r.Errors, "error"), plural(r.Warnings, "warning"), r.Checked, r.Variant)
-	for _, f := range r.Findings {
+	scope := ""
+	if len(r.Rules) > 0 {
+		scope = ", rule " + ruleScope(r.Rules)
+	}
+	fmt.Fprintf(e.stdout, "justz check: %s, %s (%d public recipes checked, %s%s)\n\n", plural(r.Errors, "error"), plural(r.Warnings, "warning"), r.Checked, r.Variant, scope)
+	rules, fixes := make([]string, len(r.Findings)), make([]string, len(r.Findings))
+	for i, f := range r.Findings {
+		rules[i], fixes[i] = f.Rule, f.Fix
+	}
+	show, count := fixRuns(rules, fixes)
+	for i, f := range r.Findings {
 		fmt.Fprintf(e.stdout, "  %-7s %s: %s  [%s]\n", f.Severity, f.Subject, f.Message, f.Rule)
-		if f.Fix != "" {
-			fmt.Fprintf(e.stdout, "          fix: %s\n", strings.TrimSpace(f.Fix))
+		if f.Fix != "" && show[i] {
+			fmt.Fprintf(e.stdout, "          %s\n", fixLine(f.Fix, count[i]))
 		}
 	}
 }
