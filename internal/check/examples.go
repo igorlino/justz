@@ -24,12 +24,34 @@ func exampleRules(reg *orderedjson.Value) []Finding {
 		if g.Val == nil || g.Val.Kind != orderedjson.Object {
 			continue
 		}
-		examples := exampleCommands(g.Val)
 		var cmds []registryEntry
 		for _, e := range registryEntries(reg) {
 			if e.Group == g.Key && !e.Extra {
 				cmds = append(cmds, e)
 			}
+		}
+		// The group examples and the per-command example fields go through the
+		// same rules. A finding on the first names the group, on the second the
+		// command.
+		var found []example
+		for _, ex := range exampleCommands(g.Val) {
+			found = append(found, example{Text: ex, Raw: ex, Subject: g.Key + ".examples"})
+		}
+		for _, c := range cmds {
+			if c.Example != "" {
+				path := c.Key
+				if g.Key != "core" {
+					path = g.Key + " " + c.Key
+				}
+				found = append(found, example{Text: expandExample(c.Example, path), Raw: c.Example, Subject: g.Key + "." + c.Key})
+			}
+		}
+		for i := range found {
+			found[i].Text = stripEnv(found[i].Text)
+		}
+		var examples []string
+		for _, ex := range found {
+			examples = append(examples, ex.Text)
 		}
 		byKey := map[string]registryEntry{}
 		for _, c := range cmds {
@@ -51,18 +73,18 @@ func exampleRules(reg *orderedjson.Value) []Finding {
 		bare := regexp.MustCompile(prefix + `([A-Za-z0-9_-]+) *$`)
 		single := regexp.MustCompile(prefix + `([A-Za-z0-9_-]+) +(-[A-Za-z0-9-]+) *$`)
 
-		for _, ex := range examples {
-			subject := g.Key + ".examples"
+		for _, e := range found {
+			ex, subject := e.Text, e.Subject
 			if bare.MatchString(ex) {
 				out = append(out, Finding{RuleExampleBare, sev, subject,
-					fmt.Sprintf("%q is a bare command with no flags or arguments", ex),
+					fmt.Sprintf("%q is a bare command with no flags or arguments", e.Raw),
 					"remove it, or show multi-flag, value or environment usage"})
 				continue
 			}
 			if m := single.FindStringSubmatch(ex); m != nil {
 				if c, ok := byKey[m[1]]; ok && isBooleanFlag(c, m[2]) {
 					out = append(out, Finding{RuleExampleSingle, sev, subject,
-						fmt.Sprintf("%q only passes the single boolean flag %s, which the argument rows already show", ex, m[2]),
+						fmt.Sprintf("%q only passes the single boolean flag %s, which the argument rows already show", e.Raw, m[2]),
 						"remove it, or combine flags, values or environment"})
 				}
 			}
@@ -74,14 +96,15 @@ func exampleRules(reg *orderedjson.Value) []Finding {
 				path = g.Key + " " + c.Key
 			}
 			onCmd := regexp.MustCompile(`^just +` + regexp.QuoteMeta(path) + `\b`)
+			out = append(out, unknownFlags(c, path, found)...)
 			for _, a := range c.Args {
 				// Long flag used in an example although a short alias exists.
 				if m := shortLong.FindStringSubmatch(a.Name); m != nil {
 					long := regexp.MustCompile(`(^| )` + regexp.QuoteMeta(m[2]) + `([ =]|$)`)
-					for _, ex := range examples {
-						if onCmd.MatchString(ex) && long.MatchString(ex) {
-							out = append(out, Finding{RuleExampleLongFlag, sev, g.Key + ".examples",
-								fmt.Sprintf("%q uses the long flag %s", ex, m[2]),
+					for _, e := range found {
+						if ex := e.Text; onCmd.MatchString(ex) && long.MatchString(ex) {
+							out = append(out, Finding{RuleExampleLongFlag, sev, e.Subject,
+								fmt.Sprintf("%q uses the long flag %s", e.Raw, m[2]),
 								"prefer the short alias " + m[1]})
 						}
 					}
@@ -112,6 +135,83 @@ func exampleRules(reg *orderedjson.Value) []Finding {
 	return out
 }
 
+// example is one example line: Text is what the rules read (an environment
+// prefix removed, a leading ellipsis expanded), Raw is what the project wrote.
+type example struct{ Text, Raw, Subject string }
+
+// stripEnv removes the environment words that lead a command line: NAME=value
+// (the value may be quoted, with escaped quotes), env and its options (-i, -u
+// NAME, -C DIR, --flag). PORT=9000 just x start is then read as just x start.
+func stripEnv(s string) string {
+	s = strings.TrimSpace(s)
+	return strings.TrimSpace(s[envPrefixLen(s):])
+}
+
+// envPrefixLen is the length of the leading environment words of s.
+func envPrefixLen(s string) int {
+	pos := 0
+	next := func() (word string, end int) { // the word at pos, and where it ends
+		i := pos
+		for i < len(s) && (s[i] == ' ' || s[i] == '\t') {
+			i++
+		}
+		start, j := i, i
+		var quote byte
+		for j < len(s) {
+			c := s[j]
+			switch {
+			case c == '\\' && quote != '\'' && j+1 < len(s):
+				j++
+			case quote != 0:
+				if c == quote {
+					quote = 0
+				}
+			case c == '"' || c == '\'':
+				quote = c
+			case c == ' ' || c == '\t':
+				return s[start:j], j
+			}
+			j++
+		}
+		return s[start:], len(s)
+	}
+	assign := regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*=`)
+	sawEnv := false
+	for {
+		w, end := next()
+		switch {
+		case w == "":
+			return pos
+		case !sawEnv && w == "env":
+			sawEnv = true
+		case sawEnv && (w == "-u" || w == "-C" || w == "--unset" || w == "--chdir"):
+			pos = end
+			_, end = next() // the option's argument
+		case sawEnv && strings.HasPrefix(w, "-") && w != "-" && w != "--":
+		case assign.MatchString(w):
+		default:
+			return pos
+		}
+		pos = end
+	}
+}
+
+// expandExample turns a command's example field into a command line. The field
+// is written with a leading ellipsis (… or ...) for "just <path>", after any
+// environment words; one without it is read as written.
+func expandExample(ex, path string) string {
+	ex = strings.TrimSpace(ex)
+	n := envPrefixLen(ex)
+	env, rest := strings.TrimSpace(ex[:n]), strings.TrimSpace(ex[n:])
+	for _, mark := range []string{"…", "..."} {
+		if r, ok := strings.CutPrefix(rest, mark); ok {
+			out := "just " + path + " " + strings.TrimSpace(r)
+			return strings.TrimSpace(env + " " + out)
+		}
+	}
+	return ex
+}
+
 func exampleCommands(group *orderedjson.Value) []string {
 	var out []string
 	if ex := group.Get("examples"); ex != nil && ex.Kind == orderedjson.Array {
@@ -138,4 +238,113 @@ func isBooleanFlag(c registryEntry, flag string) bool {
 		}
 	}
 	return false
+}
+
+var noFlag = regexp.MustCompile(`--\[no-\]([A-Za-z0-9][A-Za-z0-9-]*)`)
+
+// unknownFlags reports the flags of an example that no argument row of the
+// command declares. It is advice, so always a warning. It stays silent for a
+// command with no rows (nothing says the flags are wrong), for one with a
+// variadic row (...), which passes the rest on, and after a -- terminator. A
+// --flag=value is read as --flag, and bundled short flags (-sv) are read one by
+// one.
+func unknownFlags(c registryEntry, path string, found []example) []Finding {
+	if len(c.Args) == 0 {
+		return nil
+	}
+	declared := map[string]bool{}
+	for _, a := range c.Args {
+		if strings.Contains(a.Name, "...") {
+			return nil
+		}
+		for _, m := range noFlag.FindAllStringSubmatch(a.Name, -1) {
+			declared["--"+m[1]], declared["--no-"+m[1]] = true, true // --[no-]color
+		}
+		for _, f := range flagScan.FindAllString(a.Name, -1) {
+			declared[f] = true
+		}
+	}
+	on := regexp.MustCompile(`^just +` + regexp.QuoteMeta(path) + `(\s|$)`)
+	var out []Finding
+	for _, e := range found {
+		if !on.MatchString(e.Text) {
+			continue
+		}
+		var unknown []string
+		for _, tok := range shellWords(strings.TrimPrefix(strings.TrimSpace(e.Text[len("just"):]), path)) {
+			if tok == "--" {
+				break
+			}
+			if !strings.HasPrefix(tok, "-") || len(tok) == 1 || (tok[1] >= '0' && tok[1] <= '9') {
+				continue
+			}
+			name, _, _ := strings.Cut(tok, "=")
+			if declared[name] {
+				continue
+			}
+			if !strings.HasPrefix(name, "--") && !strings.Contains(tok, "=") {
+				all := true
+				for _, r := range name[1:] {
+					if !declared["-"+string(r)] {
+						all = false
+					}
+				}
+				if all {
+					continue
+				}
+			}
+			unknown = append(unknown, textsafe.Line(name))
+		}
+		for _, f := range unknown {
+			out = append(out, Finding{RuleExampleFlagUnknown, Warning, e.Subject,
+				fmt.Sprintf("%q passes %s, which no argument row of %s declares", e.Raw, f, c.Key),
+				"add an argument row for the flag, or fix the example"})
+		}
+	}
+	return out
+}
+
+// shellWords splits a line on white space, keeping a quoted string whole. It
+// stops at an unquoted shell operator (| ; &) or a comment (# at the start of a
+// word), since what follows is another command.
+func shellWords(s string) []string {
+	var out []string
+	var cur strings.Builder
+	var quote rune
+	started, esc := false, false
+	for _, r := range s {
+		switch {
+		case esc:
+			esc = false
+			cur.WriteRune(r)
+		case r == '\\' && quote != '\'':
+			esc = true
+			cur.WriteRune(r)
+		case quote != 0:
+			if r == quote {
+				quote = 0
+			}
+			cur.WriteRune(r) // quotes stay, so a quoted "-x" is not a flag
+		case r == '"' || r == '\'':
+			quote, started = r, true
+			cur.WriteRune(r)
+		case r == '|' || r == ';' || r == '&' || (r == '#' && cur.Len() == 0 && !started):
+			if started || cur.Len() > 0 {
+				out = append(out, cur.String())
+			}
+			return out
+		case r == ' ' || r == '\t':
+			if started || cur.Len() > 0 {
+				out = append(out, cur.String())
+				cur.Reset()
+				started = false
+			}
+		default:
+			cur.WriteRune(r)
+		}
+	}
+	if started || cur.Len() > 0 {
+		out = append(out, cur.String())
+	}
+	return out
 }
