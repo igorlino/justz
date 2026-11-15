@@ -16,7 +16,7 @@ import (
 //   - commands and extra in each group: keys A to Z
 //   - args of each command: positional arguments first, then flags, each
 //     ignoring case
-//   - examples: by their cmd; seeAlso: A to Z
+//   - examples: by their cmd; seeAlso of a group and of a command: A to Z
 //   - tiers[].groups, dispatchers and lab: A to Z; order: "core" first
 //
 // Arrays named "values" keep the order the author wrote, because they are
@@ -87,6 +87,9 @@ func canonicalizeGroup(g *orderedjson.Value) {
 func canonicalizeCommand(c *orderedjson.Value) {
 	if c == nil || c.Kind != orderedjson.Object {
 		return
+	}
+	if see := c.Get("seeAlso"); see != nil && see.Kind == orderedjson.Array {
+		sortValues(see)
 	}
 	if args := c.Get("args"); args != nil && args.Kind == orderedjson.Array {
 		sort.SliceStable(args.Arr, func(i, j int) bool {

@@ -23,7 +23,9 @@ type Command struct {
 	Desc    string
 	Example string
 	// Detail is longer prose about the command, shown only in its zoom.
-	Detail  string
+	Detail string
+	// SeeAlso lists keys (group.command) of related commands.
+	SeeAlso []string
 	Heading string // a display heading from a [group] attribute (native projects)
 	Args    []Arg
 }
@@ -156,6 +158,13 @@ func readCommands(v *orderedjson.Value) []Command {
 					}
 				}
 				c.Args = append(c.Args, arg)
+			}
+		}
+		if sa := m.Val.Get("seeAlso"); sa != nil && sa.Kind == orderedjson.Array {
+			for _, s := range sa.Arr {
+				if s.Kind == orderedjson.String {
+					c.SeeAlso = append(c.SeeAlso, s.Str)
+				}
 			}
 		}
 		out = append(out, c)

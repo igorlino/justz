@@ -76,3 +76,11 @@ func TestIgnoresOtherShapes(t *testing.T) {
 		Canonicalize(v) // must not panic
 	}
 }
+
+func TestCanonicalSortsCommandSeeAlso(t *testing.T) {
+	out := string(canonical(t, []byte(`{"groups":{"core":{"commands":{"b":{"desc":"B","seeAlso":["core.z","core.a","core.m"]}}}}}`)))
+	a, m, z := strings.Index(out, "core.a"), strings.Index(out, "core.m"), strings.Index(out, "core.z")
+	if a < 0 || a > m || m > z {
+		t.Errorf("seeAlso not sorted: %s", out)
+	}
+}
