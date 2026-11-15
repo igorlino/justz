@@ -112,6 +112,8 @@ _default:
 | `registry-key-signature` | A key carries an argument signature instead of a bare recipe name |
 | `registry-desc-long` | A `desc` is over 120 characters (warning). Keep a one-line `desc` equal to the `[doc]` and move the rest to `detail` |
 | `registry-unsorted` | Fixed by `justz fmt` |
+| `volatile-text` | A `desc` or `detail` has text that goes stale (a warning): `TODO`, `FIXME`, `WIP`, `placeholder`, `not implemented`, `coming soon`, a count such as `11 checks` or `six steps` (checks, tests, steps, jobs, stages, phases), a `$` price, an ISO date or a month with a year. Reword it, or silence one command with `[metadata('justz-ignore', 'volatile-text')]` |
+| `detail-flag-no-row` | A `detail` names a flag (`--long` or `-s`) that no argument row of the command declares (a warning): add the row. A command with no rows is reported too. Silence with `[metadata('justz-ignore', 'detail-flag-no-row')]` |
 | `example-*` | The example rules above, on group `examples` and on each command `example`; `example-flag-unknown` is always a warning |
 
 Wire `justz check` and `justz fmt --check` into `check` and `ci`, then add a deliberately undocumented recipe and confirm both fail.

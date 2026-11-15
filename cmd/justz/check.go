@@ -19,12 +19,19 @@ It reads the justfile through just --dump and, when there is one, the registry
   registry-missing, registry-stale, registry-desc-diverges,
   registry-key-signature, registry-shape, registry-desc-long, registry-unsorted
   example-bare-command, example-single-flag, example-long-flag,
-  example-enum-missing, example-flag-unknown (a warning), default-public (a public default recipe: a warning,
+  example-enum-missing, example-flag-unknown (a warning), volatile-text and
+  detail-flag-no-row (advice, warnings), default-public (a public default recipe: a warning,
   so check --strict fails on it; it is a dispatcher, not a command, so it is
   not counted)
 
   --json     Print the findings as JSON
   --strict   Warnings fail the check too
+
+volatile-text finds text in a desc or detail that goes stale (TODO, FIXME, WIP,
+placeholder, not implemented, coming soon, a count such as "11 checks", a
+price, a date). detail-flag-no-row finds a flag that a detail names but no
+argument row declares. Silence either on one recipe with
+[metadata('justz-ignore', '<rule>')].
 
 Exit codes: 0 no errors, 1 errors (or warnings with --strict), 2 usage error.
 `

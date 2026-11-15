@@ -242,6 +242,25 @@ func isBooleanFlag(c registryEntry, flag string) bool {
 
 var noFlag = regexp.MustCompile(`--\[no-\]([A-Za-z0-9][A-Za-z0-9-]*)`)
 
+// declaredFlags lists the flags the argument rows of a command declare, the
+// aliases of a row and both forms of a --[no-]x row included. variadic is true
+// when a row ends in ..., which passes the rest of the line on.
+func declaredFlags(c registryEntry) (declared map[string]bool, variadic bool) {
+	declared = map[string]bool{}
+	for _, a := range c.Args {
+		if strings.Contains(a.Name, "...") {
+			variadic = true
+		}
+		for _, m := range noFlag.FindAllStringSubmatch(a.Name, -1) {
+			declared["--"+m[1]], declared["--no-"+m[1]] = true, true // --[no-]color
+		}
+		for _, f := range flagScan.FindAllString(a.Name, -1) {
+			declared[f] = true
+		}
+	}
+	return declared, variadic
+}
+
 // unknownFlags reports the flags of an example that no argument row of the
 // command declares. It is advice, so always a warning. It stays silent for a
 // command with no rows (nothing says the flags are wrong), for one with a
@@ -252,17 +271,9 @@ func unknownFlags(c registryEntry, path string, found []example) []Finding {
 	if len(c.Args) == 0 {
 		return nil
 	}
-	declared := map[string]bool{}
-	for _, a := range c.Args {
-		if strings.Contains(a.Name, "...") {
-			return nil
-		}
-		for _, m := range noFlag.FindAllStringSubmatch(a.Name, -1) {
-			declared["--"+m[1]], declared["--no-"+m[1]] = true, true // --[no-]color
-		}
-		for _, f := range flagScan.FindAllString(a.Name, -1) {
-			declared[f] = true
-		}
+	declared, variadic := declaredFlags(c)
+	if variadic {
+		return nil
 	}
 	on := regexp.MustCompile(`^just +` + regexp.QuoteMeta(path) + `(\s|$)`)
 	var out []Finding

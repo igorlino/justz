@@ -32,7 +32,7 @@ const MaxBodyLines = 40
 const IgnoreKey = "justz-ignore"
 
 // ignorable lists the rules a recipe may silence, in the order they are shown.
-var ignorable = []string{RuleRecipeLong, RuleSecretParameter, RuleSecretInterpol}
+var ignorable = append([]string{RuleRecipeLong, RuleSecretParameter, RuleSecretInterpol}, check.IgnorableRules...)
 
 // Finding is one piece of advice. It has the fields of a check finding.
 type Finding struct {
