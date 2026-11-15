@@ -108,6 +108,7 @@ _default:
 | `variadic-interpolation` | A variadic parameter is interpolated and so split on whitespace |
 | `registry-missing`, `registry-stale` | A recipe has no registry entry, or an entry has no recipe |
 | `registry-desc-diverges` | `[doc]` and `desc` differ |
+| `registry-shape` | A registry field has the wrong type (`args` as a string, `examples` not an array, a row that is not an object). `justz` reads such a field as absent, so the finding names the command key and the field; unknown fields are allowed, and `justz schema` describes the same shape |
 | `registry-key-signature` | A key carries an argument signature instead of a bare recipe name |
 | `registry-desc-long` | A `desc` is over 120 characters (warning). Keep a one-line `desc` equal to the `[doc]` and move the rest to `detail` |
 | `registry-unsorted` | Fixed by `justz fmt` |
