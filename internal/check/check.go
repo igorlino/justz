@@ -29,6 +29,7 @@ const (
 	RuleDocMissing       = "doc-missing"
 	RuleGroupMissing     = "group-missing"
 	RuleVariadic         = "variadic-interpolation"
+	RuleDefaultPublic    = "default-public"
 	RuleRegistryMissing  = "registry-missing"
 	RuleRegistryStale    = "registry-stale"
 	RuleRegistryDesc     = "registry-desc-diverges"
@@ -122,6 +123,7 @@ func Run(in Input) (Result, error) {
 	for _, it := range items {
 		res.Findings = append(res.Findings, recipeRules(it, in.Variant)...)
 	}
+	res.Findings = append(res.Findings, publicDefaults(d, "")...)
 	if len(in.Sources) > 0 {
 		res.Findings = append(res.Findings, docMultilineFindings(items, in.Sources)...)
 	}
@@ -163,6 +165,31 @@ func collect(d dump, prefix, group string) []item {
 			g = mod
 		}
 		out = append(out, collect(sub, p, g)...)
+	}
+	return out
+}
+
+// publicDefaults reports each public recipe named default. It is a dispatcher,
+// so it is not counted or checked for a [doc], but a public one is a row in
+// every listing: the dispatcher belongs in a private _default, first in the
+// file.
+func publicDefaults(d dump, prefix string) []Finding {
+	var out []Finding
+	if r, ok := d.Recipes["default"]; ok && !r.Private {
+		path := "default"
+		if prefix != "" {
+			path = prefix + " default"
+		}
+		out = append(out, Finding{RuleDefaultPublic, Warning, "just " + path,
+			"a public default recipe is a row in every listing",
+			"rename it _default and keep it first in the file, so it is private"})
+	}
+	for mod, sub := range d.Modules {
+		p := mod
+		if prefix != "" {
+			p = prefix + " " + mod
+		}
+		out = append(out, publicDefaults(sub, p)...)
 	}
 	return out
 }

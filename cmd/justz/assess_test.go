@@ -57,6 +57,20 @@ func TestAssessRichProject(t *testing.T) {
 	}
 }
 
+func TestAssessTextShowsDispatchers(t *testing.T) {
+	t.Chdir(gitProject(t))
+	r := newRuntimeEnv()
+	r.runCmd = func(name string, args ...string) (string, error) {
+		return `{"recipes":{"default":{"private":false,"doc":null,"shebang":false,"body":[["echo"]],"parameters":[]},"build":{"private":false,"doc":"B","shebang":false,"body":[["echo"]],"parameters":[]}},"modules":{}}`, nil
+	}
+	if code := run([]string{"assess"}, r.env); code != 0 {
+		t.Fatalf("exit %d, stderr %q", code, r.errOut.String())
+	}
+	if out := r.out.String(); !strings.Contains(out, "recipes        2 (1 public, 0 private, 1 dispatcher)") || !strings.Contains(out, "advice: 1 public default") {
+		t.Errorf("output:\n%s", out)
+	}
+}
+
 func TestAssessNativeAndOverlay(t *testing.T) {
 	dir := gitProject(t)
 	t.Chdir(dir)

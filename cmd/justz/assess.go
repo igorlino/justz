@@ -20,6 +20,13 @@ It reads the justfile through just --dump, never by searching the text, so the
 numbers are exact. The recommendation follows the thresholds of the variant
 guide and always comes with its reason.
 
+A public default recipe is a dispatcher, not a command: it is left out of the
+counts, as justz check leaves it out, and assess advises renaming it _default.
+(justz check reports it as the warning default-public, which fails
+check --strict.)
+It also advises when a registry exists and a default recipe does not run
+justz help (shim names such as tz are not recognized), since detail kept in the registry is then not shown. Advice is not a rule.
+
 Exit codes: 0 done, 1 error, 2 usage error.
 `
 
@@ -74,7 +81,11 @@ func printAssess(e env, justfile string, r assess.Report) {
 	} else {
 		p("variant", "%s", r.Variant)
 	}
-	p("recipes", "%d (%d public, %d private)", r.Recipes.Total, r.Recipes.Public, r.Recipes.Private)
+	if r.Recipes.Dispatchers > 0 {
+		p("recipes", "%d (%d public, %d private, %d dispatcher)", r.Recipes.Total, r.Recipes.Public, r.Recipes.Private, r.Recipes.Dispatchers)
+	} else {
+		p("recipes", "%d (%d public, %d private)", r.Recipes.Total, r.Recipes.Public, r.Recipes.Private)
+	}
 	p("documented", "%d of %d public recipes have a doc", r.Recipes.Documented, r.Recipes.Public)
 	p("modules", "%d", r.Modules)
 	p("shebang", "%d recipes", r.ShebangRecipes)
@@ -86,6 +97,9 @@ func printAssess(e env, justfile string, r assess.Report) {
 		p("registry", "%d public recipes missing from it, %d stale entries", len(r.Registry.Missing), len(r.Registry.Stale))
 		printList(e, "missing", r.Registry.Missing)
 		printList(e, "stale", r.Registry.Stale)
+	}
+	for _, a := range r.Advice {
+		fmt.Fprintf(e.stdout, "advice: %s\n", textsafe.Line(a))
 	}
 	fmt.Fprintf(e.stdout, "\nrecommendation: %s. %s\n", r.Recommendation.Variant, r.Recommendation.Reason)
 }

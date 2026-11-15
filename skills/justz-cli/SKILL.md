@@ -41,7 +41,7 @@ metadata:
 | Schema of the registry, for an editor or CI | `justz schema` (prints JSON; `justz schema > commands.schema.json`) |
 | Keep the registry sorted | `justz fmt` (`--check` writes nothing and exits `1` when unsorted) |
 | Which group does a bare name mean? | `justz resolve <name>` (exit `0` one match, `2` several, `3` none) |
-| Which documentation variant fits? | `justz assess --json` |
+| Which documentation variant fits? | `justz assess --json` (a public `default` recipe is a dispatcher, not counted, as in `check`; `advice` lists hints such as a registry whose default recipes do not run `justz help`; shim names such as `tz` are not recognized; `check --strict` fails on a public `default`) |
 | Personal overlay for a project without a registry | `justz generate` (`--stdout` writes nothing) |
 | Shell completion | `eval "$(justz completions zsh)"` or `bash`; run it again after adding or removing a shim |
 | Is the machine ready? | `justz setup` (`--dry-run`), `justz doctor --json` |

@@ -94,7 +94,7 @@ func TestNativeDocumentationRules(t *testing.T) {
 	}
 	for _, bad := range []string{"just good", "just tool clean", "just default", "just tool default", "just _hidden"} {
 		for _, f := range res.Findings {
-			if f.Subject == bad {
+			if f.Subject == bad && f.Rule != RuleDefaultPublic {
 				t.Errorf("%s should not be reported: %+v", bad, f)
 			}
 		}
@@ -339,5 +339,37 @@ func TestDetailIsNotComparedAndDivergingFixPointsAtIt(t *testing.T) {
 		if variant == "local-rich" && !strings.Contains(fix, "justz generate") {
 			t.Errorf("local-rich diverges fix = %q", fix)
 		}
+	}
+}
+
+func TestPublicDefaultIsAWarningNotACommand(t *testing.T) {
+	priv := rc("", nil)
+	priv["private"] = true
+	d := dumpOf(t,
+		map[string]any{"default": rc("", nil), "build": rc("B", grp("core"))},
+		map[string]any{"tool": module(map[string]any{"default": rc("", nil), "clean": rc("C", nil)}), "ops": module(map[string]any{"_default": priv, "up": rc("U", nil)})})
+	res := run(t, Input{Dump: d, Variant: "native"})
+	if res.Checked != 3 {
+		t.Errorf("checked = %d, want 3 (dispatchers are not counted)", res.Checked)
+	}
+	if !has(res, RuleDefaultPublic, "just default") || !has(res, RuleDefaultPublic, "just tool default") {
+		t.Errorf("findings = %v", rules(res))
+	}
+	if has(res, RuleDefaultPublic, "just ops _default") || has(res, RuleDocMissing, "just default") {
+		t.Errorf("findings = %v", rules(res))
+	}
+	for _, f := range res.Findings {
+		if f.Rule == RuleDefaultPublic && (f.Severity != Warning || !strings.Contains(f.Fix, "_default")) {
+			t.Errorf("finding = %+v", f)
+		}
+	}
+}
+
+func TestPrivateDefaultHasNoFinding(t *testing.T) {
+	priv := rc("", nil)
+	priv["private"] = true
+	res := run(t, Input{Dump: dumpOf(t, map[string]any{"_default": priv, "build": rc("B", grp("core"))}, nil), Variant: "native"})
+	if len(res.Findings) != 0 {
+		t.Errorf("findings = %v", rules(res))
 	}
 }

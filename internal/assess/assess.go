@@ -6,6 +6,7 @@ package assess
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -35,6 +36,7 @@ type Counts struct {
 	Private      int `json:"private"`
 	Documented   int `json:"documented"`   // public recipes with a doc
 	Undocumented int `json:"undocumented"` // public recipes without one
+	Dispatchers  int `json:"dispatchers"`  // public recipes named default: counted in Total, not in Public
 }
 
 // Long counts recipes by the length of their body, in lines.
@@ -68,6 +70,7 @@ type Report struct {
 	ManyOptions    int            `json:"manyOptions"` // commands with more than two documented parameters or registry args
 	Registry       *Coverage      `json:"registry,omitempty"`
 	Recommendation Recommendation `json:"recommendation"`
+	Advice         []string       `json:"advice"` // one line each; advice, not a rule
 }
 
 // Input is everything Assess needs.
@@ -86,13 +89,25 @@ func Assess(in Input) (Report, error) {
 	}
 	r := Report{Variant: in.Variant, RegistryPath: textsafe.Line(in.RegistryPath), Modules: len(d.Modules)}
 
+	defaults, helpCalls := 0, 0 // default and _default recipes, and those that run justz help
 	public := map[string]bool{} // "group command" paths of public recipes, for the coverage check
 	var walk func(prefix string, mod dump)
 	walk = func(prefix string, mod dump) {
 		for name, rc := range mod.Recipes {
 			r.Recipes.Total++
+			if name == "default" || name == "_default" {
+				defaults++
+				if callsHelp(rc.Body) {
+					helpCalls++
+				}
+			}
 			if rc.Private {
 				r.Recipes.Private++
+				continue
+			}
+			if name == "default" {
+				// The dispatcher is not a command: check leaves it out too.
+				r.Recipes.Dispatchers++
 				continue
 			}
 			r.Recipes.Public++
@@ -140,7 +155,35 @@ func Assess(in Input) (Report, error) {
 		}
 	}
 	r.Recommendation = recommend(r)
+	r.Advice = advice(r, in.Registry != nil, defaults, helpCalls)
 	return r, nil
+}
+
+// advice lists hints that are not findings. The registry carries detail that
+// only justz renders, so a project that keeps one and shows its help some
+// other way hides that detail.
+func advice(r Report, hasRegistry bool, defaults, helpCalls int) []string {
+	out := []string{}
+	if r.Recipes.Dispatchers > 0 {
+		out = append(out, fmt.Sprintf("%d public default recipe(s) are dispatchers, not commands: rename each _default and keep it first in the file, so it is private (justz check warns: default-public)", r.Recipes.Dispatchers))
+	}
+	if hasRegistry && helpCalls < defaults {
+		out = append(out, "a registry exists, but not every default recipe runs justz help, so detail kept in the registry is not shown by the help people use: have each default recipe run justz help <group> (shim names such as tz are not recognized)")
+	}
+	return out
+}
+
+var helpCall = regexp.MustCompile(`\b(justz|jz)\s+help\b|\bjzh\b`)
+
+// callsHelp reports whether a recipe body runs justz help (or its shortcuts).
+func callsHelp(body []json.RawMessage) bool {
+	for _, line := range body {
+		s := string(line)
+		if helpCall.MatchString(s) {
+			return true
+		}
+	}
+	return false
 }
 
 // registryManyOptions counts registry commands with more than two args.
@@ -196,14 +239,13 @@ func coverage(reg *orderedjson.Value, public map[string]bool) *Coverage {
 	}
 	cov := &Coverage{Missing: []string{}, Stale: []string{}}
 	for p := range public {
-		// A module's default recipe is its dispatcher (it shows the module's
-		// help), not a command to document.
-		if !listed[p] && p != "default" && !strings.HasSuffix(p, " default") {
+		if !listed[p] {
 			cov.Missing = append(cov.Missing, p)
 		}
 	}
 	for p := range listed {
-		if !public[p] {
+		// check accepts a registry entry for a module's default as well.
+		if !public[p] && p != "default" && !strings.HasSuffix(p, " default") {
 			// A stale entry is a registry key, which is project text.
 			cov.Stale = append(cov.Stale, textsafe.Line(p))
 		}
