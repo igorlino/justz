@@ -129,3 +129,14 @@ func TestCanonicalSortsEnvByNameAndKeepsUnknownFields(t *testing.T) {
 		t.Errorf("extra env not sorted: %s", out)
 	}
 }
+
+func TestCanonicalSortsTagsAndKeepsUnknownFields(t *testing.T) {
+	out := string(canonical(t, []byte(`{"groups":{"core":{"commands":{"b":{"desc":"B","tags":["spends","asks-first","production"],"note":"kept"}},"extra":{"e":{"desc":"E","tags":["z","a"]}}}}}`)))
+	i, j, k := strings.Index(out, `"asks-first"`), strings.Index(out, `"production"`), strings.Index(out, `"spends"`)
+	if i < 0 || j < i || k < j {
+		t.Errorf("tags not A to Z: %s", out)
+	}
+	if strings.Index(out, `"a"`) > strings.Index(out, `"z"`) || !strings.Contains(out, `"note": "kept"`) {
+		t.Errorf("extra tags not sorted or unknown field lost: %s", out)
+	}
+}

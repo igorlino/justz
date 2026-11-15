@@ -67,6 +67,9 @@ func (c *Command) sanitize() {
 		c.Env[i].Desc = textsafe.Line(c.Env[i].Desc)
 		c.Env[i].Default = textsafe.Line(c.Env[i].Default)
 	}
+	for i := range c.Tags {
+		c.Tags[i] = textsafe.Line(c.Tags[i])
+	}
 	for i := range c.SeeAlso {
 		c.SeeAlso[i] = textsafe.Line(c.SeeAlso[i])
 	}

@@ -27,7 +27,7 @@ Nothing here is vendored. There is no `help.sh` to copy, keep identical across r
 | Expanded | `justz help --expanded` | Every group with its commands and argument rows. `--wide`, `-w` adds example columns (on by default from 100 columns) |
 | Zoom | `justz help <group>`, `justz help [group] <cmd>` | One group (usage, commands, examples, cross-references) or one command (how to invoke it, examples, options, then its `detail`). An exact name or a unique prefix works; an ambiguous name exits `2` and lists the groups |
 
-Add `-j` (or `--json`) for machine-readable output (a command's zoom carries `detail`, `exits`, `env` and `seeAlso`, and a group's listing carries `hasDetail` per command; listings and the array printed for an ambiguous name do not), `-b` to browse with `fzf` (or a numbered menu).
+Add `-j` (or `--json`) for machine-readable output (a command's zoom carries `detail`, `exits`, `env`, `tags` (left out when empty) and `seeAlso`, and a group's listing carries `hasDetail` per command; listings and the array printed for an ambiguous name do not), `-b` to browse with `fzf` (or a numbered menu).
 
 The text `justz` itself prints from a registry or a justfile is made safe for a terminal (0.7.0 or newer). The output of `just` and of the recipes passes through unchanged.
 
@@ -45,6 +45,20 @@ For each recipe write a description that says what it does, not just which tool 
 - `detail` (0.7.0 or newer) is empty for most commands, and an empty one is correct. Write one only when a reader who has found the command still needs a fact `desc` cannot carry. Aim for about 400 characters, written after `desc`, as facts and not narrative. 400 is what to aim for; `check` only warns at 600, so a `detail` between the two is acceptable but should earn its length. In this order, until the facts run out: what the command does not do; what it needs first; what it changes and how to undo it; when to run it and what next; its exit codes and where output goes; how it differs from a sibling. It works on `commands` and on `extra` entries. An older `justz` ignores the field and shows the short `desc`.
 - Document a command's exit codes in `exits`, not in prose: an object from the code, as a string, to one line of meaning, such as `{"0": "no errors", "1": "an error, or a warning with --strict", "2": "usage error"}`. A key is an integer from 0 to 255 (`justz check` reports any other key, `registry-exits`), `justz fmt` sorts the keys by number, and the zoom shows an **Exit codes** section after Options. List the codes a caller acts on; `0` is optional. `justz check` cannot tell whether the recipe really exits with a code, so check each against the script.
 - Document the environment variables a command reads in `env`, not in prose: an array of rows like `args`, each with `name` (the variable, such as `STORAGE_HOST`), `desc`, and optionally `required` (a boolean) and `default` (text, shown and not parsed). A flag goes in `args`; a variable that is set around the command goes in `env`; do not list one in both. `justz fmt` sorts the rows by name, the zoom shows an **Environment** section after Options and **Exit codes**, and `justz check` reports a row without a name or with a duplicate name (an error) and a name that is not upper case letters, digits and underscores (a warning), `registry-env`. It cannot tell whether the command reads the variable, since a script the recipe runs reads its own, so check each row against the script.
+- Declare what a command touches in `tags`, an array of free strings (the zoom shows a **Tags** line under the description, before the examples; `justz fmt` sorts them A to Z). Use the recommended words so a reader knows them; the list can grow without a release of `justz`, and a word outside it is allowed:
+
+  | Tag | Meaning |
+  |---|---|
+  | `read-only` | Changes nothing outside the working files: no write to a service, a host or a database |
+  | `idempotent` | Running it again has the same effect as running it once |
+  | `destructive` | Deletes or overwrites something that cannot be recovered from the command alone |
+  | `production` | Touches a production system |
+  | `spends` | Costs money or uses a quota |
+  | `asks-first` | Stops to ask for a confirmation before it acts |
+  | `long-running` | Takes minutes, not seconds |
+  | `needs-terminal` | Needs an interactive terminal (a prompt, a pager, a login) |
+
+  **Absence never means safe.** A command with no `tags`, or without `read-only`, is unknown, not harmless: never read a missing tag as a permission, and never require `read-only` of every command. Say `read-only` only when you checked the script. A tag is acted on, so a stale one is worse than stale prose: review each against the script when the script changes. `justz check` verifies two things: `asks-first` and the recipe's `[confirm]` attribute must agree in both directions (`tags-confirm`, a warning, since a script may ask by itself: silence one recipe with `[metadata('justz-ignore', 'tags-confirm')]`; an `extra` entry has no recipe, so no such rule), and `registry-tags` warns on `read-only` together with `destructive`, `spends` or `production`, and on a duplicate. It cannot derive any other tag, and does not warn on a word outside the list. An agent that runs commands must read a command's `tags` first (`justz help <group> <command> -j`).
 - Steps do not go in `detail`: the steps of a script belong in the script. `justz check` warns about the shape (`detail-long` over 600 characters, `detail-no-paragraphs` over 300 with no blank line, `detail-restates-desc` for a `detail` that opens with the `desc` again).
 - Other content has its own place:
 
@@ -67,7 +81,7 @@ For each recipe write a description that says what it does, not just which tool 
 - Write the short form first and the value placeholder once, at the end: `-s, --surface <name>`.
 - Add an `example` string (prefixed with `… `) for parameterised commands, using short flags.
 - Every group-level `examples` entry must add information the argument rows do not: a value-taking flag (especially enum `values`), several flags together, passthrough arguments (`-- …`), or an environment override. Never a bare command, and never a single boolean flag that an argument row already shows. `justz check` rejects both (`example-bare-command`, `example-single-flag`) and also flags long options where a short alias exists (`example-long-flag`) and an enum that no example uses (`example-enum-missing`). It also warns about a flag that no argument row declares (`example-flag-unknown`; silent for a command with no rows, for a variadic row and after `--`). A leading `NAME=value` or `env NAME=value` is ignored, so an environment override does not hide an example from the rules, and the per-command `example` field (a leading `…` stands for `just <command>`) goes through the same rules.
-- Run **`justz fmt`** after every edit. It writes the canonical order: groups (`core` first, then A to Z), commands A to Z, arguments (positional first, then flags A to Z), `env` rows by name, examples by `cmd`, `seeAlso` and `tiers[].groups` A to Z. `justz fmt --check` writes nothing and exits `1` when the file is not formatted.
+- Run **`justz fmt`** after every edit. It writes the canonical order: groups (`core` first, then A to Z), commands A to Z, arguments (positional first, then flags A to Z), `env` rows by name, examples by `cmd`, `tags`, `seeAlso` and `tiers[].groups` A to Z. `justz fmt --check` writes nothing and exits `1` when the file is not formatted.
 
 To start a new project instead of one file, `justz init --variant rich` (0.6.0 or newer) writes the justfile, the modules and a registry that already passes `justz check` and `justz fmt --check`; `--dry-run` lists the files first. It never overwrites.
 
@@ -128,6 +142,8 @@ _default:
 | `registry-shape` | A registry field has the wrong type (`args` as a string, `examples` not an array, a row that is not an object). `justz` reads such a field as absent, so the finding names the command key and the field; unknown fields are allowed, and `justz schema` describes the same shape |
 | `registry-key-signature` | A key carries an argument signature instead of a bare recipe name |
 | `registry-env` | An `env` row has no name, or its name repeats (an error); a name that is not upper case letters, digits and underscores (a warning) |
+| `registry-tags` | A command's `tags` has `read-only` together with `destructive`, `spends` or `production`, or repeats a tag (warnings); a tag outside the recommended list is not reported |
+| `tags-confirm` | The recipe has `[confirm]` and `tags` lacks `asks-first`, or `tags` has `asks-first` and the recipe has no `[confirm]` (a warning; not applied to `extra` entries). Silence with `[metadata('justz-ignore', 'tags-confirm')]` when the script asks by itself |
 | `registry-exits` | A key of a command's `exits` is not an integer from 0 to 255 in decimal (an error), or its meaning is blank (a warning) |
 | `registry-see-also` | A command's `seeAlso` key is not `group.command` of a command or `extra` entry, or names the command itself (an error) |
 | `registry-desc-long` | A `desc` is over 120 characters (warning). Keep a one-line `desc` equal to the `[doc]` and move the rest to `detail` |

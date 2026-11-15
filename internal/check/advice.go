@@ -10,7 +10,7 @@ import (
 
 // IgnorableRules lists the rules of check that a recipe may silence with
 // [metadata('justz-ignore', '<rule>')], the attribute justz lint uses.
-var IgnorableRules = []string{RuleVolatileText, RuleDetailFlagNoRow, RuleDetailLong, RuleDetailNoParagraphs, RuleDetailRestatesDesc}
+var IgnorableRules = []string{RuleVolatileText, RuleDetailFlagNoRow, RuleDetailLong, RuleDetailNoParagraphs, RuleDetailRestatesDesc, RuleTagsConfirm}
 
 // IgnoreKey is the first value of that attribute.
 const IgnoreKey = "justz-ignore"

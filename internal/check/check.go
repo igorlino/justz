@@ -46,6 +46,8 @@ const (
 	RuleSeeAlso            = "registry-see-also"
 	RuleExits              = "registry-exits"
 	RuleEnv                = "registry-env"
+	RuleTags               = "registry-tags"
+	RuleTagsConfirm        = "tags-confirm"
 	RuleDetailLong         = "detail-long"
 	RuleDetailNoParagraphs = "detail-no-paragraphs"
 	RuleDetailRestatesDesc = "detail-restates-desc"
@@ -58,7 +60,7 @@ var Rules = []string{
 	RuleDocMissing, RuleGroupMissing, RuleVariadic, RuleDefaultPublic, RuleRegistryMissing,
 	RuleRegistryStale, RuleRegistryDesc, RuleKeySignature, RuleRegistryShape, RuleDescLong,
 	RuleUnsorted, RuleExampleBare, RuleExampleSingle, RuleExampleLongFlag, RuleExampleEnumUnset,
-	RuleExampleFlagUnknown, RuleVolatileText, RuleDetailFlagNoRow, RuleDocMultiline, RuleSeeAlso, RuleExits, RuleEnv,
+	RuleExampleFlagUnknown, RuleVolatileText, RuleDetailFlagNoRow, RuleDocMultiline, RuleSeeAlso, RuleExits, RuleEnv, RuleTags, RuleTagsConfirm,
 	RuleDetailLong, RuleDetailNoParagraphs, RuleDetailRestatesDesc,
 }
 
@@ -298,6 +300,7 @@ type registryEntry struct {
 	SeeAlso    []string
 	ExitKeys   []string // the keys of the exits map, as written
 	ExitBlank  []string // the keys whose meaning is blank
+	Tags       []string // the tags as written, cleaned
 	EnvNames   []string // the name of each env row as written, "" when it has none
 	Extra      bool
 	Args       []argEntry
@@ -354,6 +357,13 @@ func registryEntries(reg *orderedjson.Value) []registryEntry {
 							name = textsafe.Line(n.Str)
 						}
 						e.EnvNames = append(e.EnvNames, name)
+					}
+				}
+				if tg := c.Val.Get("tags"); tg != nil && tg.Kind == orderedjson.Array {
+					for _, s := range tg.Arr {
+						if s != nil && s.Kind == orderedjson.String {
+							e.Tags = append(e.Tags, textsafe.Line(s.Str))
+						}
 					}
 				}
 				if x := c.Val.Get("detail"); x != nil && x.Kind == orderedjson.String {
@@ -440,6 +450,7 @@ func registryRules(in Input, items []item) []Finding {
 	out = append(out, seeAlsoRules(entries)...)
 	out = append(out, exitsRules(entries)...)
 	out = append(out, envRules(entries)...)
+	out = append(out, tagsRules(entries, items)...)
 	out = append(out, adviceRules(entries, items)...)
 
 	if f, ok := orderFinding(in.RegistrySource); ok {

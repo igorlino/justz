@@ -1,0 +1,23 @@
+
+  dm ops deploy
+  ────────────────────────────────────────────────────────
+  Deploy
+  Tags: asks-first, bad�[31m, production, spends, x�y
+
+  Examples
+
+    Preview
+    $ dm ops deploy --dry
+
+  Options
+    --dry  Do not copy
+
+  Exit codes
+    0  ok
+
+  Environment
+    HOST  Host
+
+  Details
+    A detail.
+

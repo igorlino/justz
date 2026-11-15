@@ -351,6 +351,15 @@ func CommandView(proj *Project, g *Group, c *Command, o Options) string {
 	for _, l := range wrap(w-4, c.Desc) {
 		p.line("  %s", l)
 	}
+	if len(c.Tags) > 0 {
+		for i, l := range wrap(w-4, "Tags: "+strings.Join(c.Tags, ", ")) {
+			if i == 0 {
+				p.line("  %s%s", p.s.dim("Tags:"), strings.TrimPrefix(l, "Tags:"))
+			} else {
+				p.line("  %s", l)
+			}
+		}
+	}
 
 	if exs := commandExamples(proj, g, c, path); len(exs) > 0 {
 		p.b.WriteByte('\n')

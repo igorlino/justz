@@ -18,6 +18,7 @@ import (
 //     ignoring case
 //   - exits of a command: by numeric code, keys that are not codes last
 //   - env of a command: by name
+//   - tags of a command: A to Z
 //   - examples: by their cmd; seeAlso of a group and of a command: A to Z
 //   - tiers[].groups, dispatchers and lab: A to Z; order: "core" first
 //
@@ -117,6 +118,9 @@ func canonicalizeCommand(c *orderedjson.Value) {
 	}
 	if see := c.Get("seeAlso"); see != nil && see.Kind == orderedjson.Array {
 		sortValues(see)
+	}
+	if tags := c.Get("tags"); tags != nil && tags.Kind == orderedjson.Array {
+		sortValues(tags)
 	}
 	if args := c.Get("args"); args != nil && args.Kind == orderedjson.Array {
 		sort.SliceStable(args.Arr, func(i, j int) bool {
