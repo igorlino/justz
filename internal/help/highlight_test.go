@@ -43,6 +43,13 @@ func TestHighlightTokens(t *testing.T) {
 		{"unmatched backtick", "a ` b --flag c", "a ` b {c}--flag{/} c"},
 		{"doubled backtick", "a `` b --flag c", "a `` b {c}--flag{/} c"},
 		{"backtick inside a word", "a`b c", "a`b c"},
+		{"flag in brackets", "[--f]", "[{c}--f{/}]"},
+		{"flag in braces", "{--f}", "{{c}--f{/}}"},
+		{"span after an angle bracket", "<`a`>", "<{g}`a`{/}>"},
+		{"span before an angle bracket", "`a --f`>", "{g}`a {c}--f{g}`{/}>"},
+		{"url with an unmatched close paren", "see https://x.test/a) now", "see {u}https://x.test/a{/u}) now"},
+		{"url with a matched paren and a close paren", "(https://x.test/a_(b))", "({u}https://x.test/a_(b){/u})"},
+		{"blank runs between words", "a   --f    `x   y`   b", "a {c}--f{/} {g}`x y`{/} b"},
 		{"closing backtick needs a boundary", "`a`b --f", "`a`b {c}--f{/}"},
 		{"two spans", "`a` and `b --f`", "{g}`a`{/} and {g}`b {c}--f{g}`{/}"},
 		{"quoted span words", "`say 'hi' --now`", "{g}`say 'hi' {c}--now{g}`{/}"},
@@ -135,5 +142,24 @@ func TestHighlightSpanAcrossALineBreakKeepsItsColor(t *testing.T) {
 		if !strings.HasPrefix(l, "\x1b[32m") || !strings.HasSuffix(l, "\x1b[39m") {
 			t.Errorf("each line of the span should be green on its own: %q", marked(l))
 		}
+	}
+}
+
+// The joining blank of a wrapped line comes from the first blank of the run
+// between two words, so a run of blanks is one blank on the line, and it is
+// green only inside a span.
+func TestHighlightJoinBlankFollowsItsSource(t *testing.T) {
+	lines := style{on: true}.highlightLines(40, "`a     b`   c    --f")
+	if got, want := marked(strings.Join(lines, "\n")), "{g}`a b`{/} c {c}--f{/}"; got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
+
+// wrap works on runes, so a byte that is not UTF-8 comes out as U+FFFD. The
+// registry never holds one (the JSON decoder replaces it); a native justfile
+// doc could.
+func TestWrapReplacesInvalidUTF8(t *testing.T) {
+	if got := wrap(20, "a\xffb c"); len(got) != 1 || got[0] != "a\ufffdb c" {
+		t.Errorf("wrap = %q", got)
 	}
 }
