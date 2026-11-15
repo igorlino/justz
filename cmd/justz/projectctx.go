@@ -34,7 +34,7 @@ func loadProjectCtx(e env) (*projectCtx, error) {
 	}
 	dump, err := e.runCmd("just", "--justfile", justfile, "--dump", "--dump-format", "json")
 	if err != nil {
-		return nil, fmt.Errorf("could not read the justfile with just: %v", err)
+		return nil, justReadError(e, err)
 	}
 
 	ctx := &projectCtx{Justfile: justfile, Dump: dump, Variant: "native"}
