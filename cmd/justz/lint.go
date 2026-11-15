@@ -2,13 +2,12 @@ package main
 
 import (
 	"fmt"
-	"strings"
 
 	chk "github.com/igorlino/justz/internal/check"
 	"github.com/igorlino/justz/internal/lint"
 )
 
-const lintUsage = `Usage: justz lint [--json] [--strict]
+const lintUsage = `Usage: justz lint [--json] [--strict] [--rule NAME]...
 
 Find antipatterns that can be seen in the structure of the justfile, as advice.
 It reads the justfile through just --dump and never runs a recipe. Every
@@ -47,6 +46,14 @@ no message carries the text of a recipe line.
 
   --json     Print the findings as JSON
   --strict   Warnings fail the run too
+  --rule     Show only the findings of this rule. It is for reading, not for
+             gating CI: it can hide errors and exit 0. Repeat the flag or separate
+             names with commas. The counts and the exit code follow the
+             findings that are shown. An unknown name is a usage error that
+             lists the valid names
+
+The text output prints a fix once for a run of findings of one rule that share
+it. The JSON keeps the fix on every finding.
 
 Exit codes: 0 no findings to act on, 1 warnings with --strict (or the justfile
 could not be read), 2 usage error.
@@ -58,11 +65,21 @@ type lintReport struct {
 	Errors   int            `json:"errors"`
 	Warnings int            `json:"warnings"`
 	Findings []lint.Finding `json:"findings"`
+	Rules    []string       `json:"rules,omitempty"` // the --rule filter, when one was given
 }
 
 func runLint(args []string, e env) int {
 	asJSON, strict := false, false
-	for _, a := range args {
+	var rules []string
+	for i := 0; i < len(args); i++ {
+		a := args[i]
+		if ok, msg := ruleFlag(args, &i, &rules); ok {
+			if msg != "" {
+				fmt.Fprintf(e.stderr, "justz lint: %s\n", msg)
+				return 2
+			}
+			continue
+		}
 		switch a {
 		case "--help", "-h":
 			fmt.Fprint(e.stdout, lintUsage)
@@ -77,6 +94,11 @@ func runLint(args []string, e env) int {
 		}
 	}
 
+	if msg := unknownRule("lint", rules, lint.Rules); msg != "" {
+		fmt.Fprintln(e.stderr, msg)
+		return 2
+	}
+
 	ctx, err := loadProjectCtx(e)
 	if err != nil {
 		fmt.Fprintf(e.stderr, "justz lint: %v\n", err)
@@ -88,9 +110,27 @@ func runLint(args []string, e env) int {
 		return 1
 	}
 
+	if want := ruleSet(rules); want != nil {
+		kept := []lint.Finding{}
+		for _, f := range res.Findings {
+			if want[f.Rule] {
+				kept = append(kept, f)
+			}
+		}
+		hidden, hiddenErrors := len(res.Findings)-len(kept), 0
+		for _, f := range res.Findings {
+			if !want[f.Rule] && f.Severity == chk.Error {
+				hiddenErrors++
+			}
+		}
+		res.Findings = kept
+		if note := hiddenNote(hidden, hiddenErrors); note != "" && !asJSON {
+			fmt.Fprintln(e.stderr, note)
+		}
+	}
 	errs, warns := res.Count(chk.Error), res.Count(chk.Warning)
 	failed := errs > 0 || (strict && warns > 0)
-	report := lintReport{OK: !failed, Checked: res.Checked, Errors: errs, Warnings: warns, Findings: res.Findings}
+	report := lintReport{OK: !failed, Checked: res.Checked, Errors: errs, Warnings: warns, Findings: res.Findings, Rules: rules}
 
 	if asJSON {
 		if code := printJSON(e, report); code != 0 {
@@ -107,18 +147,31 @@ func runLint(args []string, e env) int {
 
 func printLint(e env, r lintReport) {
 	if len(r.Findings) == 0 {
+		if len(r.Rules) > 0 {
+			fmt.Fprintf(e.stdout, "ok: %d recipes linted, no findings for rule %s\n", r.Checked, ruleScope(r.Rules))
+			return
+		}
 		fmt.Fprintf(e.stdout, "ok: %d recipes linted, nothing to report\n", r.Checked)
 		return
 	}
-	fmt.Fprintf(e.stdout, "justz lint: %s (%d recipes linted)\n\n", plural(r.Warnings, "warning"), r.Checked)
-	for _, f := range r.Findings {
+	scope := ""
+	if len(r.Rules) > 0 {
+		scope = ", rule " + ruleScope(r.Rules)
+	}
+	fmt.Fprintf(e.stdout, "justz lint: %s (%d recipes linted%s)\n\n", plural(r.Warnings, "warning"), r.Checked, scope)
+	rules, fixes := make([]string, len(r.Findings)), make([]string, len(r.Findings))
+	for i, f := range r.Findings {
+		rules[i], fixes[i] = f.Rule, f.Fix
+	}
+	show, count := fixRuns(rules, fixes)
+	for i, f := range r.Findings {
 		line := ""
 		if f.Line > 0 {
 			line = fmt.Sprintf(" (line %d)", f.Line)
 		}
 		fmt.Fprintf(e.stdout, "  %-7s %s%s: %s  [%s]\n", f.Severity, f.Subject, line, f.Message, f.Rule)
-		if f.Fix != "" {
-			fmt.Fprintf(e.stdout, "          fix: %s\n", strings.TrimSpace(f.Fix))
+		if f.Fix != "" && show[i] {
+			fmt.Fprintf(e.stdout, "          %s\n", fixLine(f.Fix, count[i]))
 		}
 	}
 }

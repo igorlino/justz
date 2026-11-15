@@ -23,6 +23,13 @@ const (
 	RuleModuleListsRoot  = "module-dispatcher-lists-root"
 )
 
+// Rules lists every rule id, for --rule and its completion. A test keeps it in
+// step with the constants above.
+var Rules = []string{
+	RuleRecipeLong, RuleSecretParameter, RuleSecretInterpol, RuleModuleShellUnset,
+	RuleIgnoreUnknown, RuleModuleNoDispatch, RuleModuleListsRoot,
+}
+
 // MaxBodyLines is the length of a recipe body, in entries of the dump, above
 // which it is reported. It is the number justz assess counts as long.
 const MaxBodyLines = 40

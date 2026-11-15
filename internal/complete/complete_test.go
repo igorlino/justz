@@ -251,9 +251,9 @@ func TestJustzFlagsAndArguments(t *testing.T) {
 		want  string
 		files bool
 	}{
-		{[]string{"check", "-"}, "--json --strict", false},
+		{[]string{"check", "-"}, "--json --rule --strict", false},
 		{[]string{"fmt", "-"}, "--check", false},
-		{[]string{"lint", "-"}, "--json --strict", false},
+		{[]string{"lint", "-"}, "--json --rule --strict", false},
 		{[]string{"init", "-"}, "--dry-run --module --name --variant", false},
 		{[]string{"init", ""}, "", true},
 		{[]string{"schema", ""}, "", false},

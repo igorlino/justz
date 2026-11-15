@@ -46,6 +46,15 @@ const (
 	RuleDetailFlagNoRow    = "detail-flag-no-row"
 )
 
+// Rules lists every rule id, for --rule and its completion. A test keeps it in
+// step with the constants above.
+var Rules = []string{
+	RuleDocMissing, RuleGroupMissing, RuleVariadic, RuleDefaultPublic, RuleRegistryMissing,
+	RuleRegistryStale, RuleRegistryDesc, RuleKeySignature, RuleRegistryShape, RuleDescLong,
+	RuleUnsorted, RuleExampleBare, RuleExampleSingle, RuleExampleLongFlag, RuleExampleEnumUnset,
+	RuleExampleFlagUnknown, RuleVolatileText, RuleDetailFlagNoRow, RuleDocMultiline,
+}
+
 // MaxDescLength is the length above which a registry description is a warning.
 const MaxDescLength = 120
 

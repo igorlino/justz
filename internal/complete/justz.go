@@ -33,7 +33,7 @@ var jsonFlag = Candidate{"--json", "Print JSON"}
 // justzFlags are the flags of each command that has some.
 var justzFlags = map[string][]Candidate{
 	"assess":   {jsonFlag},
-	"check":    {jsonFlag, {"--strict", "Warnings fail the check too"}},
+	"check":    {jsonFlag, {"--rule", "Show only this rule (repeat the flag)"}, {"--strict", "Warnings fail the check too"}},
 	"doctor":   {jsonFlag},
 	"fmt":      {{"--check", "Do not write; exit 1 if not formatted"}},
 	"generate": {{"--stdout", "Print the result and write nothing"}},
@@ -43,7 +43,7 @@ var justzFlags = map[string][]Candidate{
 		{"--name", "The heading of the help"},
 		{"--variant", "native or rich"},
 	},
-	"lint":    {jsonFlag, {"--strict", "Warnings fail the run too"}},
+	"lint":    {jsonFlag, {"--rule", "Show only this rule (repeat the flag)"}, {"--strict", "Warnings fail the run too"}},
 	"resolve": {jsonFlag},
 	"setup":   {{"--dry-run", "Show what would be created"}, jsonFlag},
 	"help": {
