@@ -89,7 +89,7 @@ func TestHooksAndCISnippets(t *testing.T) {
 			t.Errorf("a tab in a yaml snippet:\n%s", b[1])
 		}
 	}
-	for _, want := range []string{"repos:", "repo: https://github.com/igorlino/justz", "rev: vX.Y.Z", "- id: justz-check"} {
+	for _, want := range []string{"repos:", "repo: https://github.com/igorlino/justz", "rev: v0.8.0", "- id: justz-check"} {
 		if !strings.Contains(blocks[0][1], want) {
 			t.Errorf("pre-commit snippet lacks %q", want)
 		}

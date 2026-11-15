@@ -14,7 +14,7 @@ metadata:
   author: igorlino
   domain: dx
   version: "1.7.0"
-  requires: "justz-cli; justz 0.5.1 or newer for the rich and local-rich variants; 0.6.0 or newer for init, lint and schema; 0.7.0 or newer for detail; the release after 0.7.0 for exits, env, tags, hasDetail and seeAlso"
+  requires: "justz-cli; justz 0.5.1 or newer for the rich and local-rich variants; 0.6.0 or newer for init, lint and schema; 0.7.0 or newer for detail; 0.8.0 or newer for exits, env, tags, hasDetail and seeAlso"
 ---
 
 # Justfile Authoring
