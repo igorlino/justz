@@ -19,7 +19,9 @@ It reads the justfile through just --dump and, when there is one, the registry
   registry-missing, registry-stale, registry-desc-diverges,
   registry-key-signature, registry-desc-long, registry-unsorted
   example-bare-command, example-single-flag, example-long-flag,
-  example-enum-missing
+  example-enum-missing, default-public (a public default recipe: a warning,
+  so check --strict fails on it; it is a dispatcher, not a command, so it is
+  not counted)
 
   --json     Print the findings as JSON
   --strict   Warnings fail the check too

@@ -185,3 +185,73 @@ func TestInvalidDump(t *testing.T) {
 		t.Error("an invalid dump should be an error")
 	}
 }
+
+// helpBody makes a dispatcher recipe that runs the given command.
+func helpBody(private bool, cmd string) map[string]any {
+	r := rc("", private, false, 1, 0)
+	r["body"] = []any{[]any{cmd}}
+	return r
+}
+
+func TestPublicDefaultIsADispatcherAsInCheck(t *testing.T) {
+	dump := mustJSON(t, map[string]any{
+		"recipes": map[string]any{"default": rc("", false, false, 1, 0), "build": rc("B", false, false, 1, 0)},
+		"modules": map[string]any{"tool": map[string]any{"recipes": map[string]any{"default": rc("", false, false, 1, 0), "clean": rc("C", false, false, 1, 0)}}},
+	})
+	r, err := Assess(Input{Dump: dump, Variant: "native"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := Counts{Total: 4, Public: 2, Documented: 2, Dispatchers: 2}
+	if r.Recipes != want {
+		t.Errorf("recipes = %+v, want %+v", r.Recipes, want)
+	}
+	if len(r.Advice) != 1 || !strings.Contains(r.Advice[0], "_default") {
+		t.Errorf("advice = %v", r.Advice)
+	}
+}
+
+func TestPrivateDefaultGivesNoAdvice(t *testing.T) {
+	dump := mustJSON(t, map[string]any{"recipes": map[string]any{"_default": helpBody(true, "justz help"), "build": rc("B", false, false, 1, 0)}})
+	r, err := Assess(Input{Dump: dump, Variant: "rich", Registry: parse(t, `{"groups":{"core":{"commands":{"build":{}}}}}`)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(r.Advice) != 0 || r.Recipes.Dispatchers != 0 {
+		t.Errorf("advice = %v, dispatchers = %d", r.Advice, r.Recipes.Dispatchers)
+	}
+}
+
+func TestHelpAdviceOnlyWhenJustzDoesNotRenderHelp(t *testing.T) {
+	reg := parse(t, `{"groups":{"core":{"commands":{"build":{}}},"tool":{"commands":{"clean":{}}}}}`)
+	mk := func(cmd string) []byte {
+		return mustJSON(t, map[string]any{
+			"recipes": map[string]any{"_default": helpBody(true, cmd), "build": rc("B", false, false, 1, 0)},
+			"modules": map[string]any{"tool": map[string]any{"recipes": map[string]any{"_default": helpBody(true, cmd), "clean": rc("C", false, false, 1, 0)}}},
+		})
+	}
+	own, _ := Assess(Input{Dump: mk("./scripts/help.sh"), Registry: reg})
+	if len(own.Advice) != 1 || !strings.Contains(own.Advice[0], "justz help") {
+		t.Errorf("own help: advice = %v", own.Advice)
+	}
+	justz, _ := Assess(Input{Dump: mk("justz help tool"), Registry: reg})
+	if len(justz.Advice) != 0 {
+		t.Errorf("justz help: advice = %v", justz.Advice)
+	}
+	// One default that does not run justz help is enough; jzhelp.sh is not jzh.
+	mixed := mustJSON(t, map[string]any{
+		"recipes": map[string]any{"_default": helpBody(true, "justz help"), "build": rc("B", false, false, 1, 0)},
+		"modules": map[string]any{"tool": map[string]any{"recipes": map[string]any{"_default": helpBody(true, "./jzhelp.sh"), "clean": rc("C", false, false, 1, 0)}}},
+	})
+	if m, _ := Assess(Input{Dump: mixed, Registry: reg}); len(m.Advice) != 1 {
+		t.Errorf("mixed: advice = %v", m.Advice)
+	}
+	short := mustJSON(t, map[string]any{"recipes": map[string]any{"_default": helpBody(true, "jzh tool"), "build": rc("B", false, false, 1, 0)}})
+	if s, _ := Assess(Input{Dump: short, Registry: parse(t, `{"groups":{"core":{"commands":{"build":{}}}}}`)}); len(s.Advice) != 0 {
+		t.Errorf("jzh: advice = %v", s.Advice)
+	}
+	noReg, _ := Assess(Input{Dump: mk("./scripts/help.sh")})
+	if len(noReg.Advice) != 0 {
+		t.Errorf("no registry: advice = %v", noReg.Advice)
+	}
+}

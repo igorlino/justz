@@ -104,6 +104,7 @@ _default:
 |---|---|
 | `doc-missing`, `group-missing` | A public recipe has no `[doc]`, or a top-level recipe has no `[group]` |
 | `doc-multiline-comment` | A comment block above a recipe shows only its last line in `just --list`; use `[doc]` |
+| `default-public` | A public `default` recipe (a warning): it is a dispatcher, left out of the counts, but shows as a row; rename it `_default`; `--strict` fails on it |
 | `variadic-interpolation` | A variadic parameter is interpolated and so split on whitespace |
 | `registry-missing`, `registry-stale` | A recipe has no registry entry, or an entry has no recipe |
 | `registry-desc-diverges` | `[doc]` and `desc` differ |
