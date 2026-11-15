@@ -141,3 +141,82 @@ func TestRegistryStaleNotMaskedByNestedRecipe(t *testing.T) {
 		t.Errorf("nested recipe masked the stale entry: %v", rules(res))
 	}
 }
+
+func TestDetailEnvNoRow(t *testing.T) {
+	cmds := `{"build":{"desc":"B","detail":"Reads NO_COLOR and ${API_TOKEN}, then export DEBUG and HOME=/x; also HAS_ROW.","env":[{"name":"HAS_ROW"}]}}`
+	res := adviceRun(t, cmds, nil)
+	var got []string
+	for _, f := range res.Findings {
+		if f.Rule == RuleDetailEnvNoRow {
+			got = append(got, f.Message)
+			if f.Severity != Warning || f.Fix == "" || f.Subject != "core.build" {
+				t.Errorf("finding = %+v", f)
+			}
+		}
+	}
+	if len(got) != 4 {
+		t.Fatalf("findings = %v", got)
+	}
+	for i, n := range []string{"NO_COLOR", "API_TOKEN", "DEBUG", "HOME"} {
+		if !strings.Contains(got[i], n+",") {
+			t.Errorf("finding %d = %q, want %s", i, got[i], n)
+		}
+	}
+}
+
+func TestDetailEnvNoRowMissWhenDeclared(t *testing.T) {
+	res := adviceRun(t, `{"build":{"desc":"B","detail":"Reads NO_COLOR.","env":[{"name":"NO_COLOR"}]}}`, nil)
+	if has(res, RuleDetailEnvNoRow, "") {
+		t.Errorf("declared variable reported: %v", rules(res))
+	}
+}
+
+func TestDetailEnvNoRowIgnore(t *testing.T) {
+	res := adviceRun(t, `{"build":{"desc":"B","detail":"Reads NO_COLOR."}}`, ignoreAttr(RuleDetailEnvNoRow))
+	if has(res, RuleDetailEnvNoRow, "") {
+		t.Errorf("ignored rule reported: %v", rules(res))
+	}
+}
+
+func TestDetailEnvNoRowFalsePositives(t *testing.T) {
+	for _, detail := range []string{
+		"Sends HTTP over TLS, parses JSON from a URL; CI only.",
+		"See README and AGENTS.md or docs/README.md, LICENSE.txt, CHANGELOG/",
+		"Exit codes: OK 0, FAIL 1, USAGE 2. Use `JSON` output.",
+		"Pass --NO_COLOR or -DEBUG; see --FOO_BAR=1 and /opt/MY_DIR and a.B_C.",
+		"A NoColor, mixedCASE and xNO_COLOR word, or NO_COLORx, NO_COLOR_",
+		"Compare ABC==DEF.",
+		"Fetch https://x.com/p?KEY_ONE=2&KEY_TWO=3 now.",
+		"The ÉNO_COLOR and NO_COLORé words.",
+		"Short: AB, A_ and 1_A.",
+	} {
+		if res := adviceRun(t, `{"build":{"desc":"B","detail":"`+detail+`"}}`, nil); has(res, RuleDetailEnvNoRow, "") {
+			t.Errorf("%q: %v", detail, res.Findings)
+		}
+	}
+}
+
+func TestDetailEnvNoRowExtraEntries(t *testing.T) {
+	dump := dumpOf(t, map[string]any{"build": rc("Build", nil)}, nil)
+	s := `{"groups":{"core":{"commands":{"build":{"desc":"B"}},"extra":{"ext":{"desc":"E","detail":"Reads NO_COLOR."}}}}}`
+	res := run(t, Input{Dump: dump, Variant: "rich", Registry: parse(t, s), RegistrySource: []byte(s)})
+	if !has(res, RuleDetailEnvNoRow, "core.ext") {
+		t.Errorf("extra entry: %v", rules(res))
+	}
+}
+
+func TestDetailEnvNoRowDollarWithPath(t *testing.T) {
+	// Known gap: a sentence-final constant such as README_FIRST. is reported.
+	for detail, want := range map[string]string{"Put it in $HOME/bin.": "HOME", "Reads $CONFIG_DIR/app.toml": "CONFIG_DIR", "Reads $FOO_BAR.conf": "FOO_BAR", "Reads ${VAR_X}/x": "VAR_X"} {
+		res := adviceRun(t, `{"build":{"desc":"B","detail":"`+detail+`"}}`, nil)
+		found := false
+		for _, f := range res.Findings {
+			if f.Rule == RuleDetailEnvNoRow && strings.Contains(f.Message, want+",") {
+				found = true
+			}
+		}
+		if !found {
+			t.Errorf("%q: %v", detail, res.Findings)
+		}
+	}
+}

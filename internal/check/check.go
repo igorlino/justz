@@ -52,6 +52,7 @@ const (
 	RuleDetailNoParagraphs = "detail-no-paragraphs"
 	RuleDetailRestatesDesc = "detail-restates-desc"
 	RuleDetailFlagNoRow    = "detail-flag-no-row"
+	RuleDetailEnvNoRow     = "detail-env-no-row"
 )
 
 // Rules lists every rule id, for --rule and its completion. A test keeps it in
@@ -61,7 +62,7 @@ var Rules = []string{
 	RuleRegistryStale, RuleRegistryDesc, RuleKeySignature, RuleRegistryShape, RuleDescLong,
 	RuleUnsorted, RuleExampleBare, RuleExampleSingle, RuleExampleLongFlag, RuleExampleEnumUnset,
 	RuleExampleFlagUnknown, RuleVolatileText, RuleDetailFlagNoRow, RuleDocMultiline, RuleSeeAlso, RuleExits, RuleEnv, RuleTags, RuleTagsConfirm,
-	RuleDetailLong, RuleDetailNoParagraphs, RuleDetailRestatesDesc,
+	RuleDetailLong, RuleDetailNoParagraphs, RuleDetailRestatesDesc, RuleDetailEnvNoRow,
 }
 
 // MaxDescLength is the length above which a registry description is a warning.
