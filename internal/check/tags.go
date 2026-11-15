@@ -27,7 +27,7 @@ var unsafeWithReadOnly = []string{"destructive", "spends", "production"}
 func tagsRules(entries []registryEntry, items []item) []Finding {
 	byPath := map[string]item{}
 	for _, it := range items {
-		if !it.TopLevel && strings.Count(it.Path, " ") > 1 {
+		if it.nested() {
 			continue // nested modules have no registry group, and would shadow the parent recipe
 		}
 		byPath[pathOf(it.Group, it.Name)] = it

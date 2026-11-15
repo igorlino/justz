@@ -46,6 +46,9 @@ var detailFlag = regexp.MustCompile("(?:^|[\\s(\\[`'\"])(--[A-Za-z][A-Za-z0-9-]*
 func adviceRules(entries []registryEntry, items []item) []Finding {
 	byPath := map[string]item{}
 	for _, it := range items {
+		if it.nested() {
+			continue // nested modules have no registry group, and would shadow the parent recipe
+		}
 		byPath[pathOf(it.Group, it.Name)] = it
 	}
 	var out []Finding
