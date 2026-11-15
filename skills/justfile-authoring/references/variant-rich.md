@@ -40,8 +40,22 @@ The text `justz` itself prints from a registry or a justfile is made safe for a 
 
 For each recipe write a description that says what it does, not just which tool it calls:
 
-- `desc` is imperative, specific and has no trailing period: `Type-check then bundle → dist/static/` beats `Build the project`. Keep it to one line of 120 characters or fewer, and the same text as the recipe's `[doc]`.
-- Put anything longer in `detail` (0.7.0 or newer), written after `desc`: what the command does step by step, what it needs, which environment variable changes it. It works on `commands` and on `extra` entries. An older `justz` ignores the field and shows the short `desc`.
+- `desc` is one line, the same text as the recipe's `[doc]`. Aim for 80 to 100 characters (the limit is 120). Start with a verb, and say the effect, not the mechanism: `Type-check then bundle → dist/static/` beats `Build the project`. Write it from what the recipe does, never from an older description or a split of one; a recipe that only prints steps "prints the steps to ...". Add the fact that would make someone hesitate (it deploys, it deletes, it dry-runs by default). Prefer words to numbers, which go stale. No quotes or backticks, and no trailing period. The test: can a reader pick this command from the list alone.
+- A fact that prevents damage goes in `desc`, whatever the length budget says.
+- `detail` (0.7.0 or newer) is empty for most commands, and an empty one is correct. Write one only when a reader who has found the command still needs a fact `desc` cannot carry. Aim for about 400 characters, written after `desc`, as facts and not narrative. In this order, until the facts run out: what the command does not do; what it needs first; what it changes and how to undo it; when to run it and what next; its exit codes and where output goes; how it differs from a sibling. It works on `commands` and on `extra` entries. An older `justz` ignores the field and shows the short `desc`.
+- Steps do not go in `detail`: the steps of a script belong in the script. `justz check` warns about the shape (`detail-long` over 600 characters, `detail-no-paragraphs` over 300 with no blank line, `detail-restates-desc` for a `detail` that opens with the `desc` again).
+- Other content has its own place:
+
+  | Content | Where |
+  |---|---|
+  | What a flag or argument does | its `args` row |
+  | A worked command line | `examples` of the group, or `example` of the command |
+  | A related command | `seeAlso` of the command |
+  | The steps of a script | the header comment of `scripts/<group>/<name>.sh` |
+  | Why it is built this way | a decision record |
+  | A procedure for a person on call | a runbook |
+
+- **Review what you wrote.** Check each description against the script it describes: open the recipe and its script, and compare what it really does with the `desc` and the `detail`. In an audit about one in six written descriptions was wrong, and `check` cannot see it, since it compares the `desc` only with the `[doc]`.
 - `detail` is shown only in the zoom (`justz help <group> <cmd>`, after the options, under a **Details** heading) and in that zoom's JSON. Listings, completion and `just --list` never show it. `justz check` compares it with nothing, so keep it current yourself.
 - `detail` is plain text. A newline starts a new line and a blank line separates paragraphs; runs of spaces collapse to one and indentation is lost. No markup is interpreted.
 - With colors on, the zoom colors four things in `detail` and nothing else: a `` `backtick span` `` green (a flag inside it cyan, a `<placeholder>` yellow), a flag such as `--dry-run` cyan, a `<placeholder>` yellow, and a URL underlined. So in `detail`, put commands in backticks. This does not apply to `desc` or `[doc]`.

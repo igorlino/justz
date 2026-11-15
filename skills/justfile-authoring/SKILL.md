@@ -13,7 +13,7 @@ description: >
 metadata:
   author: igorlino
   domain: dx
-  version: "1.2.0"
+  version: "1.3.0"
   requires: "justz-cli; justz 0.5.1 or newer for the rich and local-rich variants; 0.6.0 or newer for init, lint and schema; 0.7.0 or newer for detail"
 ---
 
@@ -137,7 +137,7 @@ Run `justz lint` (0.6.0 or newer): it points at long recipe bodies, secret-like 
 - Do not decide the namespace taxonomy, the top-level command set or the migration strategy on the user's behalf.
 - Do not silently fix, or silently carry over, bugs found while porting. Surface them and let the user choose.
 - Before any edit the user has not explicitly requested (a taxonomy, a migration, a `local-rich` improvement pass), preview the concrete plan, recommend one option, then ask. Never pose an abstract yes/no with nothing to evaluate.
-- Do not put long prose in `desc` or in a `[doc]`. In `rich`, keep `desc` to one line of 120 characters or fewer and move the rest to `detail` (0.7.0 or newer); in `native` there is no such field, so keep the `[doc]` to one line and put the rest in `#` comments above the recipe (`references/variant-native.md`, section 5).
+- Do not put long prose in `desc` or in a `[doc]`. In `rich`, keep `desc` to one line of 120 characters or fewer and move the facts that do not fit to `detail` (0.7.0 or newer), never the steps of a script (see `references/variant-rich.md` for what goes in each); in `native` there is no such field, so keep the `[doc]` to one line and put the rest in `#` comments above the recipe (`references/variant-native.md`, section 5).
 - Do not write a description that names the tool instead of the effect. `Type-check then bundle → dist/static/` beats `Build the project`.
 - Do not create a public `default` recipe: it appears as a row in every listing. Use `_default`, first in the file.
 - Do not declare a positional parameter ahead of a variadic; it swallows the first forwarded argument. Make it a flag.
