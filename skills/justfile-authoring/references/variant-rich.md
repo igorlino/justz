@@ -49,7 +49,7 @@ For each recipe write a description that says what it does, not just which tool 
 - Design short single-letter aliases (`-x, --long`) for every flag whose name has three or more letters. Two-letter names (`--id`, `--ci`, `--ui`) stay long-only unless there is a real UX reason; ask the user.
 - Write the short form first and the value placeholder once, at the end: `-s, --surface <name>`.
 - Add an `example` string (prefixed with `… `) for parameterised commands, using short flags.
-- Every group-level `examples` entry must add information the argument rows do not: a value-taking flag (especially enum `values`), several flags together, passthrough arguments (`-- …`), or an environment override. Never a bare command, and never a single boolean flag that an argument row already shows. `justz check` rejects both (`example-bare-command`, `example-single-flag`) and also flags long options where a short alias exists (`example-long-flag`) and an enum that no example uses (`example-enum-missing`).
+- Every group-level `examples` entry must add information the argument rows do not: a value-taking flag (especially enum `values`), several flags together, passthrough arguments (`-- …`), or an environment override. Never a bare command, and never a single boolean flag that an argument row already shows. `justz check` rejects both (`example-bare-command`, `example-single-flag`) and also flags long options where a short alias exists (`example-long-flag`) and an enum that no example uses (`example-enum-missing`). It also warns about a flag that no argument row declares (`example-flag-unknown`; silent for a command with no rows, for a variadic row and after `--`). A leading `NAME=value` or `env NAME=value` is ignored, so an environment override does not hide an example from the rules, and the per-command `example` field (a leading `…` stands for `just <command>`) goes through the same rules.
 - Run **`justz fmt`** after every edit. It writes the canonical order: groups (`core` first, then A to Z), commands A to Z, arguments (positional first, then flags A to Z), examples by `cmd`, `seeAlso` and `tiers[].groups` A to Z. `justz fmt --check` writes nothing and exits `1` when the file is not formatted.
 
 To start a new project instead of one file, `justz init --variant rich` (0.6.0 or newer) writes the justfile, the modules and a registry that already passes `justz check` and `justz fmt --check`; `--dry-run` lists the files first. It never overwrites.
@@ -112,7 +112,7 @@ _default:
 | `registry-key-signature` | A key carries an argument signature instead of a bare recipe name |
 | `registry-desc-long` | A `desc` is over 120 characters (warning). Keep a one-line `desc` equal to the `[doc]` and move the rest to `detail` |
 | `registry-unsorted` | Fixed by `justz fmt` |
-| `example-*` | The four example rules above |
+| `example-*` | The example rules above, on group `examples` and on each command `example`; `example-flag-unknown` is always a warning |
 
 Wire `justz check` and `justz fmt --check` into `check` and `ci`, then add a deliberately undocumented recipe and confirm both fail.
 

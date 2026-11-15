@@ -26,21 +26,22 @@ const (
 
 // Rule ids. They are part of the output and stay stable.
 const (
-	RuleDocMissing       = "doc-missing"
-	RuleGroupMissing     = "group-missing"
-	RuleVariadic         = "variadic-interpolation"
-	RuleDefaultPublic    = "default-public"
-	RuleRegistryMissing  = "registry-missing"
-	RuleRegistryStale    = "registry-stale"
-	RuleRegistryDesc     = "registry-desc-diverges"
-	RuleKeySignature     = "registry-key-signature"
-	RuleRegistryShape    = "registry-shape"
-	RuleDescLong         = "registry-desc-long"
-	RuleUnsorted         = "registry-unsorted"
-	RuleExampleBare      = "example-bare-command"
-	RuleExampleSingle    = "example-single-flag"
-	RuleExampleLongFlag  = "example-long-flag"
-	RuleExampleEnumUnset = "example-enum-missing"
+	RuleDocMissing         = "doc-missing"
+	RuleGroupMissing       = "group-missing"
+	RuleVariadic           = "variadic-interpolation"
+	RuleDefaultPublic      = "default-public"
+	RuleRegistryMissing    = "registry-missing"
+	RuleRegistryStale      = "registry-stale"
+	RuleRegistryDesc       = "registry-desc-diverges"
+	RuleKeySignature       = "registry-key-signature"
+	RuleRegistryShape      = "registry-shape"
+	RuleDescLong           = "registry-desc-long"
+	RuleUnsorted           = "registry-unsorted"
+	RuleExampleBare        = "example-bare-command"
+	RuleExampleSingle      = "example-single-flag"
+	RuleExampleLongFlag    = "example-long-flag"
+	RuleExampleEnumUnset   = "example-enum-missing"
+	RuleExampleFlagUnknown = "example-flag-unknown"
 )
 
 // MaxDescLength is the length above which a registry description is a warning.
@@ -273,6 +274,7 @@ type registryEntry struct {
 	Group, Key string
 	Desc       string
 	HasDesc    bool
+	Example    string // the per-command example field
 	Extra      bool
 	Args       []argEntry
 }
@@ -301,6 +303,9 @@ func registryEntries(reg *orderedjson.Value) []registryEntry {
 				e := registryEntry{Group: textsafe.Line(g.Key), Key: textsafe.Line(c.Key), Extra: kind == "extra"}
 				if d := c.Val.Get("desc"); d != nil && d.Kind == orderedjson.String {
 					e.Desc, e.HasDesc = textsafe.Line(d.Str), true
+				}
+				if x := c.Val.Get("example"); x != nil && x.Kind == orderedjson.String {
+					e.Example = textsafe.Line(x.Str)
 				}
 				if args := c.Val.Get("args"); args != nil && args.Kind == orderedjson.Array {
 					for _, a := range args.Arr {
