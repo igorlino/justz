@@ -1,12 +1,12 @@
 # Design note: a `detail` field for long command descriptions
 
-Status: implemented in one PR (the field, the zoom section, the JSON, the schema property, the check fix text and the tests). The open questions are decided as recommended. Later changes: with colors on, the zoom highlights command spans, flags, placeholders and URLs in `detail` (`docs/design/terminal-text.md`, part 2), which replaces the "no markup" line under "Not in scope" for those four; and the README now has an entry for the field.
+Status: implemented in one PR (the field, the zoom section, the JSON, the schema property, the check fix text and the tests). The open questions are decided as recommended. Later changes: with colors on, the zoom highlights command spans, flags, placeholders and URLs in `detail` (`docs/design/terminal-text.md`, part 2), which replaces the "no markup" line under "Not in scope" for those four; and the README now has an entry for the field. Real use corrected the first version of this note: descriptions are written by hand, not split mechanically, a `detail` holds facts and not steps, and advice rules limit its length (see "Writing desc and detail" and "Decision after real use").
 
 ## Problem
 
 A command's `desc` has three jobs at once: it is a row in the help, it is the `[doc]` of the recipe (`justz check` requires the two to be the same text), and it is where an author puts everything worth knowing about the command. The third job breaks the first two. `check` warns when `desc` is over 120 characters (`registry-desc-long`), and a long `[doc]` makes `just --list` unreadable.
 
-Measured on a large registry: 149 of its 249 commands have a description over 120 characters, 33 are over 500, and the longest is 2,165. The text is useful (what a recipe does step by step, which flags matter, what it needs), but it is prose for someone who is already looking at one command. Today it has nowhere else to go.
+Measured on a large registry, most commands had a description over 120 characters, a good many were over 500, and the longest was over 2,000. The text is useful (which flags matter, what the command needs, what it changes), but it is prose for someone who is already looking at one command. Today it has nowhere else to go.
 
 ## Proposal
 
@@ -14,14 +14,14 @@ An optional string `detail` on a command, shown only where the reader has zoomed
 
 ```json
 "deploy": {
-  "desc": "Deploy the EWF report to the cloud and reindex it",
-  "detail": "Builds today's day directory, runs archive-doctor, uploads it to the storage box and reindexes on the cloud host.\n\nThe legacy static rsync is off unless EWF_DEPLOY_LEGACY_STATIC=1.",
+  "desc": "Deploy the report to the cloud host and reindex it",
+  "detail": "Does not touch the legacy static copy unless DEPLOY_LEGACY_STATIC=1.\n\nNeeds the storage box mounted. Changes the live index; undo with `deploy --rollback`.",
   "args": [ ... ]
 }
 ```
 
 - `desc` stays one short line, at most 120 characters, and equal to the `[doc]`. Nothing about `check` changes.
-- `detail` is the rest. It is not compared with anything.
+- `detail` is the few facts that do not fit in `desc`. It is not compared with anything. "Writing desc and detail" below says what goes in each.
 
 ## Where it shows
 
@@ -53,9 +53,51 @@ A command without `detail` renders exactly as before, byte for byte, so the exis
 - **Older `justz`.** Versions that do not know the field ignore it, keep it in `fmt`, and show the short `desc`. A registry can use `detail` before every machine has the new version.
 - **Native variant.** Nothing. A native justfile has `[doc]` and no place for long text. Not in scope.
 
-## What it does for a large registry
+## Writing desc and detail
 
-The 149 long descriptions split mechanically: `desc` is the first sentence, `detail` is the rest, and the `[doc]` is the new `desc`. 122 of the 149 have a first clause (up to a sentence end, a semicolon, a colon or a dash) of 120 characters or fewer; by full sentences alone it is 82. The other 27 need a short summary written by hand, and the removed text stays whole in `detail`. Nothing is lost and `registry-desc-long` goes away.
+`check` can measure the length of a description. It cannot tell a good one from a bad one. A first clause that fits in 120 characters but only names the subject ("Deploy the report") gives a reader nothing to choose a command by. So a description is never produced by splitting a long one at its first sentence: it is written by hand, from what the recipe does, and the facts that do not fit are moved to `detail`, not cut.
+
+### `desc`
+
+One line, equal to the `[doc]` (`check` requires it). It is what a reader sees in `just --list` and in every listing, so it is how they choose.
+
+- Aim for 80 to 100 characters. The hard limit stays 120 (`registry-desc-long`).
+- Start with a verb: "Deploy the report to the cloud host and reindex it".
+- Say the effect, not the mechanism: what changes for the user, not which tool runs.
+- If the command hesitates (it asks, it dry-runs by default, it needs a flag to do the real thing), say that fact.
+- Words over numbers: a count goes stale (`volatile-text` finds the common cases).
+- No quotes or backticks: the text is also a `[doc]` string, and `check` prints the line to paste.
+- No trailing period.
+
+### `detail`
+
+Empty is correct for most commands. Write one only when a reader who has found the command still needs a fact that `desc` cannot carry.
+
+- Aim for about 400 characters. The advice rules below warn over 600.
+- Facts, not narrative: no history, no "we", no tour of the script.
+- In this order, and stop when the facts run out:
+  1. What the command does not do.
+  2. What it needs first (a mount, a login, a running service).
+  3. What it changes, and how to undo it.
+  4. When to run it and what to run next.
+  5. Its exit codes and where its output goes.
+  6. How it differs from a sibling command (and name the sibling in `seeAlso`).
+- Steps are not facts for a reader of the help. A list of what a script does, in order, belongs in the script.
+
+### Where other content belongs
+
+| Content | Where |
+|---|---|
+| What a flag or an argument does | its `args` row |
+| A worked command line | `examples` of the group, or `example` of the command |
+| A related command | `seeAlso` of the command |
+| The steps of a script | the header comment of `scripts/<group>/<name>.sh` |
+| Why it is built this way | a decision record |
+| A procedure for a person on call | a runbook |
+
+### Moving existing long descriptions
+
+Do it by hand, one command at a time: read what the recipe does, write the `desc`, then keep the text that is a fact (in the order above) as `detail` and drop what is narrative or a list of steps. Nothing mechanical is reliable here. `registry-desc-long` goes away when each description is short, and the advice rules below keep the `detail` from growing back into the problem it was added to solve.
 
 ## Not in scope
 
@@ -69,7 +111,7 @@ The 149 long descriptions split mechanically: `desc` is the first sentence, `det
 
 1. `Detail` on the help model, the zoom section, the JSON field, the schema property and the new `registry-desc-long` fix text, with tests. One PR.
 2. At release time, the docs that describe the field wait for the release that ships it, as before: `skills/justfile-authoring/references/variant-rich.md` (the `desc` bullet, the check table and the schema reference), `SKILL.md` (the description rules), `references/choosing-a-variant.md` (a note beside the 20-of-32 evidence), `docs/design/schema.md` (its field table, which says to update it), and the `justz-cli` skill only if it names description length. The README has no such text.
-3. In a consumer: split the long descriptions as above.
+3. In a consumer: rewrite the long descriptions by hand, as in "Moving existing long descriptions".
 
 ### Drift
 
@@ -85,7 +127,7 @@ The 149 long descriptions split mechanically: `desc` is the first sentence, `det
 
 ## Decision after real use
 
-Two calls above did not survive use of the field on a large registry (149 details). None had a line break, the median was 280 characters, 14 were over 800, the longest renders as about 30 lines, and 89 opened by restating most of the `desc`. Both earlier calls are reversed, as advice only:
+Two calls above were reopened after the field was used on a large registry, and decided in [issue 126](https://github.com/igorlino/justz/issues/126). Its details had no line breaks, the median was about 280 characters, some were over 800, the longest renders as about 30 lines, and most opened by restating the `desc`. Both earlier calls are reversed, as advice only. The rules are the enforcement of "Writing desc and detail":
 
 - **A limit on `detail`** was out of scope ("A line limit on `detail`"). A long `detail` is as bad as a long `desc`: the zoom buries the options under it. `check` now warns, with `detail-long` (over 600 characters) and `detail-no-paragraphs` (over 300 characters with no blank line between paragraphs). 600 is about 9 lines at the zoom width, which keeps the examples and options in the `--browse` window next to it; 300 is about the median, so a text longer than a typical `detail` has earned a break.
 - **A rule for the opposite case** (a `detail` that repeats `desc`) was rejected as harmless and rare (open question 4). It was neither. `detail-restates-desc` warns when the words of the `desc`, lowercased, without punctuation and with a trailing `s` removed, are the first words of the `detail`. A prefix test was chosen over a similarity score: it has no threshold to tune, an author can see why it fired, and a `detail` that only starts with the same verb does not match. It misses a paraphrase, which is accepted. A `desc` of fewer than four words is not compared, since a short one is a prefix of too many honest details.
