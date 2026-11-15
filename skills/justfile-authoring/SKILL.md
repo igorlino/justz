@@ -143,7 +143,7 @@ Run `justz lint` (0.6.0 or newer): it points at long recipe bodies, secret-like 
 - Do not declare a positional parameter ahead of a variadic; it swallows the first forwarded argument. Make it a flag.
 - Do not author flags without short single-letter aliases (`-x, --long`) unless the flag name is already two letters (`--id`, `--ci`, `--ui`) or there is a collision. Do not alias two-letter parameters without asking.
 - Do not use long flags in examples when short aliases exist.
-- Do not write redundant examples: a bare command, or a single boolean flag the argument rows already show. `justz check` reports both.
+- Do not write redundant examples: a bare command, or a single boolean flag the argument rows already show. `justz check` reports both. An example that sets an environment variable (`NAME=value just ...` or `env NAME=value just ...`) is exempt, since the rows do not show the environment.
 - Do not leave `commands.json` unsorted. Run `justz fmt` after every edit; `justz check` rejects an unsorted registry.
 - Do not vendor, copy or hand-edit a help script. `justz` renders the help; the registry carries `name`, `tagline` and `cli` if the defaults need overriding.
 - When an `args` entry takes a bounded set of values, declare `"values": [...]` (it drives shell completion and renders as `(a|b|c)`) and show it in at least one group example.
