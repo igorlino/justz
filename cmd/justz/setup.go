@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/igorlino/justz/internal/shim"
+	"github.com/igorlino/justz/internal/textsafe"
 )
 
 const setupUsage = `Usage: justz setup [--dry-run] [--json]
@@ -87,15 +88,15 @@ func runSetup(args []string, e env) int {
 	} else {
 		switch {
 		case report.Created && dryRun:
-			fmt.Fprintf(e.stdout, "would create %s\n", d.Shim)
+			fmt.Fprintf(e.stdout, "would create %s\n", textsafe.Line(d.Shim))
 		case report.Created:
-			fmt.Fprintf(e.stdout, "created %s\n", d.Shim)
+			fmt.Fprintf(e.stdout, "created %s\n", textsafe.Line(d.Shim))
 		default:
-			fmt.Fprintf(e.stdout, "%s already exists\n", d.Shim)
+			fmt.Fprintf(e.stdout, "%s already exists\n", textsafe.Line(d.Shim))
 		}
 		printFindings(e, report.Findings)
 		if report.PathHint != "" {
-			fmt.Fprintf(e.stdout, "\n%s is not on your PATH. To add it:\n  %s\n", d.Shim, report.PathHint)
+			fmt.Fprintf(e.stdout, "\n%s is not on your PATH. To add it:\n  %s\n", textsafe.Line(d.Shim), textsafe.Line(report.PathHint))
 		}
 	}
 	if !report.OK {

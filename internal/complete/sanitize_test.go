@@ -56,3 +56,26 @@ func TestCompletionOffersOnlyPlainNamesAndCleanDescriptions(t *testing.T) {
 		t.Errorf("description = %q", d)
 	}
 }
+
+func TestCompletionOffersOnlyShellSafeValues(t *testing.T) {
+	const reg = `{"groups": {"core": {"commands": {"run": {"desc": "x", "args": [
+		{"name": "--env <name>", "desc": "env", "values": ["prod", "a; touch pwned", "$(id)", "x\ny", "v1.2"]},
+		{"name": "mode", "desc": "mode", "values": ["fast", "a b", "slow"]}]}}}}}`
+	doc, err := orderedjson.Parse([]byte(reg))
+	if err != nil {
+		t.Fatal(err)
+	}
+	proj, err := help.FromRegistry(doc, "p")
+	if err != nil {
+		t.Fatal(err)
+	}
+	e := Env{Project: func() *help.Project { return proj }, RootRecipes: func() map[string]bool { return nil }, Shims: func() []string { return nil }}
+
+	if got := values(Shim(false, []string{"run", "--env", ""}, e)); got != "prod v1.2" {
+		t.Errorf("flag values = %q, want only prod and v1.2", got)
+	}
+	pos := values(Shim(false, []string{"run", ""}, e))
+	if !strings.Contains(pos, "fast") || !strings.Contains(pos, "slow") || strings.ContainsAny(pos, ";$(") {
+		t.Errorf("positional values = %q, want fast and slow only", pos)
+	}
+}

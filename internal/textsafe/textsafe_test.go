@@ -1,6 +1,9 @@
 package textsafe
 
-import "testing"
+import (
+	"bytes"
+	"testing"
+)
 
 func TestTextAndLine(t *testing.T) {
 	tests := []struct {
@@ -51,6 +54,8 @@ func TestCleanTextIsReturnedWithoutACopy(t *testing.T) {
 	}
 }
 
+// TestOutputHasNothingDangerous checks every rune against ranges written out
+// here, not against dangerous itself, so a rune dropped from the set fails.
 func TestOutputHasNothingDangerous(t *testing.T) {
 	var all []rune
 	for r := rune(0); r < 0x110000; r++ {
@@ -61,8 +66,41 @@ func TestOutputHasNothingDangerous(t *testing.T) {
 	}
 	out := Line(string(all))
 	for _, r := range out {
-		if r != '�' && (r < 0x20 || dangerous(r)) {
+		switch {
+		case r == '\ufffd':
+		case r < 0x20, r >= 0x7f && r <= 0x9f,
+			r == 0x2028, r == 0x2029,
+			r >= 0x202a && r <= 0x202e,
+			r >= 0x2066 && r <= 0x2069,
+			r >= 0x206a && r <= 0x206f,
+			r >= 0xe0000 && r <= 0xe007f:
 			t.Fatalf("U+%04X is still in the output", r)
+		}
+	}
+}
+
+func TestWriterCleansWhatItPassesOn(t *testing.T) {
+	var buf bytes.Buffer
+	w := NewWriter(&buf)
+	in := "path \x1b]0;T\x07 ok\r\nnext\n"
+	n, err := w.Write([]byte(in))
+	if err != nil || n != len(in) {
+		t.Fatalf("Write = %d, %v; want %d, nil", n, err, len(in))
+	}
+	if got, want := buf.String(), "path �]0;T� ok\nnext\n"; got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
+
+func TestIsValue(t *testing.T) {
+	for _, s := range []string{"a", "prod-1", "v1.2.3", "a/b", "k=v", "~x", "a,b", "10%", "x:y", "u@h", "+1"} {
+		if !IsValue(s) {
+			t.Errorf("IsValue(%q) = false", s)
+		}
+	}
+	for _, s := range []string{"", "a b", "a;b", "$(id)", "`x`", "a|b", "a\nb", "a\"b", "a'b", "a&b", "a>b", "*", "日本", "a\x1b"} {
+		if IsValue(s) {
+			t.Errorf("IsValue(%q) = true", s)
 		}
 	}
 }

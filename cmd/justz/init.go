@@ -8,6 +8,7 @@ import (
 
 	"github.com/igorlino/justz/internal/atomicfile"
 	"github.com/igorlino/justz/internal/scaffold"
+	"github.com/igorlino/justz/internal/textsafe"
 )
 
 const initUsage = `Usage: justz init [--variant native|rich] [--name NAME] [--module NAME]... [--dry-run] [dir]
@@ -127,7 +128,7 @@ func runInit(args []string, e env) int {
 
 	for _, f := range files {
 		if dryRun {
-			fmt.Fprintf(e.stdout, "would write %s\n", f.Path)
+			fmt.Fprintf(e.stdout, "would write %s\n", textsafe.Line(f.Path))
 			continue
 		}
 		target := filepath.Join(abs, filepath.FromSlash(f.Path))
@@ -139,7 +140,7 @@ func runInit(args []string, e env) int {
 			fmt.Fprintf(e.stderr, "justz init: %v\n", err)
 			return 1
 		}
-		fmt.Fprintf(e.stdout, "wrote %s\n", f.Path)
+		fmt.Fprintf(e.stdout, "wrote %s\n", textsafe.Line(f.Path))
 	}
 	if dryRun {
 		return 0

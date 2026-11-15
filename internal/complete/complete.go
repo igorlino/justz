@@ -245,6 +245,9 @@ func optionCandidates(c *help.Command, prior []string, cur string) Result {
 					if len(a.Values) > 0 {
 						var vals []Candidate
 						for _, v := range a.Values {
+							if !textsafe.IsValue(v) {
+								continue
+							}
 							vals = append(vals, Candidate{v, a.Desc})
 						}
 						return Result{Candidates: filter(vals, cur)}
@@ -279,6 +282,9 @@ func optionCandidates(c *help.Command, prior []string, cur string) Result {
 		for _, a := range c.Args {
 			if !strings.HasPrefix(a.Name, "-") {
 				for _, v := range a.Values {
+					if !textsafe.IsValue(v) {
+						continue
+					}
 					cands = append(cands, Candidate{v, a.Desc})
 				}
 			}

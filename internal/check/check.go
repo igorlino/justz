@@ -315,7 +315,7 @@ func registryRules(in Input, items []item) []Finding {
 				"add it to commands.json (or regenerate the overlay with: justz generate)"})
 			continue
 		}
-		if it.R.Doc != nil && e.HasDesc && strings.TrimSpace(*it.R.Doc) != "" && strings.TrimSpace(*it.R.Doc) != strings.TrimSpace(e.Desc) {
+		if it.R.Doc != nil && e.HasDesc && strings.TrimSpace(*it.R.Doc) != "" && strings.TrimSpace(textsafe.Line(*it.R.Doc)) != strings.TrimSpace(e.Desc) {
 			out = append(out, Finding{RuleRegistryDesc, Error, subject,
 				fmt.Sprintf("[doc] diverges from the registry description\n      justfile: %s\n      registry: %s", textsafe.Line(*it.R.Doc), e.Desc),
 				descDivergesFix(in.Variant)})

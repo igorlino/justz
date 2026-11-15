@@ -59,3 +59,19 @@ func TestFindingsOfADirtyProjectAreSafe(t *testing.T) {
 		assertNoControl(t, "decoded JSON "+f.Rule, f.Subject+f.Message+f.Fix)
 	}
 }
+
+// A tab or newline in a [doc] and in the registry desc is the same text:
+// cleaning one side must not make them diverge.
+func TestDivergesComparesCleanedTextOnBothSides(t *testing.T) {
+	for _, doc := range []string{"a\tb", "a\nb", "a\x1b[0mb"} {
+		dump := dumpOf(t, map[string]any{"hello": rc(doc, grp("core"))}, nil)
+		d, _ := json.Marshal(doc)
+		src := `{"groups": {"core": {"commands": {"hello": {"desc": ` + string(d) + `}}}}}`
+		res := run(t, Input{Dump: dump, Variant: "rich", Registry: parse(t, src), RegistrySource: []byte(src)})
+		for _, f := range res.Findings {
+			if f.Rule == RuleRegistryDesc {
+				t.Errorf("doc %q: false divergence:\n%s", doc, f.Message)
+			}
+		}
+	}
+}

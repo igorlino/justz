@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/igorlino/justz/internal/shim"
+	"github.com/igorlino/justz/internal/textsafe"
 )
 
 type check struct {
@@ -50,7 +51,7 @@ func runDoctor(args []string, e env) int {
 			if !c.OK {
 				status = "fail"
 			}
-			fmt.Fprintf(e.stdout, "[%s] %s: %s\n", status, c.Name, c.Detail)
+			fmt.Fprintf(e.stdout, "[%s] %s: %s\n", status, textsafe.Line(c.Name), textsafe.Line(c.Detail))
 		}
 	}
 

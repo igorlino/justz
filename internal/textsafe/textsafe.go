@@ -7,6 +7,7 @@
 package textsafe
 
 import (
+	"io"
 	"strings"
 	"unicode/utf8"
 )
@@ -106,6 +107,24 @@ func dangerous(r rune) bool {
 	return false
 }
 
+// IsValue reports whether s can be offered as an option value that a shell
+// will consume as one word: letters, digits and _ . , : @ % + = / ~ -.
+func IsValue(s string) bool {
+	if s == "" {
+		return false
+	}
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		switch {
+		case c >= 'a' && c <= 'z', c >= 'A' && c <= 'Z', c >= '0' && c <= '9':
+		case strings.IndexByte("_.,:@%+=/~-", c) >= 0:
+		default:
+			return false
+		}
+	}
+	return true
+}
+
 // IsName reports whether s can be offered or printed as a group or command
 // name that a shell will consume: letters, digits, underscore, dot and dash,
 // and not starting with a dot or a dash.
@@ -123,4 +142,20 @@ func IsName(s string) bool {
 		}
 	}
 	return true
+}
+
+type writer struct{ w io.Writer }
+
+// NewWriter returns a writer that passes everything through Text, for the
+// messages a program prints on its own standard error, where an echoed path or
+// name can carry a control character. It reports the length of what it was
+// given, so callers see no short write. A multi-byte character split across two
+// writes is replaced; one Fprintf is one write.
+func NewWriter(w io.Writer) io.Writer { return writer{w} }
+
+func (x writer) Write(p []byte) (int, error) {
+	if _, err := io.WriteString(x.w, Text(string(p))); err != nil {
+		return 0, err
+	}
+	return len(p), nil
 }
