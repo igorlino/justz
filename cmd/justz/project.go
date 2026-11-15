@@ -38,7 +38,7 @@ func loadProject(e env, justfile string) (*projectInfo, error) {
 
 	out, err := e.runCmd("just", "--justfile", justfile, "--dump", "--dump-format", "json")
 	if err != nil {
-		return p, fmt.Errorf("could not read the justfile with just: %v", err)
+		return p, justReadError(e, err)
 	}
 	var dump struct {
 		Recipes map[string]struct {

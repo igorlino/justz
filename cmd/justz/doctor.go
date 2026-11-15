@@ -12,6 +12,9 @@ type check struct {
 	Name   string `json:"name"`
 	OK     bool   `json:"ok"`
 	Detail string `json:"detail"`
+	// Warn marks a check that passes but needs attention: it prints as [warn]
+	// and does not fail the report.
+	Warn bool `json:"warn,omitempty"`
 }
 
 type doctorReport struct {
@@ -46,6 +49,8 @@ func runDoctor(args []string, e env) int {
 			status := "ok"
 			if !c.OK {
 				status = "fail"
+			} else if c.Warn {
+				status = "warn"
 			}
 			fmt.Fprintf(e.stdout, "[%s] %s: %s\n", status, textsafe.Line(c.Name), textsafe.Line(c.Detail))
 		}
@@ -68,6 +73,9 @@ func checkJust(e env) check {
 	ver, err := e.runCmd(path, "--version")
 	if err != nil || ver == "" {
 		return check{Name: "just", Detail: fmt.Sprintf("found at %s but `just --version` failed", path)}
+	}
+	if versionBelow(ver, minJust) {
+		return check{Name: "just", OK: true, Warn: true, Detail: justVersionNote(path, ver)}
 	}
 	return check{Name: "just", OK: true, Detail: fmt.Sprintf("%s (%s)", path, ver)}
 }

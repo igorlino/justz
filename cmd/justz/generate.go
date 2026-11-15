@@ -69,7 +69,7 @@ func runGenerate(args []string, e env) int {
 
 	dumpJSON, err := e.runCmd("just", "--justfile", justfile, "--dump", "--dump-format", "json")
 	if err != nil {
-		fmt.Fprintf(e.stderr, "justz generate: could not read the justfile with just: %v\n", err)
+		fmt.Fprintf(e.stderr, "justz generate: %v\n", justReadError(e, err))
 		return 1
 	}
 

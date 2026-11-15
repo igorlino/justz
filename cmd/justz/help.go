@@ -136,7 +136,7 @@ func nativeProject(e env, cwd string) (*help.Project, error) {
 	}
 	dumpJSON, err := e.runCmd("just", "--justfile", justfile, "--dump", "--dump-format", "json")
 	if err != nil {
-		return nil, fmt.Errorf("could not read the justfile with just: %v", err)
+		return nil, justReadError(e, err)
 	}
 	return help.FromDump([]byte(dumpJSON), filepath.Base(projectRoot(filepath.Dir(justfile))))
 }

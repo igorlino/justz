@@ -80,8 +80,7 @@ func osEnv() env {
 		stderr:   textsafe.NewWriter(os.Stderr),
 		lookPath: exec.LookPath,
 		runCmd: func(name string, args ...string) (string, error) {
-			out, err := exec.Command(name, args...).Output()
-			return strings.TrimSpace(string(out)), err
+			return runOutput(name, args...)
 		},
 		execJust:    execJust,
 		color:       useColor(os.Stdout),

@@ -89,7 +89,9 @@ justz help core test -j | jq '{desc, detail}'
 
 ## Install
 
-`justz` needs [`just`](https://github.com/casey/just) on your PATH.
+`justz` needs [`just`](https://github.com/casey/just) 1.37.0 or newer on your PATH. An older `just` (Ubuntu's package is 1.21.0) fails with `Unknown attribute` errors; `justz doctor` warns about it. Install a current one with `brew install just`, `curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to ~/.local/bin` or `cargo install just`.
+
+How the minimum was found: `justz check`, `help` and `lint` ran on the `justz init` output (native and rich, with modules) against just 1.21.0 to 1.46.0. up to 1.31.0 cannot parse `mod`, and 1.32.0 rejects `[group]` on a module; 1.33.0 to 1.36.0 parse it but leave the `doc` of a `[doc]` recipe out of the JSON dump, so `check` reports a false `doc-missing`; 1.37.0 is the first where everything works. Two features need more than that baseline: `[metadata]` (the `justz-ignore` opt-out) needs 1.42.0, and `[arg]` (a justfile you write, not something justz needs) needs 1.46.0.
 
 **Homebrew** (macOS, Linux, WSL2):
 
