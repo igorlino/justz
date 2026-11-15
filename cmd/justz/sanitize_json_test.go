@@ -93,7 +93,7 @@ func TestGenerateWritesNoRawControlCharacters(t *testing.T) {
 
 func TestPathHintIsNotInjectable(t *testing.T) {
 	for _, goos := range []string{"linux", "windows"} {
-		for _, dir := range []string{"/h/it's;$(id)", `/h/a"b`, "/h/a`b", `/h/a\b`, "/h/a\x1b[31mb"} {
+		for _, dir := range []string{"/h/it's;$(id)", `/h/a"b`, "/h/a`b", `/h/a\b`, "C:/a\u201cb", "C:/a\u201db", "C:/a\u201eb", "/h/a\x1b[31mb"} {
 			h := pathHint(shim.Dirs{GOOS: goos, Shim: dir})
 			if strings.Contains(h, "echo ") || strings.Contains(h, "SetEnvironmentVariable") {
 				t.Errorf("%s %q: a runnable command was offered: %s", goos, dir, h)

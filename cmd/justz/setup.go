@@ -109,7 +109,9 @@ func runSetup(args []string, e env) int {
 func pathHint(d shim.Dirs) string {
 	// The hint is meant to be pasted into a shell, so a directory with a quote,
 	// a dollar sign, a backtick or a backslash would change what it runs.
-	if textsafe.Line(d.Shim) != d.Shim || strings.ContainsAny(d.Shim, "'\"$`\\") {
+	// PowerShell also ends a double-quoted string at U+201C, U+201D and U+201E
+	// (verified with its parser), so those count as quotes too.
+	if textsafe.Line(d.Shim) != d.Shim || strings.ContainsAny(d.Shim, "'\"$`\\\u201c\u201d\u201e") {
 		return fmt.Sprintf("add this directory to your PATH: %s", textsafe.Line(d.Shim))
 	}
 	if d.GOOS == "windows" {
