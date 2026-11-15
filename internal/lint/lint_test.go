@@ -184,3 +184,62 @@ func TestModuleRuleCannotBeIgnoredPerRecipe(t *testing.T) {
 		t.Errorf("findings = %q", got)
 	}
 }
+
+func dispatchDump(first string, recipes string) string {
+	return fmt.Sprintf(`{"recipes":{},"modules":{"m":{"first":%s,"recipes":{%s},"settings":{"shell":{"command":"bash","arguments":["-c"]}},"modules":{}}}}`, first, recipes)
+}
+
+func TestModuleDispatcher(t *testing.T) {
+	help := `["just help m"]`
+	listRoot := `["just --list --justfile ",[["call","justfile"]]]`
+	listOwn := `["just --list --justfile ",[["call","justfile"]]," m"]`
+	rec := func(private bool, line string) string {
+		return fmt.Sprintf(`{"private":%v,"attributes":[],"body":[%s],"shebang":false}`, private, line)
+	}
+	tests := []struct {
+		name, first, recipes, want string
+	}{
+		{"public default runs justz help", `"default"`, `"default":` + rec(false, help), ""},
+		{"private _default runs justz help", `"_default"`, `"_default":` + rec(true, `["justz help m"]`) + `,"up":` + rec(false, `["echo"]`), ""},
+		{"no default: first recipe runs", `"deploy"`, `"deploy":` + rec(false, `["echo"]`) + `,"default":` + rec(false, help), "module-dispatcher-missing module m"},
+		{"only a command", `"up"`, `"up":` + rec(false, `["echo"]`), "module-dispatcher-missing module m"},
+		{"default lists the root", `"default"`, `"default":` + rec(false, listRoot), "module-dispatcher-lists-root module m"},
+		{"private default lists the root", `"_default"`, `"_default":` + rec(true, listRoot), "module-dispatcher-lists-root module m"},
+		{"list without justfile() is not the root rule", `"default"`, `"default":` + rec(false, `["just --list"]`), ""},
+		{"justfile() without --list is fine", `"default"`, `"default":` + rec(false, `["echo ",[["call","justfile"]]]`), ""},
+		{"list with justfile() nested in an expression", `"default"`, `"default":` + rec(false, listOwn), "module-dispatcher-lists-root module m"},
+		{"no recipes", `null`, ``, ""},
+		{"private non-default first recipe is a command", `"_helper"`, `"_helper":` + rec(true, `["rm -rf x"]`) + `,"up":` + rec(false, `["echo"]`), "module-dispatcher-missing module m"},
+		{"[default] on a command", `"run"`, `"run":{"private":false,"attributes":["default"],"body":[["echo"]],"shebang":false},"default":` + rec(false, help), "module-dispatcher-missing module m"},
+		{"justfile_directory lists the root", `"default"`, `"default":` + rec(false, `["just --list --justfile ",[["call","justfile_directory"]]]`), "module-dispatcher-lists-root module m"},
+	}
+	for _, tt := range tests {
+		res := run(t, dispatchDump(tt.first, tt.recipes))
+		if got := strings.Join(rules(res), ","); got != tt.want {
+			t.Errorf("%s: findings = %q, want %q", tt.name, got, tt.want)
+		}
+		for _, f := range res.Findings {
+			if f.Severity != "warning" || !strings.Contains(f.Fix, "justz help m") {
+				t.Errorf("%s: finding = %+v", tt.name, f)
+			}
+		}
+	}
+}
+
+func TestDispatcherRootIsLeftAlone(t *testing.T) {
+	d := `{"first":"build","recipes":{"build":{"attributes":[],"body":[["echo"]],"shebang":false}},"modules":{}}`
+	if res := run(t, d); len(res.Findings) != 0 {
+		t.Errorf("findings = %v", rules(res))
+	}
+}
+
+func TestDispatcherNestedModule(t *testing.T) {
+	d := `{"recipes":{},"modules":{"o":{"first":"default","recipes":{"default":{"attributes":[],"body":[["justz help o"]],"shebang":false}},"settings":{"shell":{"command":"bash","arguments":["-c"]}},"modules":{"i":{"first":"up","recipes":{"up":{"attributes":[],"body":[["echo"]],"shebang":false}},"settings":{"shell":{"command":"bash","arguments":["-c"]}},"modules":{}}}}}}`
+	res := run(t, d)
+	if got := strings.Join(rules(res), ","); got != "module-dispatcher-missing module o i" {
+		t.Errorf("findings = %q", got)
+	}
+	if m := res.Findings[0].Message; !strings.Contains(m, "just o i runs up, which is not a dispatcher") {
+		t.Errorf("message = %q", m)
+	}
+}

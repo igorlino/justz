@@ -51,6 +51,8 @@ deploy token:
 | `secret-parameter` | A recipe parameter with a secret-like name |
 | `secret-interpolated` | A secret-like name inside `{{ … }}` in a body line that `just` hands to a shell |
 | `module-shell-unset` | A module with linewise recipes and no `set shell` |
+| `module-dispatcher-missing` | A module whose bare call runs a command, not a dispatcher |
+| `module-dispatcher-lists-root` | A module default that runs `just --list` with `justfile()` or `justfile_directory()` |
 | `ignore-unknown-rule` | A `justz-ignore` value that is not a lint rule |
 
 ### `recipe-long`
@@ -104,6 +106,12 @@ A module that has at least one linewise recipe and whose `settings.shell` is `nu
 - Any `set shell` line silences the rule, including `set shell := ['sh', '-cu']`. `set windows-shell` does not: it changes nothing on Linux or macOS, where the recipes still run with `sh -cu` (verified).
 - A recipe with an empty body, such as one that only has dependencies, runs no shell and does not count. That is the opt-out: the rule is about a module that did not choose, not about which shell is right.
 - The root file is not reported. A root without `set shell` is a normal small justfile.
+
+### `module-dispatcher-missing` and `module-dispatcher-lists-root`
+
+`just <module>` runs the recipe the dump names in the module's `first` field: the one with `[default]`, else the first in the file. A first recipe named `default` or `_default` is the dispatcher. Any other first recipe, private or not (including one chosen by `[default]`), is a command that a bare call would run, so `module-dispatcher-missing` reports it. Both rules are warnings and have no per-recipe opt-out. A module with no recipes and the root file are not reported.
+
+When the dispatcher's body has a line with the text `--list` and a call to `justfile()` or `justfile_directory()`, `module-dispatcher-lists-root` reports it: inside a module both are the root's. The fix for both is a default recipe that runs `justz help <module>`.
 
 ## Not in scope
 
