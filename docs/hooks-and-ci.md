@@ -6,12 +6,12 @@
 
 ## Pre-commit framework
 
-Add the hook to `.pre-commit-config.yaml` and pin a release in `rev`. Replace `vX.Y.Z` with the first release that ships this hook (it is not in v0.7.0 or earlier), and then keep it pinned; the `justz` version in the Actions job below may stay on any existing release.
+Add the hook to `.pre-commit-config.yaml` and pin a release in `rev`. Use v0.8.0 or newer (the first release that ships this hook; v0.7.0 and earlier do not), and keep it pinned; the `justz` version in the Actions job below may stay on any existing release.
 
 ```yaml
 repos:
   - repo: https://github.com/igorlino/justz
-    rev: vX.Y.Z
+    rev: v0.8.0
     hooks:
       - id: justz-check
 ```
@@ -23,7 +23,7 @@ The hook (`.pre-commit-hooks.yaml` at the root of this repository) uses `languag
 For a project without the framework, copy [`scripts/pre-commit-hook.sh`](../scripts/pre-commit-hook.sh) to `.git/hooks/pre-commit` and make it executable:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/igorlino/justz/vX.Y.Z/scripts/pre-commit-hook.sh -o .git/hooks/pre-commit
+curl -fsSL https://raw.githubusercontent.com/igorlino/justz/v0.8.0/scripts/pre-commit-hook.sh -o .git/hooks/pre-commit
 chmod +x .git/hooks/pre-commit
 ```
 

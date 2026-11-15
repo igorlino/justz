@@ -3,7 +3,7 @@
 #
 #   repos:
 #     - repo: https://github.com/igorlino/justz
-#       rev: vX.Y.Z   # the first release that ships this hook, then pin
+#       rev: v0.8.0   # v0.8.0 is the first release that ships this hook; keep it pinned
 #       hooks:
 #         - id: justz-check
 #
