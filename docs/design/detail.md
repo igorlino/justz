@@ -6,7 +6,7 @@ Status: implemented in one PR (the field, the zoom section, the JSON, the schema
 
 A command's `desc` has three jobs at once: it is a row in the help, it is the `[doc]` of the recipe (`justz check` requires the two to be the same text), and it is where an author puts everything worth knowing about the command. The third job breaks the first two. `check` warns when `desc` is over 120 characters (`registry-desc-long`), and a long `[doc]` makes `just --list` unreadable.
 
-Measured on the large private registry of the pilot: 149 of its 249 commands have a description over 120 characters, 33 are over 500, and the longest is 2,165. The text is useful (what a recipe does step by step, which flags matter, what it needs), but it is prose for someone who is already looking at one command. Today it has nowhere else to go.
+Measured on a large registry: 149 of its 249 commands have a description over 120 characters, 33 are over 500, and the longest is 2,165. The text is useful (what a recipe does step by step, which flags matter, what it needs), but it is prose for someone who is already looking at one command. Today it has nowhere else to go.
 
 ## Proposal
 
@@ -53,7 +53,7 @@ A command without `detail` renders exactly as before, byte for byte, so the exis
 - **Older `justz`.** Versions that do not know the field ignore it, keep it in `fmt`, and show the short `desc`. A registry can use `detail` before every machine has the new version.
 - **Native variant.** Nothing. A native justfile has `[doc]` and no place for long text. Not in scope.
 
-## What it does for the pilot registry
+## What it does for a large registry
 
 The 149 long descriptions split mechanically: `desc` is the first sentence, `detail` is the rest, and the `[doc]` is the new `desc`. 122 of the 149 have a first clause (up to a sentence end, a semicolon, a colon or a dash) of 120 characters or fewer; by full sentences alone it is 82. The other 27 need a short summary written by hand, and the removed text stays whole in `detail`. Nothing is lost and `registry-desc-long` goes away.
 
@@ -62,7 +62,7 @@ The 149 long descriptions split mechanically: `desc` is the first sentence, `det
 - Markup (Markdown, ANSI) inside `detail`, and links.
 - Detail for groups. A group already has `footer`, which its zoom prints.
 - A per-argument long text.
-- A line limit on `detail`.
+- A line limit on `detail` (reversed as advice: see "Decision after real use").
 - A way to give the same text to native justfiles (for example through `[metadata]`).
 
 ## Plan
@@ -83,10 +83,19 @@ The 149 long descriptions split mechanically: `desc` is the first sentence, `det
 - **Schema:** a string passes (add it to the all-fields document), and `{"detail": 3}` fails with `$.groups.a.commands.x.detail: want string, got number`.
 - **`check`:** the `registry-desc-long` fix text for a committed registry and for the overlay.
 
+## Decision after real use
+
+Two calls above did not survive use of the field on a large registry (149 details). None had a line break, the median was 280 characters, 14 were over 800, the longest renders as about 30 lines, and 89 opened by restating most of the `desc`. Both earlier calls are reversed, as advice only:
+
+- **A limit on `detail`** was out of scope ("A line limit on `detail`"). A long `detail` is as bad as a long `desc`: the zoom buries the options under it. `check` now warns, with `detail-long` (over 600 characters) and `detail-no-paragraphs` (over 300 characters with no blank line between paragraphs). 600 is about 9 lines at the zoom width, which keeps the examples and options in the `--browse` window next to it; 300 is about the median, so a text longer than a typical `detail` has earned a break.
+- **A rule for the opposite case** (a `detail` that repeats `desc`) was rejected as harmless and rare (open question 4). It was neither. `detail-restates-desc` warns when the words of the `desc`, lowercased, without punctuation and with a trailing `s` removed, are the first words of the `detail`. A prefix test was chosen over a similarity score: it has no threshold to tune, an author can see why it fired, and a `detail` that only starts with the same verb does not match. It misses a paraphrase, which is accepted. A `desc` of fewer than four words is not compared, since a short one is a prefix of too many honest details.
+
+All three are warnings, never errors, because an empty `detail` is correct for most commands and nothing here is wrong enough to fail a build, although `check --strict` fails on a warning. A deliberately list-style `detail` without blank lines is silenced on its recipe. The fix text names the thresholds, and a recipe silences a rule with `[metadata('justz-ignore', '<rule>')]`, as for `volatile-text`. The thresholds are constants of `internal/check/detail.go`.
+
 ## Open questions
 
 1. **Heading.** A **Details** heading, or the prose straight under the description with a blank line. Recommendation: the heading, so that a reader can tell the one-line summary from the longer text.
 2. **Field name.** `detail`, `details`, `long` or `help`. Recommendation: `detail`: singular like `desc`, and not `help`, which is already a command.
 3. **`generate` carrying `detail`.** Like `values`, a hand-added `detail` in an old overlay could survive regeneration. The overlay is personal and derived, and there is nothing to carry from. Recommendation: no.
-4. **A rule for the opposite case.** A `detail` that only repeats `desc`. Recommendation: no; it is harmless and rare.
+4. **A rule for the opposite case.** A `detail` that only repeats `desc`. Recommendation: no; it is harmless and rare. (Reversed: see "Decision after real use".)
 5. **Placement.** After Options (the zoom shows the actionable text first) or straight after the description. Recommendation: after Options. The cost is that a reader who wants the prose scrolls past the flags; the gain is that a long `detail` never hides the examples in the `--browse` preview.

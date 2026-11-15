@@ -44,6 +44,9 @@ const (
 	RuleExampleFlagUnknown = "example-flag-unknown"
 	RuleVolatileText       = "volatile-text"
 	RuleSeeAlso            = "registry-see-also"
+	RuleDetailLong         = "detail-long"
+	RuleDetailNoParagraphs = "detail-no-paragraphs"
+	RuleDetailRestatesDesc = "detail-restates-desc"
 	RuleDetailFlagNoRow    = "detail-flag-no-row"
 )
 
@@ -54,6 +57,7 @@ var Rules = []string{
 	RuleRegistryStale, RuleRegistryDesc, RuleKeySignature, RuleRegistryShape, RuleDescLong,
 	RuleUnsorted, RuleExampleBare, RuleExampleSingle, RuleExampleLongFlag, RuleExampleEnumUnset,
 	RuleExampleFlagUnknown, RuleVolatileText, RuleDetailFlagNoRow, RuleDocMultiline, RuleSeeAlso,
+	RuleDetailLong, RuleDetailNoParagraphs, RuleDetailRestatesDesc,
 }
 
 // MaxDescLength is the length above which a registry description is a warning.
@@ -288,6 +292,7 @@ type registryEntry struct {
 	DescUnsafe bool   // the description has control characters the terminal-safe text replaced
 	Example    string // the per-command example field
 	Detail     string
+	DetailText string // the detail with its line breaks, for the paragraph rule
 	SeeAlso    []string
 	Extra      bool
 	Args       []argEntry
@@ -328,6 +333,7 @@ func registryEntries(reg *orderedjson.Value) []registryEntry {
 				}
 				if x := c.Val.Get("detail"); x != nil && x.Kind == orderedjson.String {
 					e.Detail = textsafe.Line(x.Str)
+					e.DetailText = strings.TrimSpace(strings.ReplaceAll(textsafe.Text(x.Str), "\r\n", "\n"))
 				}
 				if x := c.Val.Get("example"); x != nil && x.Kind == orderedjson.String {
 					e.Example = textsafe.Line(x.Str)

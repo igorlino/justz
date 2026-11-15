@@ -19,7 +19,8 @@ It reads the justfile through just --dump and, when there is one, the registry
   registry-key-signature, registry-shape, registry-desc-long, registry-unsorted
   example-bare-command, example-single-flag, example-long-flag,
   example-enum-missing, example-flag-unknown (a warning), volatile-text and
-  detail-flag-no-row (advice, warnings), default-public (a public default recipe: a warning,
+  detail-flag-no-row, detail-long, detail-no-paragraphs, detail-restates-desc
+  (advice, warnings), default-public (a public default recipe: a warning,
   so check --strict fails on it; it is a dispatcher, not a command, so it is
   not counted)
 
@@ -41,7 +42,11 @@ it. The JSON keeps the fix on every finding.
 volatile-text finds text in a desc or detail that goes stale (TODO, FIXME, WIP,
 placeholder, not implemented, coming soon, a count such as "11 checks", a
 price, a date). detail-flag-no-row finds a flag that a detail names but no
-argument row declares. Silence either on one recipe with
+argument row declares. detail-long (over 600 characters), detail-no-paragraphs
+(over 300 with no blank line) and detail-restates-desc (the detail opens with
+the words of the desc, for a desc of four words or more) are about the shape of
+a detail. They are warnings, so check --strict fails on them; a detail that is
+deliberately a list with no blank lines is silenced with justz-ignore. Silence either on one recipe with
 [metadata('justz-ignore', '<rule>')].
 
 Exit codes: 0 no errors, 1 errors (or warnings with --strict), 2 usage error.
