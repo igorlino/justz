@@ -49,9 +49,13 @@ The fields, from `internal/help/model.go` and `internal/registry/canonical.go`:
 | command | `desc`, `example` | string | |
 | command | `detail` | string | optional longer text, shown only in the zoom (added with 0.7.0) |
 | command | `exits` | object of string | exit code (an integer 0 to 255, as a string key) to meaning; the key rule is in `check` (`registry-exits`), not in the schema |
+| command | `env` | array of env row | environment variables the command reads; a flag goes in `args`, a variable here |
 | command | `seeAlso` | array of string | keys of related commands, `group.command` (`core.build` for a top-level one); see `docs/design/see-also.md` |
 | command | `args` | array of argument | |
 | argument | `name`, `desc` | string | |
+| env row | `name`, `desc` | string | `name` is the variable, upper case letters, digits and underscores (`registry-env`: no name or a duplicate is an error, another spelling is a warning) |
+| env row | `required` | boolean | optional |
+| env row | `default` | string | optional; shown as text, not parsed |
 | argument | `values` | array of string | an enum: drives completion and renders `(a\|b\|c)` |
 | argument | `type` | string | present in real registries (`boolean`, `string`); `justz` does not read it, so it is typed but not an enum |
 

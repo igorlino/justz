@@ -110,3 +110,22 @@ func TestExitCodeKeys(t *testing.T) {
 		}
 	}
 }
+
+func TestCanonicalSortsEnvByNameAndKeepsUnknownFields(t *testing.T) {
+	out := string(canonical(t, []byte(`{"groups":{"core":{"commands":{"b":{"desc":"B","env":[{"name":"ZED","desc":"z"},{"desc":"nameless"},{"name":"ALPHA","desc":"a","required":true,"default":"x","note":"kept"}]}},"extra":{"e":{"desc":"E","env":[{"name":"B2"},{"name":"A1"}]}}}}}`)))
+	var pos []int
+	for _, k := range []string{`"ALPHA"`, `"ZED"`, `"nameless"`} {
+		pos = append(pos, strings.Index(out, k))
+	}
+	for i := 1; i < len(pos); i++ {
+		if pos[i-1] < 0 || pos[i] < pos[i-1] {
+			t.Fatalf("env not in order ALPHA, ZED, nameless: %s", out)
+		}
+	}
+	if !strings.Contains(out, `"note": "kept"`) {
+		t.Errorf("unknown field lost: %s", out)
+	}
+	if strings.Index(out, `"A1"`) > strings.Index(out, `"B2"`) {
+		t.Errorf("extra env not sorted: %s", out)
+	}
+}

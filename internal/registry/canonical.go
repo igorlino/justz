@@ -17,6 +17,7 @@ import (
 //   - args of each command: positional arguments first, then flags, each
 //     ignoring case
 //   - exits of a command: by numeric code, keys that are not codes last
+//   - env of a command: by name
 //   - examples: by their cmd; seeAlso of a group and of a command: A to Z
 //   - tiers[].groups, dispatchers and lab: A to Z; order: "core" first
 //
@@ -104,6 +105,16 @@ func canonicalizeCommand(c *orderedjson.Value) {
 			return a.Key < b.Key
 		})
 	}
+	if env := c.Get("env"); env != nil && env.Kind == orderedjson.Array {
+		// By name, as written; a row without a name goes last (check reports it).
+		sort.SliceStable(env.Arr, func(i, j int) bool {
+			a, b := envName(env.Arr[i]), envName(env.Arr[j])
+			if (a == "") != (b == "") {
+				return a != ""
+			}
+			return a < b
+		})
+	}
 	if see := c.Get("seeAlso"); see != nil && see.Kind == orderedjson.Array {
 		sortValues(see)
 	}
@@ -112,6 +123,13 @@ func canonicalizeCommand(c *orderedjson.Value) {
 			return lessKey(argKey(args.Arr[i]), argKey(args.Arr[j]))
 		})
 	}
+}
+
+func envName(row *orderedjson.Value) string {
+	if n := row.Get("name"); n != nil && n.Kind == orderedjson.String {
+		return n.Str
+	}
+	return ""
 }
 
 func cmdOf(v *orderedjson.Value) *orderedjson.Value {

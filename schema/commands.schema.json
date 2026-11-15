@@ -109,6 +109,11 @@
           "description": "Exit codes and what they mean, as {\"0\": \"done\"}. A key is an integer from 0 to 255; justz check reports any other key. The schema cannot express that, so it only says object of strings.",
           "additionalProperties": { "type": "string", "description": "What the exit code means, one line." }
         },
+        "env": {
+          "type": "array",
+          "description": "Environment variables the command reads, as rows. A flag goes in args, a variable here. justz check reports a row without a name, a duplicate name and a wrong type; it cannot tell whether the command reads the variable.",
+          "items": { "$ref": "#/definitions/envVar" }
+        },
         "seeAlso": {
           "type": "array",
           "description": "Keys of related commands, as group.command (core.build for a top-level command). justz check reports a key that does not exist.",
@@ -131,6 +136,15 @@
           "description": "The allowed values of an enum. They drive completion.",
           "items": { "type": "string" }
         }
+      }
+    },
+    "envVar": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "The variable name, such as STORAGE_HOST (upper case letters, digits and underscores)." },
+        "desc": { "type": "string", "description": "What the variable does." },
+        "required": { "type": "boolean", "description": "True when the command fails or is wrong without the variable." },
+        "default": { "type": "string", "description": "The value used when the variable is not set, as text. It is shown, not parsed." }
       }
     },
     "example": {

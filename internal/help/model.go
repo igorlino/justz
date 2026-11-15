@@ -26,10 +26,20 @@ type Command struct {
 	Detail string
 	// Exits is what each exit code means, in numeric order.
 	Exits []ExitCode
+	// Env is the environment variables the command reads, in name order.
+	Env []EnvVar
 	// SeeAlso lists keys (group.command) of related commands.
 	SeeAlso []string
 	Heading string // a display heading from a [group] attribute (native projects)
 	Args    []Arg
+}
+
+// EnvVar is one row of a command's env.
+type EnvVar struct {
+	Name     string `json:"name"`
+	Desc     string `json:"desc"`
+	Required bool   `json:"required,omitempty"`
+	Default  string `json:"default,omitempty"`
 }
 
 // ExitCode is one row of a command's exits.
@@ -175,6 +185,22 @@ func readCommands(v *orderedjson.Value) []Command {
 				}
 			}
 			sort.SliceStable(c.Exits, func(i, j int) bool { return c.Exits[i].Code < c.Exits[j].Code })
+		}
+		if ev := m.Val.Get("env"); ev != nil && ev.Kind == orderedjson.Array {
+			for _, r := range ev.Arr {
+				if r == nil || r.Kind != orderedjson.Object {
+					continue
+				}
+				v := EnvVar{Name: firstString(r, "", "name"), Desc: firstString(r, "", "desc"), Default: firstString(r, "", "default")}
+				if v.Name == "" {
+					continue
+				}
+				if q := r.Get("required"); q != nil && q.Kind == orderedjson.Bool {
+					v.Required = q.Bool
+				}
+				c.Env = append(c.Env, v)
+			}
+			sort.SliceStable(c.Env, func(i, j int) bool { return c.Env[i].Name < c.Env[j].Name })
 		}
 		if sa := m.Val.Get("seeAlso"); sa != nil && sa.Kind == orderedjson.Array {
 			for _, s := range sa.Arr {
