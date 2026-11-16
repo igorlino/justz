@@ -2,14 +2,19 @@
 
 ## Install `justz`
 
-Tell the user; do not install it yourself.
+Tell the user how to install it. Do not install it yourself, and do not run a download command for them.
 
-| Method | Command |
+| Method | Where |
 |---|---|
-| Homebrew | `brew install igorlino/tap/justz` |
-| Go | `go install github.com/igorlino/justz/cmd/justz@latest` |
-| Install script | `curl -fsSL https://raw.githubusercontent.com/igorlino/justz/main/install.sh \| sh` |
-| Windows | the `.zip` from the release archives |
+| Homebrew (macOS, Linux, WSL2) | `brew install igorlino/tap/justz` |
+| Every other method, including Windows | <https://github.com/igorlino/justz/blob/main/docs/installation.md> |
+| Release archives (`.tar.gz`; `.zip` for Windows) | <https://github.com/igorlino/justz/releases> |
+
+Every release has SHA256 checksums and a build provenance attestation. The user can verify a downloaded archive before running it:
+
+```sh
+gh attestation verify justz-<version>-<os>-<arch>.tar.gz --repo igorlino/justz
+```
 
 ## Version requirements
 

@@ -40,7 +40,7 @@ Then run `justz doctor`.
 
 ## Verify a download
 
-Releases include SHA256 checksums and build provenance attestations:
+Releases include SHA256 checksums and build provenance attestations. Archives are `.tar.gz`, and `.zip` for Windows:
 
 ```sh
 gh attestation verify justz-<version>-<os>-<arch>.tar.gz --repo igorlino/justz
