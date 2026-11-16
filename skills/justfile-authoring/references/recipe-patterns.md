@@ -87,7 +87,7 @@ lint-check *flags:
 **Usage:**
 ```bash
 just lint-check                                            # Uses default image
-LINTER_IMAGE=myregistry.com/image:latest just lint-check  # Override for one run
+LINTER_IMAGE=myregistry.com/image:1.4.2 just lint-check   # Override for one run
 ```
 
 **Why:**

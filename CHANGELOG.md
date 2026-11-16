@@ -9,6 +9,7 @@ What changed in each release of `justz`, for people who use it. The format follo
 - The README is rewritten, and the documentation is split into pages under `docs/`: getting started, installation, command reference, registry, checks, shims, for agents, ecosystem and FAQ.
 - The `justz-cli` skill is restructured: a short `SKILL.md` with a quick start and tables, and the long material in three reference files.
 - Release archives include the `docs/` directory and this changelog.
+- The `justz-cli` skill no longer carries install commands that fetch an unpinned source (`go install ...@latest`, and the install script piped to a shell). It names Homebrew, links to the installation page, and says how to verify a release.
 
 ### Added
 
