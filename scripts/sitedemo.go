@@ -22,21 +22,30 @@ type demo struct {
 func main() {
 	bin, _ := filepath.Abs("justz")
 	fixture := filepath.Join("testdata", "variants", "rich")
-	runs := [][]string{
-		{"help"},
-		{"check"},
-		{"help", "core", "test"},
-		{"lint"},
-		{"help", "core", "test", "-j"},
+	// jz and jzh are the binary started under those names; --local is the same
+	// code path, so the demo needs no link. The last run is the JSON sample of
+	// the agents section and has no tab.
+	runs := []struct {
+		cmd  string
+		args []string
+	}{
+		{"jzh", []string{"--local", "jzh"}},
+		{"jzh test", []string{"--local", "jzh", "test"}},
+		{"jz clean", []string{"--local", "jz", "clean"}},
+		{"justz check", []string{"check"}},
+		{"justz lint", []string{"lint"}},
+		{"justz help core test -j", []string{"help", "core", "test", "-j"}},
 	}
 	var demos []demo
-	for _, args := range runs {
+	for _, r := range runs {
 		var out bytes.Buffer
-		c := exec.Command(bin, args...)
+		c := exec.Command(bin, r.args...)
 		c.Dir = fixture
+		// The output must not depend on the shell that runs the generator.
+		c.Env = append(os.Environ(), "JUSTZ_QUIET=", "COLUMNS=80", "NO_COLOR=1")
 		c.Stdout, c.Stderr = &out, &out
 		_ = c.Run() // check and lint exit non-zero on findings; the output is the point
-		demos = append(demos, demo{"justz " + strings.Join(args, " "), strings.TrimRight(out.String(), "\n")})
+		demos = append(demos, demo{r.cmd, strings.TrimRight(out.String(), "\n")})
 	}
 	data, err := json.MarshalIndent(demos, "", "  ")
 	if err != nil {

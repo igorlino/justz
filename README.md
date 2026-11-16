@@ -86,6 +86,7 @@ You keep typing `just`. The short forms are there when you want them.
 | Start a self-documenting project | `justz init` |
 | Keep the command registry in one stable order | `justz fmt` |
 | Tab completion from the same data as the help | `justz completions` |
+| Check the machine and add the `jz` and `jzh` shortcuts | `justz setup` |
 | Run a project's commands from any directory, safely | `justz shim add` ([shims](docs/shims.md)) |
 | Editor completion and type checks for `commands.json` | `justz schema` |
 
