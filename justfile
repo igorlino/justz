@@ -92,9 +92,16 @@ site-demo:
 
 [doc('Fail when site/demo.js is stale')]
 [group('check')]
+[unix]
 site-demo-check: build
     go run scripts/sitedemo.go
     git diff --exit-code site/demo.js
+
+[doc('Fail when site/demo.js is stale (skipped on Windows, where the binary is justz.exe)')]
+[group('check')]
+[windows]
+site-demo-check:
+    @echo "site-demo-check: skipped on Windows"
 
 [doc('Everything CI runs: format check, vet, test, build, install script, hook script')]
 [group('check')]
