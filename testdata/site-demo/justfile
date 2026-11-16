@@ -1,0 +1,27 @@
+# The demo project of the website: scripts/sitedemo.go runs justz here to write
+# site/demo.js. After a change, run `just site-demo`.
+set shell := ["bash", "-euo", "pipefail", "-c"]
+
+mod tool 'tool.just'
+
+# Bare `just` (and `jz`) shows the help of justz.
+_default:
+    @justz help
+
+[doc('Compile the project')]
+[group('core')]
+build:
+    @echo build
+
+[doc("Run the test suite\nexample: just test -w | Re-run on every save")]
+[group('core')]
+[arg('pattern', short='k', help='Filter tests by name pattern')]
+[arg('watch', long='watch', short='w', value='true', help='Re-run on file changes')]
+test pattern='' watch='false':
+    @echo test {{ pattern }} {{ watch }}
+
+[doc('Deploy to an environment')]
+[group('deploy')]
+[arg('env', help='Target environment')]
+deploy env:
+    @echo deploy {{ env }}

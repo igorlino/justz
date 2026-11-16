@@ -31,7 +31,7 @@ Run `just ci` before you say a change is done.
 | `schema/commands.schema.json` | The JSON Schema of the registry |
 | `skills/` | The `justz-cli` and `justfile-authoring` agent skills |
 | `docs/` | User documentation. `docs/design/` holds design notes |
-| `testdata/` | Fixtures. `testdata/variants/` has one project per documentation variant |
+| `testdata/` | Fixtures. `testdata/variants/` has one project per documentation variant, and `testdata/site-demo/` is the project of the website demo |
 
 ## Rules
 
