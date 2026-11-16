@@ -6,10 +6,30 @@ A shim is a short command, such as `tz`, that runs `justz` for one project's jus
 
 | Kind | Example | Behavior |
 |---|---|---|
-| Local | `jz`, `jzh` | Find the justfile from the current directory. `jz <group> <cmd>` runs a command, `jzh` shows its help. They exist only when the binary is started under that name; Homebrew installs the symlinks. |
+| Local | `jz`, `jzh` | Find the justfile from the current directory. `jz <group> <cmd>` runs a command, `jzh` shows its help. Homebrew installs them, and `justz setup` adds them for every other install. |
 | Pinned | `tz`, `tzh`, or any name | Wrap one specific project and work from any directory. Created with `justz shim add`. |
 
-## Create one
+## The `jz` and `jzh` shortcuts
+
+```sh
+justz setup          # adds jz and jzh to the shim directory, if they are not installed yet
+jzh                  # the help of the project around the current directory
+jz clean             # with a registry, a bare name finds its group: this runs "just tool clean"
+```
+
+`justz setup` writes one small file per shortcut. It follows the rules of a shim:
+
+- It never overwrites a file that `justz` did not write.
+- It never takes a name that another command on the PATH, or a registered shim, already has. It says which one, and adds nothing.
+- The two are added together. When `jz` is taken, `jzh` is not added either, and the reverse.
+- A shortcut it cannot add is not an error: `justz setup` says why and goes on.
+- With Homebrew the shortcuts are links next to the binary, so `justz setup` leaves them alone.
+
+To remove a shortcut, delete its file. `justz setup --dry-run` shows what would be written, and `justz doctor` checks that each shortcut is the command your shell finds.
+
+In a `native` project, with no registry, `jzh` renders the help from the justfile. `jz` with no command runs the default recipe, as `just` does: the listing, in a project from `justz init`. A bare name does not find its group there, so type the group: `jz tool clean`.
+
+## Create a pinned shim
 
 ```sh
 justz setup                        # create the shim directory and check the machine

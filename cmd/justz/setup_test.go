@@ -144,3 +144,65 @@ func TestShimDoctorExitCodes(t *testing.T) {
 		t.Errorf("bad flag: code %d, stderr %q", code, errOut.String())
 	}
 }
+
+// shortcutMachine is a fresh machine whose PATH holds only the shim directory,
+// so no jz of the machine running the tests is found.
+func shortcutMachine(t *testing.T) (shimDir string) {
+	t.Helper()
+	shimDir = freshMachine(t)
+	t.Setenv("PATH", shimDir)
+	return shimDir
+}
+
+func TestSetupAddsTheJzShortcuts(t *testing.T) {
+	shimDir := shortcutMachine(t)
+	e, out, _ := testEnv(true)
+	if code := run([]string{"setup"}, e); code != 0 {
+		t.Fatalf("exit %d, out %q", code, out.String())
+	}
+	for _, n := range []string{"jz", "jzh"} {
+		_, errPlain := os.Stat(filepath.Join(shimDir, n))
+		_, errCmd := os.Stat(filepath.Join(shimDir, n+".cmd"))
+		if errPlain != nil && errCmd != nil {
+			t.Errorf("no %s shortcut in %s", n, shimDir)
+		}
+		if !strings.Contains(out.String(), "(the "+n+" shortcut)") {
+			t.Errorf("output does not name the %s shortcut: %q", n, out.String())
+		}
+	}
+
+	// Again: nothing new, and the JSON says so.
+	e, out, _ = testEnv(true)
+	if code := run([]string{"setup", "--json"}, e); code != 0 {
+		t.Fatalf("exit %d, out %q", code, out.String())
+	}
+	var report struct {
+		Shortcuts []struct{ Name, Action string }
+	}
+	if err := json.Unmarshal(out.Bytes(), &report); err != nil {
+		t.Fatal(err)
+	}
+	if len(report.Shortcuts) != 2 || report.Shortcuts[0].Action != "exists" || report.Shortcuts[1].Action != "exists" {
+		t.Errorf("shortcuts = %+v", report.Shortcuts)
+	}
+}
+
+func TestSetupDryRunAddsNoShortcut(t *testing.T) {
+	shimDir := shortcutMachine(t)
+	e, out, _ := testEnv(true)
+	if code := run([]string{"setup", "--dry-run"}, e); code != 0 || !strings.Contains(out.String(), "(the jz shortcut)") {
+		t.Fatalf("code %d, out %q", code, out.String())
+	}
+	if _, err := os.Stat(shimDir); !os.IsNotExist(err) {
+		t.Error("a dry run must not create the shim directory or a shortcut")
+	}
+}
+
+func TestSetupWarnsAboutAnOldJustLikeDoctor(t *testing.T) {
+	shortcutMachine(t)
+	e, out, _ := testEnv(true)
+	e.runCmd = func(name string, args ...string) (string, error) { return "just 1.30.0", nil }
+	if code := run([]string{"setup"}, e); code != 0 || !strings.Contains(out.String(), "[warn] just:") {
+		t.Errorf("code %d, out %q", code, out.String())
+	}
+}

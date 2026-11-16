@@ -6,10 +6,10 @@ In about ten minutes you go from nothing to a project whose commands are discove
 
 ```sh
 brew install igorlino/tap/justz     # other ways: installation.md
-justz doctor
+justz setup
 ```
 
-`justz doctor` confirms that `just` is on your PATH and new enough (1.37.0 or newer). If it warns, see [FAQ](faq.md#unknown-attribute-errors).
+`justz setup` confirms that `just` is on your PATH and new enough (1.37.0 or newer), and adds the `jz` and `jzh` shortcuts if your install did not bring them. If it warns, see [FAQ](faq.md#unknown-attribute-errors).
 
 ## 2. Look at a project
 
@@ -22,6 +22,8 @@ justz help <group>            # one group
 justz help <group> <command>  # one command: usage, examples, options, details
 justz help --browse           # pick interactively (fzf if installed)
 ```
+
+With the shortcuts, `jzh` is `justz help` and `jz <command>` runs a command. In a project from `justz init --variant rich`, plain `just` and `just help <group> <command>` show the same help, because its recipes call `justz`.
 
 A group or command can be an exact name or a unique start of it: in a project with a `tool git` command, `justz help to gi` finds it.
 
@@ -60,7 +62,7 @@ Add the pre-commit hook or the CI job from [Hooks and CI](hooks-and-ci.md), so d
 
 ```sh
 eval "$(justz completions zsh)"   # in ~/.zshrc, after compinit (bash: ~/.bashrc)
-justz shim add --name tz          # a short command pinned to this project
+justz shim add --name tz          # a short command pinned to this project, from any directory
 ```
 
 See [Shims](shims.md).

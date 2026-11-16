@@ -30,6 +30,7 @@ func testEnv(just bool) (env, *bytes.Buffer, *bytes.Buffer) {
 }
 
 func TestRun(t *testing.T) {
+	freshMachine(t) // doctor and shim list read the shim directory
 	tests := []struct {
 		name     string
 		args     []string
@@ -69,6 +70,7 @@ func TestRun(t *testing.T) {
 }
 
 func TestDoctorJSON(t *testing.T) {
+	freshMachine(t)
 	e, out, _ := testEnv(true)
 	if code := run([]string{"doctor", "--json"}, e); code != 0 {
 		t.Fatalf("exit code = %d, want 0", code)
@@ -83,6 +85,7 @@ func TestDoctorJSON(t *testing.T) {
 }
 
 func TestDoctorJSONFailure(t *testing.T) {
+	freshMachine(t)
 	e, out, _ := testEnv(false)
 	if code := run([]string{"doctor", "--json"}, e); code != 1 {
 		t.Fatalf("exit code = %d, want 1", code)

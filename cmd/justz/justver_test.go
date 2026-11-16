@@ -33,6 +33,7 @@ func TestVersionBelow(t *testing.T) {
 
 func doctorWithJust(t *testing.T, version string) (string, int) {
 	t.Helper()
+	freshMachine(t)
 	e, out, _ := testEnv(true)
 	e.runCmd = func(name string, args ...string) (string, error) { return version, nil }
 	code := runDoctor(nil, e)

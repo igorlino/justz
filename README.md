@@ -3,7 +3,7 @@
 **Make a justfile discoverable and keep its documentation honest.** `justz` is a single-binary CLI that sits next to [`just`](https://github.com/casey/just): it shows a project's commands as a grouped, searchable reference, and it fails CI when the docs and the recipes drift apart. You keep your justfile.
 
 ```text
-$ justz help
+$ jzh
 
   demo
 
@@ -15,8 +15,14 @@ $ justz help
   Commands  (run without args to see sub-commands)
     tool                # Tools
 
-  Run justz help --expanded for the full command reference.
+  Run jzh --expanded for the full command reference.
+
+$ jz clean
+jz: tool clean
+clean
 ```
+
+`jzh` shows the help and `jz` runs a command. With a command registry (`justz init --variant rich`), a bare name such as `clean` finds its group, `tool`; without one, type `jz tool clean`. Both are short forms of `justz`; see [How you type it](#how-you-type-it).
 
 And when the documentation drifts from the recipes, `justz check` says where, and what to paste:
 
@@ -48,14 +54,27 @@ You need [`just`](https://github.com/casey/just) 1.37.0 or newer.
 
 ```sh
 brew install igorlino/tap/justz     # more options: docs/installation.md
-justz doctor                        # is this machine ready?
+justz setup                         # check this machine; adds jz and jzh if your install did not
 
 cd your-project
-justz help                          # what can this project do?
+jzh                                 # what can this project do?
+jzh tool clean                      # one command: usage, examples, options
+jz tool clean                       # run it
 justz check                         # is it documented, and does the doc still match?
 ```
 
 No justfile yet? `justz init` writes one that passes `justz check` on the first run. Full walkthrough: [Getting started](docs/getting-started.md).
+
+## How you type it
+
+You keep typing `just`. The short forms are there when you want them.
+
+| You type | What it is | It needs |
+|---|---|---|
+| `just`, `just help tool clean`, `just check` | Your justfile's own recipes. `justz init --variant rich` writes them so that they call `justz`. | A justfile from `justz init --variant rich`, or the same three recipes |
+| `jz`, `jzh` | Shortcuts for the project around the current directory, from any subdirectory. | `justz setup` (Homebrew installs them) |
+| `tz`, `tzh`, or a name you choose | A [shim](docs/shims.md) pinned to one project, from any directory. | `justz shim add` |
+| `justz help`, `justz check` | The CLI itself. Works in any project with a justfile. | Nothing |
 
 ## What you get
 

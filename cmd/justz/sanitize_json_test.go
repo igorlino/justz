@@ -30,6 +30,7 @@ func TestPrintJSONCleansWhatTheEncoderLeavesRaw(t *testing.T) {
 }
 
 func TestDoctorJSONIsClean(t *testing.T) {
+	freshMachine(t)
 	e, out, _ := testEnv(true)
 	e.lookPath = func(file string) (string, error) { return "/x" + rawOnly + "/" + file, nil }
 	run([]string{"doctor", "--json"}, e)

@@ -28,6 +28,10 @@ Deliberate: the hook never passes silently when `justz` is missing. Install `jus
 
 `.just-local-rich.json` is personal, so `justz` refuses to write it when git tracks it. Add it to your global git ignore file, not to the project's.
 
+## `jz` or `jzh`: command not found
+
+Run `justz setup`. It adds the two shortcuts to the shim directory and tells you how to put that directory on your PATH. If it says a shortcut was not added, another command already has the name; it names that command.
+
 ## My shim is not found
 
 Run `justz setup` to see whether the shim directory is on your PATH, and `justz shim doctor` to check each shim.
