@@ -53,18 +53,19 @@
     </div>
     <p class="sub"><a href="https://github.com/igorlino/justz/blob/main/docs/installation.md">Other install methods</a> · <a href="https://github.com/igorlino/justz/releases/latest">Latest release</a> · needs <code>just</code> 1.37.0 or newer</p>
 
-    <div class="term" id="term" role="img" aria-label="Terminal demo: jzh shows the commands of a project, jz runs one, and justz check reports a documentation drift">
-      <div class="bar"><i></i><i></i><i></i><span id="term-title">jzh</span></div>
+    <div class="term" id="term" role="img" aria-label="Terminal demo: jz runs the default recipe, here the command list; jzh clean shows the help of one command; jz clean runs it; justz check reports a documentation drift; justz lint gives advice on the recipes">
+      <div class="bar"><i></i><i></i><i></i><span id="term-title">jz</span></div>
       <pre id="term-body"></pre>
     </div>
     <div class="tabs" id="tabs" role="tablist" aria-label="Demo command">
-      <button type="button" role="tab" aria-controls="term" class="on">jzh</button>
-      <button type="button" role="tab" aria-controls="term">jzh test</button>
+      <button type="button" role="tab" aria-controls="term" class="on">jz</button>
+      <button type="button" role="tab" aria-controls="term">jzh clean</button>
       <button type="button" role="tab" aria-controls="term">jz clean</button>
       <button type="button" role="tab" aria-controls="term">check</button>
       <button type="button" role="tab" aria-controls="term">lint</button>
     </div>
-    <p class="sub">With a command registry, a bare name such as <code>clean</code> finds its group, <code>tool</code>. Without one, type <code>jz tool clean</code>.</p>
+    <p class="sub">Bare <code>jz</code> runs the default recipe, like <code>just</code>: here it calls <code>justz help</code>. Bare <code>jzh</code> shows the help and runs nothing.</p>
+    <p class="sub">With a command registry, a bare name such as <code>clean</code> finds its group, <code>tool</code>; without one, type <code>jz tool clean</code>.</p>
   </section>
 
   <section id="why" class="reveal">
@@ -125,7 +126,7 @@
     <p class="sect-lede">An agent should not have to guess. Stable exit codes, JSON with <code>--json</code>, and safety tags one call away.</p>
     <div class="split">
       <div class="term static">
-        <div class="bar"><i></i><i></i><i></i><span>justz help core test -j</span></div>
+        <div class="bar"><i></i><i></i><i></i><span>justz help tool clean -j</span></div>
 <pre id="json-body"></pre>
       </div>
       <div class="side">

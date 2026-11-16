@@ -15,7 +15,7 @@ Every fact has one page that owns it. Other pages link to that page; they do not
 | An install method or a version requirement | [installation.md](installation.md) | |
 | A symptom and its fix | [faq.md](faq.md) | |
 | The pitch, the quickstart or the ways to type a command | the README, then the same section of `site/index.html` | let the website and the README disagree |
-| An example shown in the website terminal | the list of runs in `scripts/sitedemo.go`, then `just site-demo` | edit `site/demo.js` by hand |
+| An example shown in the website terminal | the list of runs in `scripts/sitedemo.go` or the project in `testdata/site-demo`, then `just site-demo` | edit `site/demo.js` by hand |
 | Anything a user will notice | `CHANGELOG.md`, under Unreleased | |
 
 The README changes only when the pitch, the quickstart or the list of pages changes. It is a front page: what `justz` is, why, how to start, where to read more. The website in `site/` is a second front page with the same pitch and quickstart: change both in the same PR.

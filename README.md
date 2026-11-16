@@ -3,7 +3,7 @@
 **Make a justfile discoverable and keep its documentation honest.** `justz` is a single-binary CLI that sits next to [`just`](https://github.com/casey/just): it shows a project's commands as a grouped, searchable reference, and it fails CI when the docs and the recipes drift apart. You keep your justfile.
 
 ```text
-$ jzh
+$ jz
 
   demo
 
@@ -15,14 +15,14 @@ $ jzh
   Commands  (run without args to see sub-commands)
     tool                # Tools
 
-  Run jzh --expanded for the full command reference.
+  Run justz help --expanded for the full command reference.
 
 $ jz clean
 jz: tool clean
 clean
 ```
 
-`jzh` shows the help and `jz` runs a command. With a command registry (`justz init --variant rich`), a bare name such as `clean` finds its group, `tool`; without one, type `jz tool clean`. Both are short forms of `justz`; see [How you type it](#how-you-type-it).
+`jz` runs a command, and `jzh <command>` shows its help. Bare `jz` runs the default recipe, like `just`: here it calls `justz help`, as a project from `justz init --variant rich` does. Bare `jzh` shows the help and runs nothing. With a command registry, a bare name such as `clean` finds its group, `tool`; without one, type `jz tool clean`. `jz` and `jzh` are short forms of `justz`; see [How you type it](#how-you-type-it).
 
 And when the documentation drifts from the recipes, `justz check` says where, and what to paste:
 
@@ -97,7 +97,7 @@ Every command and flag: [Command reference](docs/commands.md).
 An agent should not have to guess. Every command has stable exit codes. The ones that report something print JSON with `--json`. A command's text, exit codes, environment variables and safety tags (`destructive`, `production`, `read-only`...) are one call away:
 
 ```sh
-justz help core test -j | jq '{desc, detail, tags}'
+justz help tool clean -j | jq '{desc, detail, tags}'
 ```
 
 Two agent skills, `justz-cli` and `justfile-authoring`, teach an agent how to use `justz` and how to write a justfile it can discover:
