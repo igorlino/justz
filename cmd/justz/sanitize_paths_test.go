@@ -75,6 +75,7 @@ func TestShimDoctorFindingsAreSafe(t *testing.T) {
 }
 
 func TestDoctorPrintsASafeJustPath(t *testing.T) {
+	freshMachine(t)
 	e, out, _ := testEnv(true)
 	e.lookPath = func(file string) (string, error) { return "/x\x1b[31m/" + file, nil }
 	run([]string{"doctor"}, e)

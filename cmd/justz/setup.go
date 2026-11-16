@@ -14,9 +14,17 @@ const setupUsage = `Usage: justz setup [--dry-run] [--json]
 Get this machine ready, and check it. Safe to run again.
 
   - creates the shim directory if it does not exist
+  - adds the jz and jzh shortcuts to it, unless they are already installed
+    (Homebrew links them) or another command or a registered shim has the name
   - checks that just is installed
   - runs the shim checks (see: justz shim doctor)
   - tells you how to put the shim directory on your PATH if it is not there
+
+jz runs a command of the project around the current directory, and jzh shows
+its help. A shortcut is one small file in the shim directory: delete it to
+remove it. justz never overwrites a file it did not write, and never takes a
+name that another command on the PATH has. The two are added together: when
+one name is taken, neither is added, and setup says why.
 
 justz never edits your PATH or your shell startup files. --dry-run shows what
 would be created without creating anything.
@@ -25,12 +33,14 @@ Exit codes: 0 ready, 1 problems found, 2 usage error.
 `
 
 type setupReport struct {
-	OK       bool           `json:"ok"`
-	DryRun   bool           `json:"dryRun"`
-	ShimDir  string         `json:"shimDir"`
-	Created  bool           `json:"created"`
-	PathHint string         `json:"pathHint,omitempty"`
-	Findings []shim.Finding `json:"findings"`
+	OK      bool   `json:"ok"`
+	DryRun  bool   `json:"dryRun"`
+	ShimDir string `json:"shimDir"`
+	Created bool   `json:"created"`
+	// Shortcuts is what happened to jz and jzh.
+	Shortcuts []shim.Shortcut `json:"shortcuts"`
+	PathHint  string          `json:"pathHint,omitempty"`
+	Findings  []shim.Finding  `json:"findings"`
 }
 
 func runSetup(args []string, e env) int {
@@ -67,8 +77,15 @@ func runSetup(args []string, e env) int {
 		}
 	}
 
+	self, _ := os.Executable()
+	report.Shortcuts, err = d.Shortcuts(self, dryRun)
+	if err != nil {
+		fmt.Fprintf(e.stderr, "justz setup: %v\n", err)
+		return 1
+	}
+
 	justCheck := checkJust(e)
-	report.Findings = append(report.Findings, shim.Finding{Check: justCheck.Name, OK: justCheck.OK, Detail: justCheck.Detail})
+	report.Findings = append(report.Findings, shim.Finding{Check: justCheck.Name, OK: justCheck.OK, Detail: justCheck.Detail, Warn: justCheck.Warn})
 	findings, err := d.Doctor(e.lookPath)
 	if err != nil {
 		fmt.Fprintf(e.stderr, "justz setup: %v\n", err)
@@ -93,6 +110,19 @@ func runSetup(args []string, e env) int {
 			fmt.Fprintf(e.stdout, "created %s\n", textsafe.Line(d.Shim))
 		default:
 			fmt.Fprintf(e.stdout, "%s already exists\n", textsafe.Line(d.Shim))
+		}
+		for _, s := range report.Shortcuts {
+			path := textsafe.Line(s.Path)
+			switch {
+			case s.Action == shim.ShortcutCreated && dryRun:
+				fmt.Fprintf(e.stdout, "would create %s (the %s shortcut)\n", path, s.Name)
+			case s.Action == shim.ShortcutCreated:
+				fmt.Fprintf(e.stdout, "created %s (the %s shortcut)\n", path, s.Name)
+			case s.Action == shim.ShortcutSkipped:
+				fmt.Fprintf(e.stdout, "%s shortcut not added: %s\n", s.Name, textsafe.Line(s.Detail))
+			default:
+				fmt.Fprintf(e.stdout, "%s shortcut already installed: %s\n", s.Name, path)
+			}
 		}
 		printFindings(e, report.Findings)
 		if report.PathHint != "" {

@@ -10,6 +10,10 @@ import (
 // removes files that contain it.
 const marker = "managed by justz"
 
+// localMarker identifies a jz or jzh stub that justz setup wrote. It contains
+// marker, so such a stub is also one that justz wrote.
+const localMarker = marker + " (justz setup)"
+
 // stubPath is where the stub for a command name goes. On Windows it is a
 // .cmd file.
 func (d Dirs) stubPath(name string) string {
@@ -43,6 +47,23 @@ func isOurs(path string) bool {
 	buf := make([]byte, 4096)
 	n, _ := f.Read(buf)
 	return strings.Contains(string(buf[:n]), marker)
+}
+
+// isLocalStub reports whether the file at path is a jz or jzh stub that justz
+// setup wrote, not the stub of a registered shim.
+func isLocalStub(path string) bool {
+	info, err := os.Stat(path)
+	if err != nil || !info.Mode().IsRegular() {
+		return false
+	}
+	f, err := os.Open(path)
+	if err != nil {
+		return false
+	}
+	defer f.Close()
+	buf := make([]byte, 4096)
+	n, _ := f.Read(buf)
+	return strings.Contains(string(buf[:n]), localMarker)
 }
 
 func exists(path string) bool {

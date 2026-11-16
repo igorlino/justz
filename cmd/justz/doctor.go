@@ -94,7 +94,7 @@ func checkAliases() []check {
 	}
 	var out []check
 	for _, f := range d.CheckAliases(self) {
-		out = append(out, check{Name: f.Check, OK: f.OK, Detail: f.Detail})
+		out = append(out, check{Name: f.Check, OK: f.OK, Detail: f.Detail, Warn: f.Warn})
 	}
 	return out
 }

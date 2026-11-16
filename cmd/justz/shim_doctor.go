@@ -66,6 +66,8 @@ func printFindings(e env, findings []shim.Finding) {
 		status := "ok"
 		if !f.OK {
 			status = "fail"
+		} else if f.Warn {
+			status = "warn"
 		}
 		label := f.Check
 		if f.Shim != "" {

@@ -57,6 +57,19 @@ Parse the JSON. Do not scrape the text tables, and do not read `commands.json` o
 5. **Run it** with `just <group> <command> ...` (or a shim such as `tz <group> <command>`).
 6. **Verify your own changes.** After editing a justfile or registry: `justz check --json`, and `justz lint --json` for advice.
 
+## `setup --json`
+
+`justz setup --json` has `shortcuts`, one entry for each of `jz` and `jzh`: `name`, `path`, `action` and an optional `detail`.
+
+| `action` | Meaning |
+|---|---|
+| `created` | The shortcut was written. With `--dry-run`, it would be. |
+| `exists` | A shortcut from an earlier `justz setup` is there. |
+| `installed` | A package, such as Homebrew, installed it next to the binary. |
+| `skipped` | It was not added. `detail` says why: another command or a shim has the name, or the file cannot be written. |
+
+A `skipped` shortcut does not change the exit code.
+
 ## Reading a command's text
 
 `desc` plus `detail` is the text of a command. Match on both, never on `desc` alone:

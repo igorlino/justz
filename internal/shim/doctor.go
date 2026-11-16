@@ -12,6 +12,9 @@ type Finding struct {
 	Check  string `json:"check"`
 	OK     bool   `json:"ok"`
 	Detail string `json:"detail"`
+	// Warn marks a finding that is ok but needs attention. It does not make
+	// the setup unhealthy.
+	Warn bool `json:"warn,omitempty"`
 }
 
 // Doctor re-checks every registered shim, so problems that appeared after the
@@ -111,26 +114,45 @@ func Healthy(findings []Finding) bool {
 }
 
 // CheckAliases looks at the jz and jzh names installed next to the justz binary
-// at self (for example by the Homebrew formula) and reports, for each one that
-// exists, whether it is the command a shell finds first. An older script of the
-// same name earlier on the PATH would hide it.
+// at self (for example by the Homebrew formula), or written into the shim
+// directory by justz setup, and reports, for each one that exists, whether it
+// is the command a shell finds first. An older script of the same name earlier
+// on the PATH would hide it.
 func (d Dirs) CheckAliases(self string) []Finding {
 	var out []Finding
 	dir := filepath.Dir(self)
-	for _, n := range []string{"jz", "jzh"} {
-		ours := filepath.Join(dir, n)
-		if !exists(ours) {
+	for _, n := range shortcutNames {
+		// A name next to the binary was put there by a package. That does not
+		// hold when the binary is in the shim directory (the install script
+		// puts it there): in that directory only a stub of justz setup is ours.
+		packaged := filepath.Join(dir, n)
+		hasPackaged := self != "" && exists(packaged) && !d.sameDir(dir, d.Shim)
+		// The stub of justz setup. The stub of a registered shim with this
+		// name is not one: Doctor reports on that.
+		stub := d.stubPath(n)
+		hasStub := isLocalStub(stub)
+		if !hasPackaged && !hasStub {
 			continue
 		}
+
 		f := Finding{Check: "command " + n}
 		switch first, _ := d.firstExecutable(n); {
+		case first == "" && hasPackaged:
+			f.Detail = fmt.Sprintf("%s is installed but %s is not on the PATH", packaged, dir)
 		case first == "":
-			f.Detail = fmt.Sprintf("%s is installed but %s is not on the PATH", ours, dir)
-		case !sameFile(first, ours):
-			f.Detail = fmt.Sprintf("%s comes first on the PATH and hides the %s that justz installed (%s); remove or rename it", first, n, ours)
-		default:
+			// justz setup wrote the stub and already said how to add the
+			// directory to the PATH, so this is not a failure.
+			f.OK, f.Warn = true, true
+			f.Detail = fmt.Sprintf("%s is installed but %s is not on the PATH (run: justz setup)", stub, d.Shim)
+		case hasPackaged && sameFile(first, packaged), hasStub && sameFile(first, stub):
 			f.OK = true
 			f.Detail = first
+		default:
+			ours := stub
+			if hasPackaged {
+				ours = packaged
+			}
+			f.Detail = fmt.Sprintf("%s comes first on the PATH and hides the %s that justz installed (%s); remove or rename it", first, n, ours)
 		}
 		out = append(out, f)
 	}

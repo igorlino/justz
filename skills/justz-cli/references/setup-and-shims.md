@@ -25,13 +25,14 @@ gh attestation verify justz-<version>-<os>-<arch>.tar.gz --repo igorlino/justz
 | `init`, `lint`, `schema` | `justz` 0.6.0 |
 | A command's `detail`, and terminal-safe output | `justz` 0.7.0 |
 | `hasDetail`, `exits`, `env`, `tags`, a command's `seeAlso` | `justz` 0.8.0 |
+| `justz setup` adds the `jz` and `jzh` shortcuts | `justz` 0.9.0 |
 
 `lint` needs `just`. `init` and `schema` do not.
 
 ## Check the machine
 
 - `justz doctor --json`: is `just` installed and new enough?
-- `justz setup` (`--dry-run`): create the shim directory, check `just`, run the shim checks. It never edits the PATH or shell startup files.
+- `justz setup` (`--dry-run`): create the shim directory, add the `jz` and `jzh` shortcuts, check `just`, run the shim checks. It never edits the PATH or shell startup files.
 
 ## Start a project
 
@@ -53,7 +54,7 @@ It never overwrites: if a file is in the way it writes nothing and exits `1`. A 
 
 ## Shims
 
-`jz` and `jzh` are shortcuts for the project around the current directory: `jz <group> <cmd>` runs a command, `jzh` shows its help. They exist only when the binary is started under that name (Homebrew installs the symlinks).
+`jz` and `jzh` are shortcuts for the project around the current directory: `jz <group> <cmd>` runs a command, `jzh` shows its help. Homebrew installs them, and `justz setup` adds them to the shim directory for every other install (0.9.0 or newer). `setup --json` lists them in `shortcuts`, each with an `action`: `created`, `exists`, `installed` or `skipped` (with a `detail` that says why). The two are added together, and a skipped one is not an error.
 
 Register a pinned shim:
 

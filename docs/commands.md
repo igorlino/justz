@@ -47,7 +47,7 @@ Run `justz --help` for the list and `justz <command> --help` for the full text o
 |---|---|
 | `justz completions <zsh\|bash>` | Print a completion script. Add `eval "$(justz completions zsh)"` to `~/.zshrc` (after `compinit`) or `~/.bashrc`; run it again after adding or removing a shim. |
 | `justz doctor` | Is `just` installed and new enough, and are the `jz` shortcuts reachable on the PATH? |
-| `justz setup` | Create the shim directory, check `just`, run the shim checks, and say how to put the shim directory on your PATH. Never edits your PATH or shell startup files. `--dry-run` creates nothing. Safe to re-run. |
+| `justz setup` | Create the shim directory, add the `jz` and `jzh` shortcuts to it, check `just`, run the shim checks, and say how to put the shim directory on your PATH. A shortcut is not added when it is already installed or another command has the name. Never edits your PATH or shell startup files. `--dry-run` creates nothing. Safe to re-run. |
 | `justz shim add [path]` | Register a shim. See [Shims](shims.md). |
 | `justz shim list` / `remove <name>` / `doctor` | List, remove or verify shims. |
 
