@@ -133,7 +133,13 @@ Claude Code plugin, the JSON contract and the workflow: [For agents](docs/for-ag
 
 ## Status
 
+`justz` is an independent open source project, maintained by one person in their own time. No company backs it.
+
 Early development (current release: see [Releases](https://github.com/igorlino/justz/releases)). The command surface and the JSON contract are described in the docs above; fields may be added, never renamed or removed. Not open for code contributions yet; ideas and bug reports are welcome as [issues](https://github.com/igorlino/justz/issues). Security reports: [SECURITY.md](SECURITY.md).
+
+## Acknowledgements
+
+`justz` builds on [`just`](https://github.com/casey/just). Thanks to [Snyk](https://snyk.io) for supporting open source projects.
 
 ## License
 
