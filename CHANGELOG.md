@@ -13,6 +13,7 @@ What changed in each release of `justz`, for people who use it. The format follo
 
 ### Added
 
+- A showcase website in `site/`, deployed to GitHub Pages by `.github/workflows/pages.yml`.
 - `AGENTS.md` and `llms.txt`.
 - A test that fails when a relative link in the documentation or the skills points at a file that does not exist.
 - `docs/writing-docs.md`, and tests that fail when a command or a rule is undocumented, or when the README or a `SKILL.md` grows past its budget.
