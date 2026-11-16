@@ -52,3 +52,24 @@ func TestRelativeLinksResolve(t *testing.T) {
 		}
 	}
 }
+
+// repoLink matches a link from the website into this repository's files on main.
+var repoLink = regexp.MustCompile(`https://github\.com/igorlino/justz/blob/main/([^"#\s]+)`)
+
+// localRef matches a relative href or src in the website.
+var localRef = regexp.MustCompile(`(?:href|src)="([^":#]+)"`)
+
+// The website links to files of this repository, and loads its own assets.
+func TestSiteLinksResolve(t *testing.T) {
+	page := read(t, "site/index.html")
+	for _, m := range repoLink.FindAllStringSubmatch(page, -1) {
+		if _, err := os.Stat(filepath.Join("..", "..", filepath.FromSlash(m[1]))); err != nil {
+			t.Errorf("site/index.html: link to %s does not resolve", m[1])
+		}
+	}
+	for _, m := range localRef.FindAllStringSubmatch(page, -1) {
+		if _, err := os.Stat(filepath.Join("..", "..", "site", filepath.FromSlash(m[1]))); err != nil {
+			t.Errorf("site/index.html: %s does not exist in site/", m[1])
+		}
+	}
+}

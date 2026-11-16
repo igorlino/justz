@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>justz: make a justfile discoverable</title>
+<meta name="description" content="A single-binary CLI next to just: a grouped, searchable command reference, and a CI check that fails when docs and recipes drift apart.">
+<link rel="canonical" href="https://igorlino.github.io/justz/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="justz">
+<meta property="og:url" content="https://igorlino.github.io/justz/">
+<meta property="og:title" content="justz: make a justfile discoverable">
+<meta property="og:description" content="Make a justfile discoverable and keep its documentation honest.">
+<meta property="og:image" content="https://igorlino.github.io/justz/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="justz: your justfile, discoverable and honest">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://igorlino.github.io/justz/og.png">
+<meta name="theme-color" content="#07090d">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2307090d'/%3E%3Ctext x='16' y='23' font-family='monospace' font-size='20' font-weight='700' text-anchor='middle' fill='%2338f5b0'%3Ez%3C/text%3E%3C/svg%3E">
+<script>try{var t=localStorage.getItem("theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="style.css">
+<noscript><style>.reveal{opacity:1;transform:none}</style></noscript>
+</head>
+<body>
+<canvas id="bg" aria-hidden="true"></canvas>
+<div class="glow" aria-hidden="true"></div>
+
+<header class="nav">
+  <a class="brand" href="#top"><span class="prompt">$</span> justz</a>
+  <nav>
+    <a href="#why">Why</a>
+    <a href="#features">Features</a>
+    <a href="#agents">Agents</a>
+    <a href="#docs">Docs</a>
+    <button type="button" class="theme" aria-label="Switch theme"></button>
+    <a class="btn small" href="https://github.com/igorlino/justz">GitHub</a>
+  </nav>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <p class="eyebrow">for <a href="https://github.com/casey/just">just</a> · single binary · MIT</p>
+    <h1>Your justfile,<br><span class="grad">discoverable and honest.</span></h1>
+    <p class="lede"><code>justz</code> shows a project's commands as a grouped, searchable reference, and fails CI when the docs and the recipes drift apart. You keep your justfile.</p>
+
+    <div class="install" data-copy="brew install igorlino/tap/justz">
+      <span class="prompt">$</span>
+      <code>brew install igorlino/tap/justz</code>
+      <button type="button" aria-label="Copy install command">Copy</button>
+    </div>
+    <p class="sub"><a href="https://github.com/igorlino/justz/blob/main/docs/installation.md">Other install methods</a> · <a href="https://github.com/igorlino/justz/releases/latest">Latest release</a> · needs <code>just</code> 1.37.0 or newer</p>
+
+    <div class="term" id="term" role="img" aria-label="Terminal demo: justz help, then justz check reporting a documentation drift">
+      <div class="bar"><i></i><i></i><i></i><span id="term-title">justz help</span></div>
+      <pre id="term-body"></pre>
+    </div>
+    <div class="tabs" id="tabs" role="tablist" aria-label="Demo command">
+      <button type="button" role="tab" aria-controls="term" class="on" data-i="0">help</button>
+      <button type="button" role="tab" aria-controls="term" data-i="1">check</button>
+      <button type="button" role="tab" aria-controls="term" data-i="2">help core test</button>
+      <button type="button" role="tab" aria-controls="term" data-i="3">lint</button>
+    </div>
+  </section>
+
+  <section id="why" class="reveal">
+    <h2>One source of truth</h2>
+    <p class="sect-lede"><code>just --list</code> is fine for a dozen recipes. Past that, two things get hard.</p>
+    <div class="cols">
+      <article class="card spot">
+        <h3>Discovery</h3>
+        <p>A new teammate, or an AI agent, cannot tell what the project can do, which flags a command takes, or which commands are safe to run.</p>
+      </article>
+      <article class="card spot">
+        <h3>Drift</h3>
+        <p>The help text, the docs and the recipes slowly disagree, and nobody notices until someone is misled.</p>
+      </article>
+    </div>
+    <p class="note">The help, the completion and the checks all read the same data, so they cannot disagree.</p>
+  </section>
+
+  <section id="start" class="reveal">
+    <h2>Three commands</h2>
+    <ol class="steps">
+      <li><code>justz doctor</code><span>is this machine ready?</span></li>
+      <li><code>justz help</code><span>what can this project do?</span></li>
+      <li><code>justz check</code><span>is it documented, and does the doc still match?</span></li>
+    </ol>
+    <p class="note">No justfile yet? <code>justz init</code> writes one that passes <code>justz check</code> on the first run.</p>
+  </section>
+
+  <section id="features" class="reveal">
+    <h2>What you get</h2>
+    <div class="grid">
+      <a class="card spot" href="https://github.com/igorlino/justz/blob/main/docs/commands.md"><code>justz help</code><p>Grouped commands with flags and examples. Drill into one with <code>justz help &lt;group&gt; &lt;command&gt;</code>.</p></a>
+      <a class="card spot" href="https://github.com/igorlino/justz/blob/main/docs/hooks-and-ci.md"><code>justz check</code><p>Fail CI when the docs and the recipes disagree. Pre-commit and Actions snippets included.</p></a>
+      <a class="card spot" href="https://github.com/igorlino/justz/blob/main/docs/checks.md"><code>justz lint</code><p>Advice on recipe antipatterns: long bodies, secrets on the command line.</p></a>
+      <a class="card spot" href="https://github.com/igorlino/justz/blob/main/docs/getting-started.md"><code>justz init</code><p>Scaffold a self-documenting project that is green from the first run.</p></a>
+      <a class="card spot" href="https://github.com/igorlino/justz/blob/main/docs/commands.md"><code>justz completions</code><p>Tab completion for zsh and bash, from the same data as the help.</p></a>
+      <a class="card spot" href="https://github.com/igorlino/justz/blob/main/docs/shims.md"><code>justz shim add</code><p>Run a project's commands from any directory, safely, under a short name.</p></a>
+      <a class="card spot" href="https://github.com/igorlino/justz/blob/main/docs/registry.md"><code>justz fmt</code><p>Keep the command registry in one stable order.</p></a>
+      <a class="card spot" href="https://github.com/igorlino/justz/blob/main/docs/registry.md"><code>justz schema</code><p>Editor completion and type checks for <code>commands.json</code>.</p></a>
+    </div>
+  </section>
+
+  <section id="agents" class="reveal">
+    <h2>Built for agents</h2>
+    <p class="sect-lede">An agent should not have to guess. Stable exit codes, JSON with <code>--json</code>, and safety tags one call away.</p>
+    <div class="split">
+      <div class="term static">
+        <div class="bar"><i></i><i></i><i></i><span>justz help core test -j</span></div>
+<pre id="json-body"></pre>
+      </div>
+      <div class="side">
+        <h3>Two skills</h3>
+        <p><code>justz-cli</code> teaches an agent to use <code>justz</code>. <code>justfile-authoring</code> teaches it to write a justfile it can discover.</p>
+        <p class="sub"><a href="https://github.com/igorlino/justz/blob/main/docs/for-agents.md">Install the skills, the JSON contract and the workflow</a> · <a href="https://github.com/igorlino/justz/blob/main/llms.txt">llms.txt</a></p>
+      </div>
+    </div>
+  </section>
+
+  <section id="principles" class="reveal">
+    <h2>Design principles</h2>
+    <ul class="pills">
+      <li class="spot"><b>One binary.</b> No <code>jq</code>, <code>awk</code>, Python or Node.</li>
+      <li class="spot"><b>Reads <code>just</code> the supported way</b> through its JSON dump.</li>
+      <li class="spot"><b>Stays out of your secrets.</b> Never reads, stores or injects credentials.</li>
+      <li class="spot"><b>Safe output.</b> Escape sequences in descriptions never reach your terminal.</li>
+      <li class="spot"><b>Verified releases.</b> SHA256 checksums and provenance attestations.</li>
+    </ul>
+  </section>
+
+  <section id="docs" class="reveal">
+    <h2>Read more</h2>
+    <div class="links">
+      <a href="https://github.com/igorlino/justz/blob/main/docs/getting-started.md">Getting started</a>
+      <a href="https://github.com/igorlino/justz/blob/main/docs/installation.md">Installation</a>
+      <a href="https://github.com/igorlino/justz/blob/main/docs/commands.md">Command reference</a>
+      <a href="https://github.com/igorlino/justz/blob/main/docs/registry.md">The command registry</a>
+      <a href="https://github.com/igorlino/justz/blob/main/docs/checks.md">Checks and lint rules</a>
+      <a href="https://github.com/igorlino/justz/blob/main/docs/hooks-and-ci.md">Hooks and CI</a>
+      <a href="https://github.com/igorlino/justz/blob/main/docs/shims.md">Shims</a>
+      <a href="https://github.com/igorlino/justz/blob/main/docs/for-agents.md">For agents</a>
+      <a href="https://github.com/igorlino/justz/blob/main/docs/ecosystem.md">Ecosystem</a>
+      <a href="https://github.com/igorlino/justz/blob/main/docs/faq.md">FAQ</a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <span>justz · <a href="https://github.com/igorlino/justz/blob/main/LICENSE">MIT</a></span>
+  <span><a href="https://github.com/igorlino/justz/releases">Releases</a> · <a href="https://github.com/igorlino/justz/issues">Issues</a> · <a href="https://github.com/igorlino/justz/blob/main/SECURITY.md">Security</a></span>
+</footer>
+
+<script src="demo.js"></script>
+<script src="player.js"></script>
+<script src="site.js"></script>
+</body>
+</html>
