@@ -8,6 +8,6 @@ Closes #
 
 - [ ] `just ci` passes locally
 - [ ] Tests added or updated for the change
-- [ ] Docs updated if behavior changed
+- [ ] Docs updated in the page that owns the fact, not the README (see `docs/writing-docs.md`), and `CHANGELOG.md` has a line
 - [ ] No secrets, tokens or private paths in the diff
 - [ ] The PR title follows Conventional Commits, for example `feat(fmt): sort commands.json canonically`

@@ -1,0 +1,28 @@
+# justz
+
+> justz is a single-binary CLI that sits next to the `just` task runner. It shows a project's commands as a grouped reference with JSON output, and it fails CI when the documentation and the recipes drift apart. It needs `just` 1.37.0 or newer.
+
+Agents: start with "For agents". Every reporting command prints JSON with `--json` (`help` uses `-j`). Exit codes: 0 success, 1 a check failed or an error, 2 usage error, 3 no match (`resolve` only).
+
+## Docs
+
+- [For agents](https://raw.githubusercontent.com/igorlino/justz/main/docs/for-agents.md): the JSON contract, safety tags, and the workflow before running a project's command
+- [Getting started](https://raw.githubusercontent.com/igorlino/justz/main/docs/getting-started.md): install, look at a project, check it, scaffold one
+- [Command reference](https://raw.githubusercontent.com/igorlino/justz/main/docs/commands.md): every command and flag
+- [The command registry](https://raw.githubusercontent.com/igorlino/justz/main/docs/registry.md): the fields of `commands.json`
+- [Checks and lint rules](https://raw.githubusercontent.com/igorlino/justz/main/docs/checks.md): every rule, its severity and how to silence it
+- [Installation](https://raw.githubusercontent.com/igorlino/justz/main/docs/installation.md): Homebrew, install script, Go, and the `just` version matrix
+- [Hooks and CI](https://raw.githubusercontent.com/igorlino/justz/main/docs/hooks-and-ci.md): pre-commit hook and GitHub Actions job
+- [Shims](https://raw.githubusercontent.com/igorlino/justz/main/docs/shims.md): short commands pinned to a project
+- [FAQ and troubleshooting](https://raw.githubusercontent.com/igorlino/justz/main/docs/faq.md)
+
+## Skills
+
+- [justz-cli](https://raw.githubusercontent.com/igorlino/justz/main/skills/justz-cli/SKILL.md): how an agent runs and troubleshoots `justz`
+- [justfile-authoring](https://raw.githubusercontent.com/igorlino/justz/main/skills/justfile-authoring/SKILL.md): how to design a discoverable, documented justfile
+
+## Optional
+
+- [Input model](https://raw.githubusercontent.com/igorlino/justz/main/docs/input-model.md): what `justz` reads and how the variants combine
+- [Ecosystem](https://raw.githubusercontent.com/igorlino/justz/main/docs/ecosystem.md): how `justz` fits with `just-lsp` and `just-mcp`
+- [JSON Schema of the registry](https://raw.githubusercontent.com/igorlino/justz/main/schema/commands.schema.json)

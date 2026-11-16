@@ -131,33 +131,50 @@ Run `justz lint` (0.6.0 or newer): it points at long recipe bodies, secret-like 
 
 ## Avoid these mistakes
 
+### Process
+
 - Do not scaffold a shape before the assessment and the batched question. The choice is architectural and the user cannot answer it from a bare prompt.
 - Do not paste the full comparison into the conversation. One line per option plus a pointer.
 - Do not assume a tech stack: derive the tool list, description language and groupings from the repo's content.
 - Do not decide the namespace taxonomy, the top-level command set or the migration strategy on the user's behalf.
 - Do not silently fix, or silently carry over, bugs found while porting. Surface them and let the user choose.
 - Before any edit the user has not explicitly requested (a taxonomy, a migration, a `local-rich` improvement pass), preview the concrete plan, recommend one option, then ask. Never pose an abstract yes/no with nothing to evaluate.
+
+### Descriptions
+
 - Do not put long prose in `desc` or in a `[doc]`. In `rich`, keep `desc` to one line of 120 characters or fewer and move the facts that do not fit to `detail` (0.7.0 or newer), never the steps of a script (see `references/variant-rich.md` for what goes in each); in `native` there is no such field, so keep the `[doc]` to one line and put the rest in `#` comments above the recipe (`references/variant-native.md`, section 5).
 - Do not write a description that names the tool instead of the effect. `Type-check then bundle → dist/static/` beats `Build the project`.
-- Do not create a public `default` recipe: it appears as a row in every listing. Use `_default`, first in the file.
+- Do not duplicate a description. In `rich`, `commands.json` is authoritative and any `[doc]` must match it exactly (`justz check` enforces this); in `native`, `[doc]` is the only copy. Duplication produced a 20-of-32 divergence in the field.
+
+### Arguments and examples
+
 - Do not declare a positional parameter ahead of a variadic; it swallows the first forwarded argument. Make it a flag.
 - Do not author flags without short single-letter aliases (`-x, --long`) unless the flag name is already two letters (`--id`, `--ci`, `--ui`) or there is a collision. Do not alias two-letter parameters without asking.
 - Do not use long flags in examples when short aliases exist.
 - Do not write redundant examples: a bare command, or a single boolean flag the argument rows already show. `justz check` reports both. An example that sets an environment variable (`NAME=value just ...` or `env NAME=value just ...`) is exempt, since the rows do not show the environment.
-- Do not leave `commands.json` unsorted. Run `justz fmt` after every edit; `justz check` rejects an unsorted registry.
-- Do not vendor, copy or hand-edit a help script. `justz` renders the help; the registry carries `name`, `tagline` and `cli` if the defaults need overriding.
 - When an `args` entry takes a bounded set of values, declare `"values": [...]` (it drives shell completion and renders as `(a|b|c)`) and show it in at least one group example.
 - Do not interpolate a variadic (`for x in {{ args }}`) when the recipe parses or forwards it. Use `set positional-arguments` and iterate `"$@"`.
 - Do not let a recipe consume the flags of a single tool it wraps. Detect and forward them so the tool keeps its own flag namespace.
-- Do not add a per-recipe `-h`/`--help`. `just <ns>` and `justz help <ns> <cmd>` already render it.
+
+### Recipes and modules
+
+- Do not create a public `default` recipe: it appears as a row in every listing. Use `_default`, first in the file.
 - Do not leave multi-line shell in a recipe body. Extract it to `scripts/<ns>/<cmd>.sh` so it can be parsed, linted and run without `just`.
 - Do not leave an orphaned indented block after a `#!/usr/bin/env bash` recipe: `just` silently absorbs it into the preceding recipe. Cross-check `just --list`.
+- Do not leave a module that has line-by-line recipes without a `set shell`: it runs them with `sh -cu` and no `pipefail`, whatever the root chose. Import the shared settings file (`justz init` writes `just/preamble.just`) or set the shell in the module.
+
+### Help and registry
+
+- Do not leave `commands.json` unsorted. Run `justz fmt` after every edit; `justz check` rejects an unsorted registry.
+- Do not vendor, copy or hand-edit a help script. `justz` renders the help; the registry carries `name`, `tagline` and `cli` if the defaults need overriding.
+- Do not add a per-recipe `-h`/`--help`. `just <ns>` and `justz help <ns> <cmd>` already render it.
 - Do not render examples or footers with `printf` inside a recipe. A repo that wants structured examples wants `rich`.
-- Do not duplicate a description. In `rich`, `commands.json` is authoritative and any `[doc]` must match it exactly (`justz check` enforces this); in `native`, `[doc]` is the only copy. Duplication produced a 20-of-32 divergence in the field.
 - Do not tell agents to avoid `just --list` or `just --dump`. They cannot be stale; a registry can.
 - Do not commit `.just-local-rich.json`, and do not scaffold it as part of the step 2 question. It is personal; `justz generate` refuses to write it where git tracks it.
+
+### Secrets
+
 - Do not put a secret value on a command line, in a justfile, or in a `commands.json` example. See `references/credentials-in-recipes.md`. Do not take a secret as a recipe parameter, and do not interpolate one with `{{ }}`: `just` puts the value in the process list. `justz lint` reports both.
-- Do not leave a module that has line-by-line recipes without a `set shell`: it runs them with `sh -cu` and no `pipefail`, whatever the root chose. Import the shared settings file (`justz init` writes `just/preamble.just`) or set the shell in the module.
 
 ## Checklist
 

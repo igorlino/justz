@@ -33,6 +33,9 @@ archives:
     files:
       - LICENSE
       - README.md
+      - CHANGELOG.md
+      # The README links to these pages, so they ship with it.
+      - docs/*.md
 
 checksum:
   name_template: "justz-{{ .Version }}-checksums.txt"

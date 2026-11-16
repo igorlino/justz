@@ -220,11 +220,11 @@ REGISTRY_TOKEN=$(resolve_registry_token)
 1. Create secret in 1Password under `op://Private/<service>/<name>`
 2. Add resolver function to `scripts/local/op-secrets.sh`
 3. Update table above with service, secret, owner, rotation
-4. Link this file to [`biometric-1password` skill](link) for setup
+4. Link this file to `biometric-1password` skill for setup
 
 ### Debugging "no active session" Errors
 
-See [`biometric-1password` skill](link) → references → diagnostics.md
+See `biometric-1password` skill → references → diagnostics.md
 ```
 
 ### Centralized Documentation
@@ -252,10 +252,10 @@ Maintain in version control, not in wiki or Slack:
 
 ## Integration with biometric-1password Skill
 
-For comprehensive guidance on 1Password credential resolution patterns, see the [`biometric-1password` skill](../../biometric-1password/SKILL.md):
-- [`authoring.md`](../../biometric-1password/references/authoring.md) — Wiring credentials into scripts
-- [`npm-registry-auth.md`](../../biometric-1password/references/npm-registry-auth.md) — npm/package manager credentials
-- [`diagnostics.md`](../../biometric-1password/references/diagnostics.md) — Troubleshooting "no active session"
+For comprehensive guidance on 1Password credential resolution patterns, see the `biometric-1password` skill, a separate skill that is not part of this repository. If it is installed, its references are:
+- `authoring.md` — Wiring credentials into scripts
+- `npm-registry-auth.md` — npm/package manager credentials
+- `diagnostics.md` — Troubleshooting "no active session"
 
 ---
 
