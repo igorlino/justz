@@ -14,7 +14,7 @@ What changed in each release of `justz`, for people who use it. The format follo
 ### Added
 
 - `justz setup` adds the `jz` and `jzh` shortcuts to the shim directory, so they exist after any install, not only with Homebrew. It adds nothing when a shortcut is already installed, or when another command or a registered shim has the name, and the two are added together. `setup --json` reports them in `shortcuts`, and `justz doctor` checks them.
-- A showcase website in `site/`, deployed to GitHub Pages by `.github/workflows/pages.yml`.
+- A showcase website in `site/`, deployed to GitHub Pages by `.github/workflows/pages.yml`. Its quickstart and its terminal demo show `justz setup`, `jz` and `jzh`, like the README.
 - `AGENTS.md` and `llms.txt`.
 - A test that fails when a relative link in the documentation or the skills points at a file that does not exist.
 - `docs/writing-docs.md`, and tests that fail when a command or a rule is undocumented, or when the README or a `SKILL.md` grows past its budget.

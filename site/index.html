@@ -31,6 +31,7 @@
   <a class="brand" href="#top"><span class="prompt">$</span> justz</a>
   <nav>
     <a href="#why">Why</a>
+    <a href="#start">Quickstart</a>
     <a href="#features">Features</a>
     <a href="#agents">Agents</a>
     <a href="#docs">Docs</a>
@@ -52,16 +53,18 @@
     </div>
     <p class="sub"><a href="https://github.com/igorlino/justz/blob/main/docs/installation.md">Other install methods</a> · <a href="https://github.com/igorlino/justz/releases/latest">Latest release</a> · needs <code>just</code> 1.37.0 or newer</p>
 
-    <div class="term" id="term" role="img" aria-label="Terminal demo: justz help, then justz check reporting a documentation drift">
-      <div class="bar"><i></i><i></i><i></i><span id="term-title">justz help</span></div>
+    <div class="term" id="term" role="img" aria-label="Terminal demo: jzh shows the commands of a project, jz runs one, and justz check reports a documentation drift">
+      <div class="bar"><i></i><i></i><i></i><span id="term-title">jzh</span></div>
       <pre id="term-body"></pre>
     </div>
     <div class="tabs" id="tabs" role="tablist" aria-label="Demo command">
-      <button type="button" role="tab" aria-controls="term" class="on" data-i="0">help</button>
-      <button type="button" role="tab" aria-controls="term" data-i="1">check</button>
-      <button type="button" role="tab" aria-controls="term" data-i="2">help core test</button>
-      <button type="button" role="tab" aria-controls="term" data-i="3">lint</button>
+      <button type="button" role="tab" aria-controls="term" class="on">jzh</button>
+      <button type="button" role="tab" aria-controls="term">jzh test</button>
+      <button type="button" role="tab" aria-controls="term">jz clean</button>
+      <button type="button" role="tab" aria-controls="term">check</button>
+      <button type="button" role="tab" aria-controls="term">lint</button>
     </div>
+    <p class="sub">With a command registry, a bare name such as <code>clean</code> finds its group, <code>tool</code>. Without one, type <code>jz tool clean</code>.</p>
   </section>
 
   <section id="why" class="reveal">
@@ -81,13 +84,26 @@
   </section>
 
   <section id="start" class="reveal">
-    <h2>Three commands</h2>
+    <h2>Quickstart</h2>
     <ol class="steps">
-      <li><code>justz doctor</code><span>is this machine ready?</span></li>
-      <li><code>justz help</code><span>what can this project do?</span></li>
+      <li><code>justz setup</code><span>check this machine; adds <code>jz</code> and <code>jzh</code> if your install did not</span></li>
+      <li><code>jzh</code><span>what can this project do?</span></li>
+      <li><code>jzh tool clean</code><span>one command: usage, examples, options</span></li>
+      <li><code>jz tool clean</code><span>run it: here, <code>clean</code> in the group <code>tool</code></span></li>
       <li><code>justz check</code><span>is it documented, and does the doc still match?</span></li>
     </ol>
     <p class="note">No justfile yet? <code>justz init</code> writes one that passes <code>justz check</code> on the first run.</p>
+  </section>
+
+  <section id="type" class="reveal">
+    <h2>How you type it</h2>
+    <p class="sect-lede">You keep typing <code>just</code>. The short forms are there when you want them.</p>
+    <div class="grid">
+      <article class="card spot"><code>just</code><p>Your justfile's own recipes. <code>justz init --variant rich</code> writes <code>just</code>, <code>just help</code> and <code>just check</code> so that they call <code>justz</code>.</p></article>
+      <article class="card spot"><code>jz</code> <code>jzh</code><p>Shortcuts for the project around the current directory, from any subdirectory. <code>justz setup</code> adds them; Homebrew installs them.</p></article>
+      <article class="card spot"><code>tz</code> <code>tzh</code><p>A <a href="https://github.com/igorlino/justz/blob/main/docs/shims.md">shim</a> pinned to one project, under a name you choose, from any directory. Added with <code>justz shim add</code>.</p></article>
+      <article class="card spot"><code>justz</code><p>The CLI itself. <code>justz help</code> and <code>justz check</code> work in any project with a justfile, with no setup.</p></article>
+    </div>
   </section>
 
   <section id="features" class="reveal">
@@ -98,9 +114,9 @@
       <a class="card spot" href="https://github.com/igorlino/justz/blob/main/docs/checks.md"><code>justz lint</code><p>Advice on recipe antipatterns: long bodies, secrets on the command line.</p></a>
       <a class="card spot" href="https://github.com/igorlino/justz/blob/main/docs/getting-started.md"><code>justz init</code><p>Scaffold a self-documenting project that is green from the first run.</p></a>
       <a class="card spot" href="https://github.com/igorlino/justz/blob/main/docs/commands.md"><code>justz completions</code><p>Tab completion for zsh and bash, from the same data as the help.</p></a>
+      <a class="card spot" href="https://github.com/igorlino/justz/blob/main/docs/shims.md"><code>justz setup</code><p>Check the machine and add the <code>jz</code> and <code>jzh</code> shortcuts. It never takes a name that another command on your PATH has.</p></a>
       <a class="card spot" href="https://github.com/igorlino/justz/blob/main/docs/shims.md"><code>justz shim add</code><p>Run a project's commands from any directory, safely, under a short name.</p></a>
-      <a class="card spot" href="https://github.com/igorlino/justz/blob/main/docs/registry.md"><code>justz fmt</code><p>Keep the command registry in one stable order.</p></a>
-      <a class="card spot" href="https://github.com/igorlino/justz/blob/main/docs/registry.md"><code>justz schema</code><p>Editor completion and type checks for <code>commands.json</code>.</p></a>
+      <a class="card spot" href="https://github.com/igorlino/justz/blob/main/docs/registry.md"><code>justz fmt</code> <code>justz schema</code><p>Keep the command registry in one stable order, with editor completion and type checks for <code>commands.json</code>.</p></a>
     </div>
   </section>
 
@@ -115,7 +131,12 @@
       <div class="side">
         <h3>Two skills</h3>
         <p><code>justz-cli</code> teaches an agent to use <code>justz</code>. <code>justfile-authoring</code> teaches it to write a justfile it can discover.</p>
-        <p class="sub"><a href="https://github.com/igorlino/justz/blob/main/docs/for-agents.md">Install the skills, the JSON contract and the workflow</a> · <a href="https://github.com/igorlino/justz/blob/main/llms.txt">llms.txt</a></p>
+        <div class="install" data-copy="npx skills add igorlino/justz">
+          <span class="prompt">$</span>
+          <code>npx skills add igorlino/justz</code>
+          <button type="button" aria-label="Copy the command that installs the skills">Copy</button>
+        </div>
+        <p class="sub"><a href="https://github.com/igorlino/justz/blob/main/docs/for-agents.md">Claude Code plugin, the JSON contract and the workflow</a> · <a href="https://github.com/igorlino/justz/blob/main/llms.txt">llms.txt</a></p>
       </div>
     </div>
   </section>

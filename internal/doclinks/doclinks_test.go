@@ -73,3 +73,29 @@ func TestSiteLinksResolve(t *testing.T) {
 		}
 	}
 }
+
+// siteTab matches the label of a tab under the website terminal, and demoCmd
+// the command of a demo in the generated site/demo.js.
+var (
+	siteTab = regexp.MustCompile(`role="tab"[^>]*>([^<]+)</button>`)
+	demoCmd = regexp.MustCompile(`"cmd": "([^"]+)"`)
+)
+
+// The website has one tab per demo, in the same order, and each tab is named
+// after the command it plays. The last demo is the JSON sample of the agents
+// section and has no tab.
+func TestSiteTabsMatchTheDemos(t *testing.T) {
+	tabs := siteTab.FindAllStringSubmatch(read(t, "site/index.html"), -1)
+	demos := demoCmd.FindAllStringSubmatch(read(t, "site/demo.js"), -1)
+	if len(tabs) == 0 || len(tabs) != len(demos)-1 {
+		t.Fatalf("site/index.html has %d tabs and site/demo.js has %d demos: want one tab per demo except the last", len(tabs), len(demos))
+	}
+	for i, tab := range tabs {
+		if cmd := demos[i][1]; !strings.HasSuffix(cmd, tab[1]) {
+			t.Errorf("tab %d is %q but plays %q", i+1, tab[1], cmd)
+		}
+	}
+	if last := demos[len(demos)-1][1]; !strings.HasSuffix(last, " -j") {
+		t.Errorf("the last demo is %q: want the JSON sample of the agents section", last)
+	}
+}

@@ -85,9 +85,9 @@ test-completion-containers:
 verify-install:
     sh scripts/verify-install.sh
 
-[doc('Regenerate site/demo.js from the binary (needs ./justz)')]
+[doc('Regenerate site/demo.js from the binary')]
 [group('build')]
-site-demo:
+site-demo: build
     go run scripts/sitedemo.go
 
 [doc('Fail when site/demo.js is stale')]
