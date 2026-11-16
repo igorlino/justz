@@ -1,165 +1,119 @@
 # justz
 
-> Just addons for a superior agent and developer experience
+**Make a justfile discoverable and keep its documentation honest.** `justz` is a single-binary CLI that sits next to [`just`](https://github.com/casey/just): it shows a project's commands as a grouped, searchable reference, and it fails CI when the docs and the recipes drift apart. You keep your justfile.
 
-[`just`](https://github.com/casey/just) is a great task runner. Past a dozen recipes, though, two things get hard: new people (and AI agents) can't tell what the project can do, and the docs, the help text and the recipes slowly drift apart.
+```text
+$ justz help
 
-`justz` is a small, single-binary CLI that fixes both, without replacing `just`. You keep your justfile. `justz` adds the layer around it.
+  demo
 
-> **Status: early development.** Available today: `justz help` (summary, `--expanded`, zoom into a group or command, `--json`, `--browse`), `justz check`, `justz completions` (zsh and bash), `justz fmt`, the shim system (`justz setup`, `justz shim add`, `list`, `remove` and `doctor`, plus the `jz` and `jzh` shortcuts), `justz resolve`, `justz generate`, `justz assess`, `justz doctor`, `justz init`, `justz lint` and `justz schema`. Everything in the list below is available.
+  Core
+    build               # Compile the project
+    deploy              # Deploy to an environment
+    test                # Run the test suite
+
+  Commands  (run without args to see sub-commands)
+    tool                # Tools
+
+  Run justz help --expanded for the full command reference.
+```
+
+And when the documentation drifts from the recipes, `justz check` says where, and what to paste:
+
+```text
+$ justz check
+justz check: 1 error, 1 warning (4 public recipes checked, rich)
+
+  error   just test: [doc] diverges from the registry description
+      justfile: Run the test suite example: just test -w | Re-run on every save
+      registry: Run the test suite  [registry-desc-diverges]
+          paste: [doc('Run the test suite')]
+          fix: make them the same: keep a one-line description in both, and move the rest to "detail" in the registry
+  warning core.test: "just test -w" only passes the single boolean flag -w, which the argument rows already show  [example-single-flag]
+          fix: remove it, or combine flags, values or environment
+```
+
+## Why
+
+`just --list` is fine for a dozen recipes. Past that, two things get hard:
+
+- **Discovery.** A new teammate, or an AI agent, cannot tell what the project can do, which flags a command takes, or which commands are safe to run.
+- **Drift.** The help text, the docs and the recipes slowly disagree, and nobody notices until someone is misled.
+
+`justz` fixes both with one source of truth: the help, the completion and the checks all read the same data, so they cannot disagree.
+
+## Quickstart
+
+You need [`just`](https://github.com/casey/just) 1.37.0 or newer.
+
+```sh
+brew install igorlino/tap/justz     # more options: docs/installation.md
+justz doctor                        # is this machine ready?
+
+cd your-project
+justz help                          # what can this project do?
+justz check                         # is it documented, and does the doc still match?
+```
+
+No justfile yet? `justz init` writes one that passes `justz check` on the first run. Full walkthrough: [Getting started](docs/getting-started.md).
 
 ## What you get
 
-- **Help people actually read** *(available)*. A grouped, searchable command reference with examples, rendered from your project's own data. Zoom into a group or a single command, or print it as JSON for tools.
-- **Long descriptions where they belong** *(available)*. A command's `detail` field holds the longer text: the few facts that do not fit in `desc`, not steps (the [`justfile-authoring` skill](skills/justfile-authoring/references/variant-rich.md) says what goes in each). The zoom prints it under a **Details** heading and, with colors on, picks out `` `command spans` ``, flags, `<placeholders>` and URLs; listings and completion stay one line each. A command's `exits` maps each exit code to its meaning (an **Exit codes** section in the zoom and in `help -j`), and its `env` lists the environment variables it reads as rows with `name`, `desc`, `required` and `default` (an **Environment** section, and `env` in `help -j`; a flag goes in `args`, a variable in `env`), and its `tags` say what it touches, such as `read-only`, `destructive`, `production`, `spends` or `asks-first` (a **Tags** line under the description, and `tags` in `help -j`; free words, so the list can grow; `justz check` keeps `asks-first` in step with the recipe's `[confirm]` and warns on a contradiction or a duplicate; a command with no tags is not declared safe), and the group listing of `help -j` has `hasDetail` per command, so an agent knows which zooms are worth a call. A command's `seeAlso` lists related commands by key (`group.command`), which the zoom shows as a **See also** line, `help -j` carries, and `justz check` verifies.
-- **Text that cannot drive your terminal** *(available)*. A description with an escape sequence, a control character or a bidirectional override is shown with U+FFFD in its place, in text and in `--json`, so a cloned repository cannot change your window title or rewrite what you read.
-- **Checks that keep docs honest** *(available)*. `justz check` fails when a recipe has no documentation, when the registry and the justfile disagree, or when an example no longer parses (a `[doc]` that diverges from the registry comes with the exact line to paste). Advice rules (warnings, never errors) catch text that goes stale (`volatile-text`: a TODO, a count of checks, a price, a date), a flag that a `detail` names without an argument row (`detail-flag-no-row`), an environment variable that a `detail` names without an `env` row (`detail-env-no-row`: a name with an underscore such as `NO_COLOR`, or one written as `$NAME`, `export NAME` or `NAME=`; acronyms such as HTTP or JSON, flags, paths and file names do not count; a prose constant with an underscore such as `UTF_8` or `READ_ONLY` can fire, and `justz-ignore` is the opt-out; a name shorter than 3 characters such as `$CI` is not caught), and a `detail` that is too long, has no paragraphs or opens by repeating the `desc` (`detail-long`, `detail-no-paragraphs`, `detail-restates-desc`; a deliberately list-style `detail` with no blank lines opts out, and as warnings they fail `check --strict`); one recipe can opt out with `[metadata('justz-ignore', '<rule>')]`. `tags-confirm` (a warning) reports a recipe with `[confirm]` whose command does not declare `asks-first`, and the reverse; a script that asks by itself opts out with `justz-ignore`. The text output of `check` and `lint` prints a fix once per rule, and `--rule <name>` shows one rule at a time (the counts and the exit code follow the shown findings, so it is for reading, not for gating CI: it can hide errors and exit 0). Run it in pre-commit and CI instead of discovering drift months later.
-- **Canonical formatting** *(available)*. `justz fmt` sorts your command registry into one stable order, so diffs stay small and reviews stay calm. Use `justz fmt --check` in CI to fail on an unformatted registry.
-- **A scaffold that documents itself** *(available)*. `justz init` writes a justfile, a shared `just/preamble.just` and one module per group (and, for the rich variant, a sorted `config/commands.json`) that pass `justz check` on the first run. It never overwrites a file.
-- **Advice on the recipes themselves** *(available)*. `justz lint` points at antipatterns you can see in the structure of a justfile: a recipe body over 40 lines (with a count of its `{{ }}` interpolations, which decides whether moving it to a script is mechanical), a secret-like parameter, a secret interpolated into a command line, a module that runs without a chosen shell, a module whose bare `just <module>` runs a command instead of a dispatcher, and a dispatcher that lists the root justfile. Every finding is a warning, and one recipe can opt out with `[metadata('justz-ignore', '<rule>')]`.
-- **Shortcuts that never break** *(available)*. Pin a command such as `tz` to a project's justfile and run it from any directory, with collision checks so it never hides a real command on your system.
-- **Completion for free** *(available)*. Shell completion generated from the same data as the help.
-- **An editor-ready schema** *(available)*. `justz schema` prints the JSON Schema of `commands.json`, so an editor can complete and type-check the registry.
-- **Built for agents.** Every command has stable exit codes, and the ones that report something (`check`, `lint`, `assess`, `doctor`, `resolve`, `setup`, `shim`) print JSON with `--json`, so an AI agent can discover what a repo offers and verify its own changes without guessing. Two agent skills, `justz-cli` and `justfile-authoring`, teach agents how.
-
-## Why another tool?
-
-- **One binary, almost no dependencies.** No `jq`, `awk`, Python or Node to install. It only needs `just`.
-- **One source of truth.** The help, the checks and the completion all read the same data, so they cannot disagree.
-- **It reads `just` the supported way**, through `just --dump --dump-format json`, so it keeps working as `just` evolves.
-- **It stays out of your secrets.** `justz` never reads, stores or injects credentials.
-- **Verified releases.** Releases ship with checksums and build provenance attestations.
-
-## Part of the `just` ecosystem
-
-`justz` exists because `just` is good. It does not replace `just`, and it works alongside the other tools people have built around it. Here is where each one shines, and where `justz` fits in.
-
-| If you want to... | Good choices |
+| Need | Command |
 |---|---|
-| Run tasks, write recipes, use modules and attributes | [`just`](https://github.com/casey/just) itself. Its manual is the reference for syntax. |
-| Edit justfiles with syntax checks and completion in your editor | [`just-lsp`](https://github.com/terror/just-lsp), a language server for `just`. |
-| Let an agent call your recipes through MCP | [`just-mcp`](https://github.com/PromptExecution/just-mcp), an MCP server for `just`. |
-| Teach an agent `just` syntax and conventions | The skills [`cli-just`](https://github.com/paulrberg/dot-agents/tree/main/skills/cli-just), [`justfile-expert`](https://github.com/laurigates/claude-plugins/tree/main/tools-plugin/skills/justfile-expert) and [`justfile`](https://github.com/mizchi/skills/tree/main/justfile). |
+| See what a project can do, grouped, with flags and examples | `justz help` · `justz help <group> <command>` |
+| Fail CI when docs and recipes disagree | `justz check` ([pre-commit and CI snippets](docs/hooks-and-ci.md)) |
+| Get advice on recipe antipatterns (long bodies, secrets on the command line) | `justz lint` |
+| Start a self-documenting project | `justz init` |
+| Keep the command registry in one stable order | `justz fmt` |
+| Tab completion from the same data as the help | `justz completions` |
+| Run a project's commands from any directory, safely | `justz shim add` ([shims](docs/shims.md)) |
+| Editor completion and type checks for `commands.json` | `justz schema` |
 
-**What `justz` adds.** The tools above help you write and run justfiles. `justz` is about what happens once a project has many of them: can a new person or an agent find the right command, and does the documentation still match the recipes? It brings a grouped command reference with examples, checks you can run in CI, a single registry that the help and the completion share, global shortcuts that cannot hide a real command, and JSON output for tools. It also ships two agent skills of its own, `justz-cli` and `justfile-authoring`, focused on a discoverable command surface and on keeping documentation honest.
+Every command and flag: [Command reference](docs/commands.md).
 
-**How they combine.** Use `just-lsp` while you write, `justz check` before you commit, and `just-mcp` if your agent should run recipes itself. The syntax skills and the `justz` skills do not compete: install both and your agent gets syntax help and a convention for making the result discoverable.
+## Built for agents
 
-Know a good tool or skill that belongs in this table? Open an issue and tell us. All of this builds on the work of the `just` maintainers, and thanks go to the authors of the tools above.
-
-## How it works
-
-Describe your commands once, next to your justfile:
-
-```json
-{
-  "groups": {
-    "core": {
-      "label": "Core",
-      "commands": {
-        "test": {
-          "desc": "Run the test suite",
-          "args": [
-            { "name": "-k <pattern>", "desc": "Filter tests by name pattern" },
-            { "name": "-w, --watch", "desc": "Re-run on file changes" }
-          ]
-        }
-      }
-    }
-  }
-}
-```
-
-Then `justz help`, `justz check`, `justz fmt` and `justz completions` work from that file and from your justfile. To start a new project with this layout, run `justz init --variant rich`. To get completion and type checks for the registry in your editor, save the schema with `justz schema > commands.schema.json` and point your editor at it, or add a `"$schema"` line at the top of the registry with `https://raw.githubusercontent.com/igorlino/justz/main/schema/commands.schema.json`.
-
-### Read a command's text from a script or a test
-
-`justz help <group> <command> -j` is the supported way to read what a command is documented as: the JSON has `desc`, and `detail` when the command has one (`exits`, `env`, `tags`, `seeAlso` and the arguments are there too). **`desc` plus `detail` is the text of a command.** A command's long text can move from `desc` to `detail` without any change to the command, so code that asserts a phrase in `desc` alone breaks when it does. The JSON contract is that fields may be added: a consumer must ignore unknown fields, and fields are not renamed or removed. Reading the registry file (`config/commands.json`) directly is not part of the contract: its layout, and where a given sentence lives in it, can change, and for a native project it does not exist. This is the call, with its output, run against the demo registry in `testdata/help-reference/demo` after adding a `detail` to its `test` command:
+An agent should not have to guess. Every command has stable exit codes. The ones that report something print JSON with `--json`. A command's text, exit codes, environment variables and safety tags (`destructive`, `production`, `read-only`...) are one call away:
 
 ```sh
-justz help core test -j | jq '{desc, detail}'
+justz help core test -j | jq '{desc, detail, tags}'
 ```
 
-```json
-{
-  "desc": "Run the test suite",
-  "detail": "Runs only the unit tests; integration tests need `test --integration`.\n\nNeeds no network."
-}
-```
-
-## Install
-
-`justz` needs [`just`](https://github.com/casey/just) 1.37.0 or newer on your PATH. An older `just` (Ubuntu's package is 1.21.0) fails with `Unknown attribute` errors; `justz doctor` warns about it. Install a current one with `brew install just`, `curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to ~/.local/bin` or `cargo install just`.
-
-How the minimum was found: `justz check`, `help` and `lint` ran on the `justz init` output (native and rich, with modules) against just 1.21.0 to 1.46.0. up to 1.31.0 cannot parse `mod`, and 1.32.0 rejects `[group]` on a module; 1.33.0 to 1.36.0 parse it but leave the `doc` of a `[doc]` recipe out of the JSON dump, so `check` reports a false `doc-missing`; 1.37.0 is the first where everything works. Two features need more than that baseline: `[metadata]` (the `justz-ignore` opt-out) needs 1.42.0, and `[arg]` (a justfile you write, not something justz needs) needs 1.46.0.
-
-**Homebrew** (macOS, Linux, WSL2):
-
-```sh
-brew install igorlino/tap/justz
-```
-
-**Install script** (macOS, Linux, WSL2). It verifies the SHA256 of the download before installing anything, installs into `~/.local/bin` and never uses `sudo`:
-
-```sh
-curl -fsSL https://raw.githubusercontent.com/igorlino/justz/main/install.sh | sh
-```
-
-**Go**:
-
-```sh
-go install github.com/igorlino/justz/cmd/justz@latest
-```
-
-**Windows**: `winget install igorlino.justz` is coming. Until then, download the `.zip` from the [releases page](https://github.com/igorlino/justz/releases).
-
-Then check your setup:
-
-```sh
-justz doctor
-```
-
-### Run `justz check` before commits and in CI
-
-A project that drops its own documentation guard needs something that runs `justz check` automatically. [`docs/hooks-and-ci.md`](docs/hooks-and-ci.md) has snippets to copy:
-
-- a hook for the [pre-commit](https://pre-commit.com) framework (`.pre-commit-hooks.yaml` in this repository, hook id `justz-check`);
-- a plain git hook, `scripts/pre-commit-hook.sh`, for projects without the framework;
-- a GitHub Actions job that installs a pinned `justz` with the verifying install script and runs `justz check`.
-
-Neither hook passes silently when `justz` is missing: the commit fails, and `JUSTZ_HOOK_SKIP_MISSING=1` skips it with a loud warning on stderr.
-
-### Verify a download
-
-Releases include SHA256 checksums and build provenance attestations. To check an archive you downloaded:
-
-```sh
-gh attestation verify justz-<version>-<os>-<arch>.tar.gz --repo igorlino/justz
-```
-
-## Agent skills
-
-- `justz-cli`: how an agent runs and troubleshoots `justz`.
-- `justfile-authoring`: how to design a discoverable, well-documented justfile, built on `justz`.
-
-Claude Code:
-
-```sh
-/plugin marketplace add igorlino/justz
-/plugin install justz --marketplace igorlino/justz
-```
-
-The one-step install needs Claude Code 2.1.275 or later; on older versions use `/plugin install justz@justz`. The skills then appear as `/justz:justz-cli`. A third-party marketplace does not auto-update by default: run `/plugin marketplace update justz` to get new versions. Any other agent (Codex, Copilot, Antigravity and others) can install them with the `skills` CLI:
+Two agent skills, `justz-cli` and `justfile-authoring`, teach an agent how to use `justz` and how to write a justfile it can discover:
 
 ```sh
 npx skills add igorlino/justz
 ```
 
-The skills never install `justz`. They check for it and tell you how to install it.
+Claude Code plugin, the JSON contract and the workflow: [For agents](docs/for-agents.md). Machine-readable index: [`llms.txt`](llms.txt).
 
-## Contributing
+## Design principles
 
-The project is not open for code contributions yet. Ideas and feedback are welcome as issues.
+- **One binary.** No `jq`, `awk`, Python or Node. It needs only `just`.
+- **It reads `just` the supported way**, through `just --dump --dump-format json`, so it keeps working as `just` evolves.
+- **It stays out of your secrets.** `justz` never reads, stores or injects credentials.
+- **Text from a repository cannot drive your terminal.** Escape sequences and control characters in descriptions are replaced before they are printed.
+- **Verified releases.** SHA256 checksums and build provenance attestations.
+
+## Documentation
+
+| Read this | When you want to |
+|---|---|
+| [Getting started](docs/getting-started.md) | go from zero to a documented project, step by step |
+| [Installation](docs/installation.md) | install by Homebrew, script or Go, or verify a download |
+| [Command reference](docs/commands.md) | look up a command, flag, JSON output or exit code |
+| [The command registry](docs/registry.md) | write `commands.json`: `detail`, `args`, `exits`, `env`, `tags`, `seeAlso` |
+| [Checks and lint rules](docs/checks.md) | understand a `check` or `lint` finding, or silence one |
+| [Hooks and CI](docs/hooks-and-ci.md) | run `justz check` on commit and in GitHub Actions |
+| [Shims](docs/shims.md) | pin a short command such as `tz` to a project |
+| [For agents](docs/for-agents.md) | wire `justz` into an AI agent, or read the JSON contract |
+| [Ecosystem](docs/ecosystem.md) | see how `justz` fits with `just-lsp`, `just-mcp` and others |
+| [FAQ and troubleshooting](docs/faq.md) | fix `Unknown attribute`, a missing shim, or an empty help |
+
+## Status
+
+Early development (current release: see [Releases](https://github.com/igorlino/justz/releases)). The command surface and the JSON contract are described in the docs above; fields may be added, never renamed or removed. Not open for code contributions yet; ideas and bug reports are welcome as [issues](https://github.com/igorlino/justz/issues). Security reports: [SECURITY.md](SECURITY.md).
 
 ## License
 
