@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/igorlino/justz/internal/check"
+	"github.com/igorlino/justz/internal/generate"
 )
 
 // Rule ids. They are part of the output and stay stable.
@@ -208,7 +209,7 @@ func dispatcherRules(d dump, path string, res *Result) {
 		return
 	}
 	subject := "module " + path
-	if *d.First != "default" && *d.First != "_default" {
+	if !generate.IsDispatcherName(*d.First) {
 		res.Findings = append(res.Findings, Finding{
 			Rule: RuleModuleNoDispatch, Severity: check.Warning, Subject: subject,
 			Message: fmt.Sprintf("a bare just %s runs %s, which is not a dispatcher", path, *d.First),

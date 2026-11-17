@@ -37,6 +37,7 @@ func FromDump(dumpJSON []byte, name string) (*Project, error) {
 			params[m.Name+" "+c.Name] = c.AllArgs
 		}
 	}
+	p.checkDispatchers(parsed)
 	if p.Core != nil {
 		for i := range p.Core.Commands {
 			c := &p.Core.Commands[i]
@@ -73,4 +74,34 @@ func withUndocumented(args []Arg, all []generate.Arg) []Arg {
 		}
 	}
 	return out
+}
+
+// CheckDispatchers is for a project read from the personal overlay, which is
+// generated from the justfile and so has the default hint of the summary. The
+// dump says whether the hint is true; with no dump it is left out.
+func (p *Project) CheckDispatchers(dumpJSON []byte) {
+	parsed, err := generate.Parse(dumpJSON)
+	if err != nil {
+		parsed = nil
+	}
+	p.checkDispatchers(parsed)
+}
+
+// checkDispatchers keeps the hint "run without args to see sub-commands" only
+// where it is true: every module has a default recipe, so a bare
+// `just <module>` lists the module. Where one would run a command instead, or
+// nothing is known, the summary says nothing.
+func (p *Project) checkDispatchers(parsed *generate.Parsed) {
+	if parsed != nil {
+		all := true
+		for _, m := range parsed.Modules {
+			all = all && m.Dispatcher
+		}
+		if all {
+			return
+		}
+	}
+	for i := range p.Tiers {
+		p.Tiers[i].Hint = ""
+	}
 }

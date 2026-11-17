@@ -1,3 +1,5 @@
+<!-- Not the maintainer? Open an issue first: see CONTRIBUTING.md. -->
+
 ## What and why
 
 <!-- A sentence or two. What changes, and what problem does it solve? -->
