@@ -1,6 +1,6 @@
 # The `rich` variant: `commands.json` rendered and checked by `justz`
 
-Documentation lives in a registry, `commands.json`, next to the justfile. `justz` renders the help from it, keeps it sorted, checks it against the justfile, and generates shell completion from it. Read `references/choosing-a-variant.md` first: `rich` is the exception, not the default.
+Documentation lives in a registry, `commands.json`, next to the justfile. `justz` renders the help from it, keeps it sorted, checks it against the justfile, and generates shell completion from it. Read `references/choosing-a-variant.md` first: `rich` is the default, on the condition that every machine that renders the help can install `justz`.
 
 > **Known cost, state it to the user:** `desc` duplicates the recipe's own `[doc]`. In the one adoption we can audit, 20 of 32 descriptions had diverged within six months. `justz check` now reports every divergence (`registry-desc-diverges`), which is what makes the duplication affordable. Keeping the `desc` to one short line (and moving longer prose to `detail`, 0.7.0 or newer) is what makes it cheap to keep in step. Treat `commands.json` as authoritative, keep each `[doc]` a one-liner identical to it, and run `justz check` in `check` and `ci`.
 
@@ -85,7 +85,7 @@ For each recipe write a description that says what it does, not just which tool 
 
 To start a new project instead of one file, `justz init --variant rich` (0.6.0 or newer) writes the justfile, the modules and a registry that already passes `justz check` and `justz fmt --check`; `--dry-run` lists the files first. It never overwrites.
 
-To start from an existing justfile instead of a blank file, `justz generate --stdout` prints a registry-shaped starting point from the justfile's own `[doc]` and `[arg]` attributes. Review it, then add the `args`, `examples` and `seeAlso` that are the reason for choosing `rich`.
+To start from an existing justfile instead of a blank file, `justz generate --stdout` prints a registry-shaped starting point from the justfile's own `[doc]` and `[arg]` attributes. Review it, then add `detail`, `tags`, `exits`, `env` and `seeAlso`: those are what `native` cannot hold.
 
 ## 2. Wire the root `justfile`
 

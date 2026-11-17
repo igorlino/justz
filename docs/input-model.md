@@ -4,15 +4,7 @@ What `justz` reads, where it looks, and how the pieces combine. The renderers, `
 
 ## The three variants
 
-A project documents its commands in one of three ways, and `justz` supports all of them. Fixtures for each are in `testdata/variants/`.
-
-| Variant | Where the documentation lives | Needs |
-|---|---|---|
-| `native` | In the justfile itself: `[doc]`, `[group]` and `[arg(..., help=...)]` attributes | Only `just` |
-| `rich` | In a registry file, `commands.json`, committed to the repository, next to the justfile | `just` and the registry |
-| `local-rich` | In a personal, git-ignored registry-shaped file, `.just-local-rich.json`, generated from a `native` justfile | `just` and the generated file |
-
-`local-rich` exists so one developer can get the richer help and completion on a `native` repository the team did not convert. It leaves no file in the repository that the team has to accept.
+A project documents its commands in one of three ways, `native`, `rich` or `local-rich`, and `justz` supports all of them. What each one is, and how to choose: [Variants](variants.md). Fixtures for each are in `testdata/variants/`.
 
 ## Inputs
 

@@ -57,6 +57,19 @@ Parse the JSON. Do not scrape the text tables, and do not read `commands.json` o
 5. **Run it** with `just <group> <command> ...` (or a shim such as `tz <group> <command>`).
 6. **Verify your own changes.** After editing a justfile or registry: `justz check --json`, and `justz lint --json` for advice.
 
+## `assess --json`
+
+`justz assess --json` has `recommendation`. Its `variant` is not a verdict: it holds only when `condition` is true, and `justz` cannot see whether it is.
+
+| Field | Meaning |
+|---|---|
+| `variant` | The variant to use when the condition holds: `rich`. |
+| `condition` | What that variant needs, in words. Ask the user; do not assume it. |
+| `otherwise` | The variant to use when the condition does not hold: `native`, or `local-rich` in a project with a personal overlay. |
+| `reason` | Why, in one sentence. |
+
+What the variants are: [Variants](variants.md).
+
 ## `setup --json`
 
 `justz setup --json` has `shortcuts`, one entry for each of `jz` and `jzh`: `name`, `path`, `action` and an optional `detail`.

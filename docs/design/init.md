@@ -19,7 +19,7 @@ justz init [--variant native|rich] [--name NAME] [--module NAME]... [--dry-run] 
 | `just/<module>.just` | both | `import 'preamble.just'` and a private `_default` that lists the module |
 | `config/commands.json` | rich | `core` with `check` and `help`, one empty group per module, in `justz fmt` order |
 
-`native` is the default, because the skill recommends it for small repos and it needs only `just`. `rich` writes recipes that call `justz`, so it needs `justz` wherever the help is rendered.
+`rich` is the default, because the registry holds what makes the help worth reading: details, safety tags and exit codes. It writes recipes that call `justz`, so it needs `justz` wherever the help is rendered. `native` is for a project that cannot ask that of every machine, and needs only `just`. The rule is in [variants.md](../variants.md).
 
 ## Decisions
 

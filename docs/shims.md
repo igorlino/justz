@@ -27,7 +27,7 @@ jz clean             # with a registry, a bare name finds its group: this runs "
 
 To remove a shortcut, delete its file. `justz setup --dry-run` shows what would be written, and `justz doctor` checks that each shortcut is the command your shell finds.
 
-In a `native` project, with no registry, `jzh` renders the help from the justfile. `jz` with no command runs the default recipe, as `just` does: the listing, in a project from `justz init`. A bare name does not find its group there, so type the group: `jz tool clean`.
+In a `native` project, with no registry, `jzh` renders the help from the justfile. `jz` with no command runs the default recipe, as `just` does: the listing, in a project from `justz init --variant native`. A bare name does not find its group there, so type the group: `jz tool clean`.
 
 ## Create a pinned shim
 

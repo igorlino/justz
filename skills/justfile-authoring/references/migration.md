@@ -32,7 +32,7 @@ Withdrawn advice from older versions: "do not run `just --help`, read `commands.
 
 ## Converting `rich` → `native`
 
-Only on explicit request, and only after showing the user what they lose: `args` rows, `examples`, `seeAlso` and `tiers` have no structured home in `native`. Count them first and put the number in front of the user:
+Only on explicit request, and only after showing the user what they lose: `detail`, `tags`, `exits`, `env`, `seeAlso`, `tiers`, structured `examples` and bare-name lookup have no home in `native`. Count them first and put the number in front of the user:
 
 ```bash
 jq '[.groups[].commands[].args // [] | length] | add' config/commands.json
@@ -51,15 +51,18 @@ Expect roughly a 55% line reduction in the command surface. Confirm `just`, `jus
 
 ## Converting `native` → `rich`
 
-Rare: only when a repo outgrows `native` (thresholds in `references/choosing-a-variant.md`). Generate the registry from the justfile rather than writing it by hand, so the first version cannot already be wrong:
+Do this when every machine that renders the help can install `justz` (the rule in `references/choosing-a-variant.md`). First add the `_default`, `help` and `check` recipes from `references/variant-rich.md`, so that the generator lists them. Then generate the registry from the justfile rather than writing it by hand, so the first version cannot already be wrong:
 
 ```bash
+mkdir -p config
 justz generate --stdout > config/commands.json
 justz fmt
 justz check
 ```
 
-Then add `args` detail, `examples`, `seeAlso` and enum `values` by hand: those are the reason to convert. Keep `[doc]` in place and identical to `desc`; `justz check` will fail if they drift. Add `help`, `check` and the `_default` recipes from `references/variant-rich.md`.
+Remove the `$comment` line: it says the file is generated, and it is now edited by hand. Fix what `justz check` reports; for a `[doc]` with an `example:` line it prints the one-line `[doc]` to paste. Top-level recipes land in the `core` group: move them if the project has other groups.
+
+Then add `detail`, `tags`, `exits`, `env` and `seeAlso` by hand: those are what `native` cannot hold. Keep `[doc]` in place and identical to `desc`; `justz check` will fail if they drift.
 
 ## Adding the personal overlay instead
 

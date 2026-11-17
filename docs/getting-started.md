@@ -35,24 +35,22 @@ justz check
 
 A project with no problems prints `ok: <n> public recipes checked (<variant>), no problems`. Otherwise each finding names the recipe, the rule and a fix. Errors exit `1`. Warnings fail the run only with `--strict`. What each rule means: [Checks and lint rules](checks.md).
 
-## 4. Start a new project (optional)
+## 4. Document your commands
+
+Ask an agent that has the `justfile-authoring` skill: it reads the recipes and writes the documentation, on a new project or an existing one. See [For agents](for-agents.md).
+
+Without an agent, scaffold a new project:
 
 ```sh
-justz init --variant native --module build --module test my-project
+justz init --module build --module test my-project
 cd my-project && justz check
 ```
 
-`init` writes a justfile, a shared `just/preamble.just` and one module per `--module`. It never overwrites a file. Use `--dry-run` to list the files first.
+`init` writes a justfile, a shared `just/preamble.just`, one module per `--module` and the registry, `config/commands.json`. It never overwrites a file. Use `--dry-run` to list the files first.
 
-Pick a variant:
+The registry lists only `help` and `check`: you add your own commands to it. For a justfile that exists, follow [From `native` to `rich`, by hand](variants.md#from-native-to-rich-by-hand).
 
-| Variant | Documentation lives in | Choose it when |
-|---|---|---|
-| `native` | the justfile: `[doc]`, `[group]`, `[arg]` attributes | you want only `just` and nothing else to maintain |
-| `rich` | `config/commands.json`, next to the justfile | you want examples, details, exit codes, env rows and tags |
-| `local-rich` | `.just-local-rich.json`, personal and git-ignored | the team did not adopt a registry and you want richer help for yourself |
-
-Not sure? `justz assess` reports facts about your justfile and recommends one with its reason.
+This project is `rich`, so it needs `justz` wherever its help is shown. If that is not possible, `--variant native` keeps the documentation in the justfile. What you gain and lose: [Variants](variants.md).
 
 ## 5. Run the check automatically
 
@@ -69,5 +67,6 @@ See [Shims](shims.md).
 
 ## Next
 
+- Choose where the documentation lives: [Variants](variants.md).
 - Write richer documentation: [The command registry](registry.md).
 - Let an agent use all of this: [For agents](for-agents.md).

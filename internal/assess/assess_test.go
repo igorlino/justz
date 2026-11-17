@@ -139,10 +139,13 @@ func TestNoRegistryMeansNoCoverage(t *testing.T) {
 	}
 }
 
+// The recommendation does not depend on the size of the project: rich needs
+// justz on every machine, which the dump cannot show, so the reason says so.
 func TestRecommendation(t *testing.T) {
-	modules := func(n int) map[string]any {
+	small := map[string]any{"recipes": map[string]any{"a": rc("d", false, false, 1, 0)}}
+	large := map[string]any{"recipes": map[string]any{"x": rc("d", false, false, 1, 3)}, "modules": func() map[string]any {
 		m := map[string]any{}
-		for i := 0; i < n; i++ {
+		for i := 0; i < 4; i++ {
 			recipes := map[string]any{}
 			for j := 0; j < 10; j++ {
 				recipes[fmt.Sprintf("r%d", j)] = rc("d", false, false, 1, 0)
@@ -150,31 +153,28 @@ func TestRecommendation(t *testing.T) {
 			m[fmt.Sprintf("m%d", i)] = map[string]any{"recipes": recipes}
 		}
 		return m
-	}
+	}()}
 	tests := []struct {
-		name string
-		dump map[string]any
-		want string
+		name      string
+		dump      map[string]any
+		variant   string
+		otherwise string
+		reason    string // a part of the reason
 	}{
-		{"small project", map[string]any{"recipes": map[string]any{"a": rc("d", false, false, 1, 0)}}, "native"},
-		{"large but flat", map[string]any{"recipes": func() map[string]any {
-			m := map[string]any{}
-			for i := 0; i < 40; i++ {
-				m[fmt.Sprintf("r%d", i)] = rc("d", false, false, 1, 0)
-			}
-			return m
-		}()}, "native"},
-		{"large, namespaced, no options", map[string]any{"recipes": map[string]any{}, "modules": modules(4)}, "native"},
-		{"large, namespaced, with options", map[string]any{"recipes": map[string]any{"x": rc("d", false, false, 1, 3)}, "modules": modules(4)}, "rich"},
+		{"small native project", small, "native", "native", "justfile alone cannot hold"},
+		{"large native project", large, "native", "native", "justfile alone cannot hold"},
+		{"personal overlay", small, "local-rich", "local-rich", "overlay is personal"},
+		{"rich project", small, "rich", "native", "keep it"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r, err := Assess(Input{Dump: mustJSON(t, tt.dump), Variant: "native"})
+			r, err := Assess(Input{Dump: mustJSON(t, tt.dump), Variant: tt.variant})
 			if err != nil {
 				t.Fatal(err)
 			}
-			if r.Recommendation.Variant != tt.want || r.Recommendation.Reason == "" {
-				t.Errorf("recommendation = %+v, want %s with a reason", r.Recommendation, tt.want)
+			got := r.Recommendation
+			if got.Variant != "rich" || got.Otherwise != tt.otherwise || !strings.Contains(got.Condition, "every machine") || !strings.Contains(got.Reason, tt.reason) {
+				t.Errorf("recommendation = %+v, want rich, otherwise %s, the condition and a reason with %q", got, tt.otherwise, tt.reason)
 			}
 		})
 	}

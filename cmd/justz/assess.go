@@ -13,12 +13,15 @@ const assessUsage = `Usage: justz assess [--json]
 
 Report facts about the justfile of the current project: how many recipes it
 has and how many are documented, modules, recipes with a shebang, long
-recipes, whether the registry covers every public recipe, and which
-documentation variant (native, rich, local-rich) fits.
+recipes, whether the registry covers every public recipe, which documentation
+variant (native, rich, local-rich) it uses, and which one is recommended.
 
 It reads the justfile through just --dump, never by searching the text, so the
-numbers are exact. The recommendation follows the thresholds of the variant
-guide and always comes with its reason.
+numbers are exact. The recommendation follows the variant guide: rich if
+every machine that renders the help can install justz, and otherwise what the
+project has without a registry (native, or local-rich with an overlay). justz
+cannot see which holds, so it prints the condition. With --json they are the
+fields variant, condition, otherwise and reason of recommendation.
 
 A public default recipe is a dispatcher, not a command: it is left out of the
 counts, as justz check leaves it out, and assess advises renaming it _default.
@@ -101,7 +104,7 @@ func printAssess(e env, justfile string, r assess.Report) {
 	for _, a := range r.Advice {
 		fmt.Fprintf(e.stdout, "advice: %s\n", textsafe.Line(a))
 	}
-	fmt.Fprintf(e.stdout, "\nrecommendation: %s. %s\n", r.Recommendation.Variant, r.Recommendation.Reason)
+	fmt.Fprintf(e.stdout, "\nrecommendation: %s if %s, otherwise %s. %s\n", r.Recommendation.Variant, r.Recommendation.Condition, r.Recommendation.Otherwise, r.Recommendation.Reason)
 }
 
 func printList(e env, label string, items []string) {

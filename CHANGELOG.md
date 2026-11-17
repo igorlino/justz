@@ -6,6 +6,9 @@ What changed in each release of `justz`, for people who use it. The format follo
 
 ### Changed
 
+- `justz init` writes a `rich` project by default: a justfile and the registry, `config/commands.json`. Pass `--variant native` for a project that needs only `just`.
+- `justz assess` recommends `rich` on every project, on one condition: every machine that shows the help can install `justz`. The size of the project no longer decides. In `assess --json`, `recommendation.variant` is always `rich`: read the condition before you act on it.
+- The `justfile-authoring` skill recommends `rich` by the same rule.
 - The README is rewritten, and the documentation is split into pages under `docs/`: getting started, installation, command reference, registry, checks, shims, for agents, ecosystem and FAQ.
 - The `justz-cli` skill is restructured: a short `SKILL.md` with a quick start and tables, and the long material in three reference files.
 - Release archives include the `docs/` directory and this changelog.
@@ -16,6 +19,8 @@ What changed in each release of `justz`, for people who use it. The format follo
 - `justz setup` adds the `jz` and `jzh` shortcuts to the shim directory, so they exist after any install, not only with Homebrew. It adds nothing when a shortcut is already installed, or when another command or a registered shim has the name, and the two are added together. `setup --json` reports them in `shortcuts`, and `justz doctor` checks them.
 - A showcase website in `site/`, deployed to GitHub Pages by `.github/workflows/pages.yml`. Its quickstart and its terminal demo show `justz setup`, `jz` and `jzh`, like the README.
 - `AGENTS.md` and `llms.txt`.
+- `assess --json` has `condition` and `otherwise` in `recommendation`: what the recommended variant needs, and the variant to use when the project cannot give it.
+- `docs/variants.md`: what `rich`, `native` and `local-rich` each give, how to choose, and how to move a `native` project to `rich`.
 - A test that fails when a relative link in the documentation or the skills points at a file that does not exist.
 - `docs/writing-docs.md`, and tests that fail when a command or a rule is undocumented, or when the README or a `SKILL.md` grows past its budget.
 
