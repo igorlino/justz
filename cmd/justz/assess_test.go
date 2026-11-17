@@ -49,7 +49,7 @@ func TestAssessRichProject(t *testing.T) {
 		"1 public recipes missing from it, 1 stale entries",
 		"missing: test",
 		"stale: old",
-		"recommendation: native.",
+		"recommendation: rich if every machine that renders the help can install justz, otherwise native. the project has a registry",
 	} {
 		if !strings.Contains(out, want) {
 			t.Errorf("output should contain %q:\n%s", want, out)
@@ -101,12 +101,12 @@ func TestAssessJSON(t *testing.T) {
 		Variant        string
 		Recipes        struct{ Total, Public, Private, Documented, Undocumented int }
 		Modules        int
-		Recommendation struct{ Variant, Reason string }
+		Recommendation struct{ Variant, Condition, Otherwise, Reason string }
 	}
 	if err := json.Unmarshal(r.out.Bytes(), &got); err != nil {
 		t.Fatalf("not JSON: %v\n%s", err, r.out.String())
 	}
-	if got.Justfile == "" || got.Variant != "native" || got.Recipes.Total != 4 || got.Recipes.Undocumented != 1 || got.Modules != 1 || got.Recommendation.Reason == "" {
+	if got.Justfile == "" || got.Variant != "native" || got.Recipes.Total != 4 || got.Recipes.Undocumented != 1 || got.Modules != 1 || got.Recommendation.Reason == "" || got.Recommendation.Variant != "rich" || got.Recommendation.Otherwise != "native" || got.Recommendation.Condition == "" {
 		t.Errorf("report = %+v", got)
 	}
 }

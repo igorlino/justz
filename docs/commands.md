@@ -30,13 +30,13 @@ Run `justz --help` for the list and `justz <command> --help` for the full text o
 |---|---|
 | `justz check` | Does the project document its commands, and do the docs still match? Errors exit `1`; `--strict` fails on warnings too; `--rule <name>` shows one rule (for reading, not for gating CI). Rules: [Checks](checks.md). |
 | `justz lint` | Advice on the recipes themselves. Every finding is a warning. Same flags as `check`. |
-| `justz assess` | Facts about the justfile (recipes, documented share, modules, long recipes) and which variant fits, with the reason. |
+| `justz assess` | Facts about the justfile (recipes, documented share, modules, long recipes) and the recommended [variant](variants.md), with the reason. |
 
 ## Create and maintain
 
 | Command | What it does |
 |---|---|
-| `justz init [dir]` | Scaffold a self-documenting justfile. `--variant native\|rich`, `--name`, `--module` (repeatable), `--dry-run`. Never overwrites; refuses and exits `1` if any file exists. |
+| `justz init [dir]` | Scaffold a self-documenting justfile. `--variant rich\|native` (default `rich`), `--name`, `--module` (repeatable), `--dry-run`. Never overwrites; refuses and exits `1` if any file exists. |
 | `justz fmt [path]` | Sort the registry into its canonical order. `--check` writes nothing and exits `1` if unsorted. Looks in the current directory, or takes a path or `$JUSTZ_CONFIG`. |
 | `justz generate [path]` | Build the personal `.just-local-rich.json` from the justfile's `[doc]` and `[arg]` attributes. `--stdout` writes nothing. Refuses to write a file that git tracks. |
 | `justz schema` | Print the JSON Schema of `commands.json`. |

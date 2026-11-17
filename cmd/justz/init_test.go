@@ -12,7 +12,7 @@ import (
 func TestInitWritesNativeProject(t *testing.T) {
 	dir := filepath.Join(t.TempDir(), "demo")
 	e, out, errOut := testEnv(false)
-	if code := run([]string{"init", "--module", "build", "--module=ops", dir}, e); code != 0 {
+	if code := run([]string{"init", "--variant", "native", "--module", "build", "--module=ops", dir}, e); code != 0 {
 		t.Fatalf("code %d: %s", code, errOut)
 	}
 	for _, p := range []string{"justfile", "just/preamble.just", "just/build.just", "just/ops.just"} {
@@ -26,7 +26,7 @@ func TestInitWritesNativeProject(t *testing.T) {
 	if !strings.Contains(readFile(t, filepath.Join(dir, "justfile")), "$'\\n  demo\\n\\n'") {
 		t.Error("name should default to the directory name")
 	}
-	if !strings.Contains(out.String(), "wrote just/build.just") {
+	if !strings.Contains(out.String(), "wrote just/build.just") || !strings.Contains(out.String(), "then run: just\n") {
 		t.Errorf("stdout: %s", out)
 	}
 	if !strings.Contains(out.String(), "then: run justz check before commits and in CI") || !strings.Contains(out.String(), "docs/hooks-and-ci.md") {
@@ -42,6 +42,20 @@ func TestInitRichWritesRegistry(t *testing.T) {
 	}
 	if !strings.Contains(readFile(t, filepath.Join(dir, "config", "commands.json")), `"name": "My App"`) {
 		t.Error("registry misses the name")
+	}
+}
+
+func TestInitDefaultsToRich(t *testing.T) {
+	dir := t.TempDir()
+	e, out, errOut := testEnv(false)
+	if code := run([]string{"init", dir}, e); code != 0 {
+		t.Fatalf("code %d: %s", code, errOut)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "config", "commands.json")); err != nil {
+		t.Errorf("init with no --variant should write the registry: %s", out)
+	}
+	if !strings.Contains(out.String(), "next: add recipes with [doc] and [group], list them in config/commands.json") {
+		t.Errorf("the next step should name the registry: %s", out)
 	}
 }
 
@@ -129,7 +143,7 @@ func TestInitDryRunWritesNothing(t *testing.T) {
 	if code := run([]string{"init", "--dry-run", dir}, e); code != 0 {
 		t.Fatalf("code %d", code)
 	}
-	if !strings.Contains(out.String(), "would write justfile") {
+	if !strings.Contains(out.String(), "would write justfile") || !strings.Contains(out.String(), "would write config/commands.json") {
 		t.Errorf("stdout: %s", out)
 	}
 	if entries, _ := os.ReadDir(dir); len(entries) != 0 {

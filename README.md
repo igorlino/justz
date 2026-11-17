@@ -63,7 +63,7 @@ jz tool clean                       # run it
 justz check                         # is it documented, and does the doc still match?
 ```
 
-No justfile yet? `justz init` writes one that passes `justz check` on the first run. Full walkthrough: [Getting started](docs/getting-started.md).
+To document a project's commands, ask an agent that has the [`justfile-authoring` skill](#built-for-agents): it reads the recipes and writes the documentation. Without an agent, `justz init` scaffolds a new project, and you add the commands by hand. Where the documentation lives, and what that needs: [Variants](docs/variants.md). Full walkthrough: [Getting started](docs/getting-started.md).
 
 ## How you type it
 
@@ -123,6 +123,7 @@ Claude Code plugin, the JSON contract and the workflow: [For agents](docs/for-ag
 | [Getting started](docs/getting-started.md) | go from zero to a documented project, step by step |
 | [Installation](docs/installation.md) | install by Homebrew, script or Go, or verify a download |
 | [Command reference](docs/commands.md) | look up a command, flag, JSON output or exit code |
+| [Variants](docs/variants.md) | choose where the documentation lives: a registry, or the justfile alone |
 | [The command registry](docs/registry.md) | write `commands.json`: `detail`, `args`, `exits`, `env`, `tags`, `seeAlso` |
 | [Checks and lint rules](docs/checks.md) | understand a `check` or `lint` finding, or silence one |
 | [Hooks and CI](docs/hooks-and-ci.md) | run `justz check` on commit and in GitHub Actions |

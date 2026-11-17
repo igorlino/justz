@@ -53,10 +53,14 @@ type Coverage struct {
 	Stale   []string `json:"stale"`   // registry entries with no such public recipe
 }
 
-// Recommendation names a variant and says why.
+// Recommendation names a variant and says why. The variant fits only when
+// Condition holds, which the justfile cannot show; Otherwise is the variant
+// to use when it does not.
 type Recommendation struct {
-	Variant string `json:"variant"`
-	Reason  string `json:"reason"`
+	Variant   string `json:"variant"`
+	Condition string `json:"condition"`
+	Otherwise string `json:"otherwise"`
+	Reason    string `json:"reason"`
 }
 
 // Report is the result of Assess.
@@ -255,14 +259,19 @@ func coverage(reg *orderedjson.Value, public map[string]bool) *Coverage {
 	return cov
 }
 
-// recommend applies the thresholds from the variant guide: the registry only
-// pays for itself in a large project with commands that take several options.
+// richCondition is what the rich variant needs from the team.
+const richCondition = "every machine that renders the help can install justz"
+
+// recommend applies the rule of the variant guide: rich where every machine
+// that renders the help can install justz, and otherwise what the project
+// has without a registry. The dump cannot show which holds, so the
+// recommendation carries the condition.
 func recommend(r Report) Recommendation {
-	switch {
-	case r.Modules >= 3 && r.Recipes.Public >= 25 && r.ManyOptions >= 1:
-		return Recommendation{"rich", fmt.Sprintf("%d namespaces, %d public recipes and %d recipe(s) with several options: enough to justify a registry", r.Modules, r.Recipes.Public, r.ManyOptions)}
-	case r.Recipes.Public < 25 || r.Modules < 3:
-		return Recommendation{"native", fmt.Sprintf("%d namespace(s) and %d public recipes: [doc] and [group] attributes are enough, and a registry would cost more than it gives", r.Modules, r.Recipes.Public)}
+	switch r.Variant {
+	case "rich":
+		return Recommendation{"rich", richCondition, "native", "the project has a registry: keep it while the condition holds"}
+	case "local-rich":
+		return Recommendation{"rich", richCondition, "local-rich", "the overlay is personal: a committed registry gives the whole team details, safety tags, exit codes, environment rows and bare-name lookup"}
 	}
-	return Recommendation{"native", "no recipe takes several documented options, so a registry would mostly repeat what [doc] already says"}
+	return Recommendation{"rich", richCondition, "native", "a registry adds details, safety tags, exit codes, environment rows and bare-name lookup, which the justfile alone cannot hold"}
 }

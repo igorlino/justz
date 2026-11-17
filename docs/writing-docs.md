@@ -11,6 +11,7 @@ Every fact has one page that owns it. Other pages link to that page; they do not
 | A command or a flag | its `--help` text, then [commands.md](commands.md) and the table in `skills/justz-cli/SKILL.md` | describe the flag in the README |
 | A `check` or `lint` rule | `--help`, then [checks.md](checks.md) | list rules in the README or in `SKILL.md` |
 | A registry field | `schema/commands.schema.json`, then [registry.md](registry.md) | |
+| What a variant gives, or how to choose one | [variants.md](variants.md), then `references/choosing-a-variant.md` in the `justfile-authoring` skill | compare variants on another page |
 | A JSON field or an exit code | [for-agents.md](for-agents.md) and `skills/justz-cli/` | |
 | An install method or a version requirement | [installation.md](installation.md) | |
 | A symptom and its fix | [faq.md](faq.md) | |

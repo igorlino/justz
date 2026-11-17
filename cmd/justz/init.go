@@ -14,20 +14,22 @@ import (
 // hooksDoc is the page with the pre-commit hook and the CI step.
 const hooksDoc = "https://github.com/igorlino/justz/blob/main/docs/hooks-and-ci.md"
 
-const initUsage = `Usage: justz init [--variant native|rich] [--name NAME] [--module NAME]... [--dry-run] [dir]
+const initUsage = `Usage: justz init [--variant rich|native] [--name NAME] [--module NAME]... [--dry-run] [dir]
 
 Scaffold a justfile that documents itself, in dir (default: the current
 directory):
 
-  justfile              _default and help recipes, and a mod line per module
+  justfile              _default, help and check recipes (no check with
+                        --variant native), and a mod line per module
   just/preamble.just    the settings every file shares (strict bash, positional
                         arguments); the justfile and each module import it
   just/<module>.just    one per --module, each with a _default that lists it
-  config/commands.json  the registry, with --variant rich only
+  config/commands.json  the registry (rich only)
 
-  --variant   native (default) keeps the documentation in the justfile and
-              needs only just. rich adds the registry and needs justz wherever
-              the help is rendered.
+  --variant   rich (default) adds the registry, which holds details, safety
+              tags and exit codes, and needs justz wherever the help is
+              rendered. native keeps the documentation in the justfile and
+              needs only just.
   --module    A command group, run as: just <module> <recipe>. Repeat the flag.
   --name      The heading of the help (default: the directory name)
   --dry-run   List the files and write nothing
@@ -39,7 +41,7 @@ Exit codes: 0 done, 1 refused or error, 2 usage error.
 `
 
 func runInit(args []string, e env) int {
-	opts := scaffold.Options{Variant: scaffold.Native}
+	opts := scaffold.Options{Variant: scaffold.Rich}
 	dryRun := false
 	dir := ""
 	for i := 0; i < len(args); i++ {

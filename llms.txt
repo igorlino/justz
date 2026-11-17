@@ -9,6 +9,7 @@ Agents: start with "For agents". Every reporting command prints JSON with `--jso
 - [For agents](https://raw.githubusercontent.com/igorlino/justz/main/docs/for-agents.md): the JSON contract, safety tags, and the workflow before running a project's command
 - [Getting started](https://raw.githubusercontent.com/igorlino/justz/main/docs/getting-started.md): install, look at a project, check it, scaffold one
 - [Command reference](https://raw.githubusercontent.com/igorlino/justz/main/docs/commands.md): every command and flag
+- [Variants](https://raw.githubusercontent.com/igorlino/justz/main/docs/variants.md): `rich`, `native` and `local-rich`, what each gives and how to choose
 - [The command registry](https://raw.githubusercontent.com/igorlino/justz/main/docs/registry.md): the fields of `commands.json`
 - [Checks and lint rules](https://raw.githubusercontent.com/igorlino/justz/main/docs/checks.md): every rule, its severity and how to silence it
 - [Installation](https://raw.githubusercontent.com/igorlino/justz/main/docs/installation.md): Homebrew, install script, Go, and the `just` version matrix

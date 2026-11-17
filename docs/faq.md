@@ -10,7 +10,7 @@ On `just` 1.33.0 to 1.36.0 the JSON dump leaves out the `doc` of a `[doc]` recip
 
 ## `justz help` shows no details, examples or tags
 
-Those live in the registry (`rich` variant). A `native` project documents commands only with `[doc]`, `[group]` and `[arg]`. Run `justz assess`: it advises when a registry exists but the `default` recipe does not run `justz help`. See [Getting started](getting-started.md#4-start-a-new-project-optional) for the variants.
+Those live in the registry (`rich` variant). A `native` project documents commands only with `[doc]`, `[group]` and `[arg]`. Run `justz assess`: it advises when a registry exists but the `default` recipe does not run `justz help`. See [Variants](variants.md).
 
 ## `justz check` warns `default-public`
 

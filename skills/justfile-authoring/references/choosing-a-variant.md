@@ -1,18 +1,23 @@
 # Choosing a variant
 
-Two supported team shapes, plus a personal overlay. They produce the same *kind* of
-thing, a discoverable, grouped command surface, but they put the documentation in
-different places, and that single difference drives every trade-off below.
+Two supported team shapes, plus a personal overlay. Recommend `rich` when every machine
+that renders the help can install `justz`, and `native` when it cannot. The size of the
+repository does not decide.
 
-| | `native` | `rich` |
+| | `rich` | `native` |
 |---|---|---|
-| Descriptions live in | `[doc('…')]` on the recipe | `commands.json` (`desc`) |
-| Rendering | `just --list` (optionally `justz help`) | `justz help` |
-| Arg documentation | `[arg(…, help='…')]` — real CLI options | `args` rows in JSON |
-| Examples / see-also | convention inside a multiline `[doc]` | `examples`, `seeAlso` in JSON |
-| Metadata file | **none** | yes |
-| Dependencies | none (`justz` optional) | `justz` |
-| Checks | an inline guard, or `justz check` | `justz check`, `justz fmt --check` |
+| Descriptions live in | `commands.json` (`desc`); any `[doc]` must equal it | `[doc('…')]` on the recipe |
+| Rendering | `justz help` | `just --list` (optionally `justz help`) |
+| Arg documentation | `args` rows in JSON | `[arg(…, help='…')]` — real CLI options |
+| Examples | `examples` in JSON | convention inside a multiline `[doc]` |
+| Details, safety tags, exit codes, env rows, see-also | `detail`, `tags`, `exits`, `env`, `seeAlso` | **nowhere** |
+| Bare-name lookup (`jz clean` finds `tool clean`) | yes | no |
+| Metadata file | yes | **none** |
+| Dependencies | `justz` on every machine that renders help | none (`justz` optional) |
+| Checks | `justz check`, `justz fmt --check` | an inline guard, or `justz check` |
+
+The same comparison for people, with what a developer keeps when only they install
+`justz`: https://github.com/igorlino/justz/blob/main/docs/variants.md
 
 ## Assess the repo first, then recommend
 
@@ -27,25 +32,42 @@ Print a short assessment — facts, not prose — before proposing anything:
   cross-cutting      none
   just version       1.59 → [group], [arg], --explain available
 
-  Recommendation: the `native` variant. Reason: 7 flat recipes; a registry and a
-  dependency on a renderer would serve 7 one-line descriptions.
+  Recommendation: the `rich` variant, if every machine that renders the help can
+  install `justz`. Reason: safety tags, details and exit codes have no place in a
+  justfile. Otherwise `native`.
 ```
 
 `justz assess --json` reports these numbers exactly, with its own recommendation and the
-reason. Signals that justify the `rich` variant's extra machinery: **all** of the first
-three should hold, not just one:
+reason.
 
-| Signal | Threshold |
+## The one question
+
+Can every teammate, and every CI job that renders the help, install `justz`?
+
+| Answer | Recommend |
 |---|---|
-| Size | ≥3 namespaces **and** ≥25 recipes |
-| Flag surface | ≥1 recipe with more than two meaningful options |
-| Cross-cutting caveats | ≥1 namespace where a newcomer will get it wrong without prose |
-| Ownership | someone will own the registry, and every machine that renders help installs `justz` |
+| Yes | `rich` |
+| No | `native` |
+| Not known | Ask. It is the first row of the batched question in step 2 |
 
-Default to **the `native` variant**. Most repos with a task runner have a handful of flat
-recipes, and for those `rich` is machinery without a payload.
+Default to **the `rich` variant**. Three reasons, in the order to give them:
 
-## Evidence — measured, not asserted
+- **Safety tags exist only in the registry.** In `native`, nothing tells an agent or a
+  newcomer that a command is `destructive` or touches `production`. That is as true of
+  four recipes as of forty, which is why size is not the test.
+- **The registry is the only structured place** for details, exit codes, environment
+  rows and cross-references. Without one they end up in a README, or nowhere.
+- **`justz check` fails when `desc` and `[doc]` differ.** The cost measured below came
+  from two copies that nothing compared.
+
+Say what `native` gives up in one line when the user picks it: no details, no tags, no
+exit codes, no environment rows, no bare-name lookup. A developer who installs `justz`
+still gets `justz help`, `check`, `lint` and completion on a `native` repo.
+
+`rich` has one condition that is not negotiable: `justz check` runs in the `check`
+recipe, and in CI where there is one. Without it the two copies drift, as below.
+
+## What a registry costs without a check — measured, not asserted
 
 From a six-month-old `rich` adoption (33 recipes, 4 namespaces) that used the older
 vendored-bash renderer:
@@ -72,27 +94,27 @@ vendored-bash renderer:
   divergence structurally impossible. `justz check` now makes it detectable in `rich`
   too, which narrows the gap between the two.
 
-Counter-evidence, in `rich`'s favour, from the same repo: its UI namespace
+From the same repo, what the registry bought: its UI namespace
 carries 11 arg rows, 28 examples, a 5-line footer and 4 cross-references. That
 is the best documentation in the repo and it exists *because there was a
 structured place to put it*. The `native` variant reproduces it only with `[arg]` plus a
 doc-text convention, and the result is looser.
 
-## The upstream bet
+## What `just` may add upstream
 
-Every remaining weakness of the `native` variant traces to one `just` limitation:
+The weakness of the `native` listing traces to one `just` limitation:
 `--list` renders either the whole doc or nothing — it cannot show the first line
 of a multiline doc (casey/just#2684, open, with a maintainer proposal for
 short/long `[doc]` arguments).
 
-- The `rich` variant bets that gap persists, and pays a registry and a dependency on `justz`.
-- The `native` variant bets it closes. `[group]`, `--groups`, `--explain`,
-  `set default-list` and `[arg(…, help=…)]` already landed; when short/long
-  `[doc]` lands, `native` gets most of `rich`'s output for free and the registry
-  becomes optional in every repo that has one.
+- `[group]`, `--groups`, `--explain`, `set default-list` and `[arg(…, help=…)]`
+  already landed. When short/long `[doc]` lands, `native` gets a short and a long
+  description for free.
+- Safety tags, exit codes and environment rows are not part of that proposal. They
+  stay in the registry.
 
-State this bet to the user in one line when recommending. It is the actual
-decision; everything else is detail.
+Mention this in one line when the user chooses `native`: the gap narrows, and it
+does not close.
 
 ## Do not offer a third way
 

@@ -38,8 +38,8 @@ gh attestation verify justz-<version>-<os>-<arch>.tar.gz --repo igorlino/justz
 
 Do this only when the user asks for a new justfile.
 
-1. `justz init --dry-run` lists the files. Show the list to the user.
-2. `justz init` writes them. Add `--variant rich` for a `commands.json` registry.
+1. `justz init --dry-run --variant rich` lists the files. Show the list to the user.
+2. `justz init --variant rich` writes them, with a `commands.json` registry. Use `--variant native` for a project that must need only `just`. Always pass `--variant`: `justz` 0.8.1 and older default to `native`.
 
 It never overwrites: if a file is in the way it writes nothing and exits `1`. A bad name or option exits `2`. For an existing repository, use `justz assess` and the `justfile-authoring` skill.
 
@@ -47,6 +47,7 @@ It never overwrites: if a file is in the way it writes nothing and exits `1`. A 
 
 `justz assess --json` reports facts about the justfile and recommends a variant.
 
+- `recommendation.variant` is `rich`, and it holds only when `recommendation.condition` is true: every machine that renders the help can install `justz`. Ask the user. When it is not true, use `recommendation.otherwise`. A `justz` with no `condition` field used the size of the project.
 - A public `default` recipe is a dispatcher, not a command. It is not counted, as in `check`. `check --strict` fails on it.
 - `advice` lists hints, such as a registry whose default recipes do not run `justz help`. Shim names such as `tz` are not recognized there.
 
