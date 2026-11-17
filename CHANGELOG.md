@@ -4,6 +4,8 @@ What changed in each release of `justz`, for people who use it. The format follo
 
 ## Unreleased
 
+## 0.10.0 - 2026-11-17
+
 ### Added
 
 - `justz help -j --expanded` prints every command of the project in one document: `commands`, each with its `path`, `desc`, `hasDetail` and `tags`.
@@ -23,7 +25,7 @@ What changed in each release of `justz`, for people who use it. The format follo
 - `justz help` no longer prints a `#` after a command that has no description, in the summary, the expanded reference and a group.
 - `justz check` passes on an overlay that `justz generate` has just written, when a `[doc]` has an `example:` line. It reported `registry-desc-diverges` and told you to run `justz generate` again.
 - `justz resolve --json` prints its document in a project with no registry: `"status": "none"`, `"reason": "no-registry"`, exit `3`. It printed a plain message.
-- `justz help` with more than two words exits `2`, as every usage error does. It exited `1`.
+- **Breaking.** `justz help` with more than two words exits `2`, as every usage error does. It exited `1`.
 - `justz --help` lists exit code `3`, and `justz help --help` says that the commands can come from the justfile alone.
 - `justz init` with a wrong `--variant` no longer suggests `--name`.
 
