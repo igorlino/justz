@@ -36,7 +36,7 @@ go install github.com/igorlino/justz/cmd/justz@latest
 
 **Windows**: `winget install igorlino.justz` is coming. Until then, download the `.zip` from the [releases page](https://github.com/igorlino/justz/releases).
 
-Then run `justz doctor`.
+Then run `justz setup`. It checks the machine and adds the `jz` and `jzh` shortcuts. Homebrew is the only install that brings them. To check again later and change nothing, run `justz doctor`.
 
 ## Verify a download
 

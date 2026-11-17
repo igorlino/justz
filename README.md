@@ -22,7 +22,7 @@ jz: tool clean
 clean
 ```
 
-`jz` runs a command, and `jzh <command>` shows its help. Bare `jz` runs the default recipe, like `just`: here it calls `justz help`, as a project from `justz init --variant rich` does. Bare `jzh` shows the help and runs nothing. With a command registry, a bare name such as `clean` finds its group, `tool`; without one, type `jz tool clean`. `jz` and `jzh` are short forms of `justz`; see [How you type it](#how-you-type-it).
+`jz` runs a command, and `jzh <command>` shows its help. Commands can sit in groups: `jz clean` found `clean` in the group `tool`, and its first line says so. `jz` and `jzh` are short forms of `justz`: see [How you type it](#how-you-type-it).
 
 And when the documentation drifts from the recipes, `justz check` says where, and what to paste:
 
@@ -46,7 +46,7 @@ justz check: 1 error, 1 warning (4 public recipes checked, rich)
 - **Discovery.** A new teammate, or an AI agent, cannot tell what the project can do, which flags a command takes, or which commands are safe to run.
 - **Drift.** The help text, the docs and the recipes slowly disagree, and nobody notices until someone is misled.
 
-`justz` fixes both with one source of truth: the help, the completion and the checks all read the same data, so they cannot disagree.
+`justz` fixes both. The help you read and the tab completion come from the same data, and `justz check` fails when that data and the recipes disagree.
 
 ## Quickstart
 
@@ -58,8 +58,8 @@ justz setup                         # check this machine; adds jz and jzh if you
 
 cd your-project
 jzh                                 # what can this project do?
-jzh tool clean                      # one command: usage, examples, options
-jz tool clean                       # run it
+jzh <command>                       # one command: what it does and how to call it
+jz <command>                        # run it
 justz check                         # is it documented, and does the doc still match?
 ```
 
@@ -71,8 +71,10 @@ You keep typing `just`. The short forms are there when you want them.
 
 | You type | What it is | It needs |
 |---|---|---|
-| `just`, `just help tool clean`, `just check` | Your justfile's own recipes. `justz init --variant rich` writes them so that they call `justz`. | A justfile from `justz init --variant rich`, or the same three recipes |
-| `jz`, `jzh` | Shortcuts for the project around the current directory, from any subdirectory. | `justz setup` (Homebrew installs them) |
+| `just`, `just help tool clean`, `just check` | Your justfile's own recipes, when it defines them. | A justfile from `justz init` with its defaults, or your own default, `help` and `check` recipes |
+| `jzh`, `jzh clean` | The help of the project around the current directory, from any subdirectory. It runs nothing. | `justz setup` (Homebrew installs it) |
+| `jz build`, `jz tool clean` | Runs a command of that project. With no command, it runs the default recipe, like `just`. | `justz setup` (Homebrew installs it) |
+| `jz clean`, for `tool clean` | A bare name finds its group. | A project with a [command registry](docs/variants.md) |
 | `tz`, `tzh`, or a name you choose | A [shim](docs/shims.md) pinned to one project, from any directory. | `justz shim add` |
 | `justz help`, `justz check` | The CLI itself. Works in any project with a justfile. | Nothing |
 
@@ -88,19 +90,19 @@ You keep typing `just`. The short forms are there when you want them.
 | Tab completion from the same data as the help | `justz completions` |
 | Check the machine and add the `jz` and `jzh` shortcuts | `justz setup` |
 | Run a project's commands from any directory, safely | `justz shim add` ([shims](docs/shims.md)) |
-| Editor completion and type checks for `commands.json` | `justz schema` |
+| Editor completion and type checks for the registry file, `commands.json` | `justz schema` |
 
 Every command and flag: [Command reference](docs/commands.md).
 
 ## Built for agents
 
-An agent should not have to guess. Every command has stable exit codes. The ones that report something print JSON with `--json`. A command's text, exit codes, environment variables and safety tags (`destructive`, `production`, `read-only`...) are one call away:
+An agent should not have to guess. Every command has stable exit codes. The ones that report something print JSON with `--json`. What a project documents about a command is one call away: its description and details, exit codes, environment variables and safety tags (`destructive`, `production`, `read-only`...).
 
 ```sh
 justz help tool clean -j | jq '{desc, detail, tags}'
 ```
 
-Two agent skills, `justz-cli` and `justfile-authoring`, teach an agent how to use `justz` and how to write a justfile it can discover:
+Two agent skills come with it. `justz-cli` teaches an agent to use `justz` in any project. `justfile-authoring` teaches it to document a justfile for you: it reads the recipes and writes the documentation.
 
 ```sh
 npx skills add igorlino/justz
@@ -108,10 +110,10 @@ npx skills add igorlino/justz
 
 Claude Code plugin, the JSON contract and the workflow: [For agents](docs/for-agents.md). Machine-readable index: [`llms.txt`](llms.txt).
 
-## Design principles
+## What you can rely on
 
 - **One binary.** No `jq`, `awk`, Python or Node. It needs only `just`.
-- **It reads `just` the supported way**, through `just --dump --dump-format json`, so it keeps working as `just` evolves.
+- **It keeps working as `just` evolves.** It reads a justfile only through the JSON that `just` prints, never by parsing the text.
 - **It stays out of your secrets.** `justz` never reads, stores or injects credentials.
 - **Text from a repository cannot drive your terminal.** Escape sequences and control characters in descriptions are replaced before they are printed.
 - **Verified releases.** SHA256 checksums and build provenance attestations.

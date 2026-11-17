@@ -19,7 +19,7 @@ In a directory that has a justfile:
 justz help                    # a compact summary: core commands, then each group
 justz help --expanded         # the full reference
 justz help <group>            # one group
-justz help <group> <command>  # one command: usage, examples, options, details
+justz help <group> <command>  # one command: how to invoke it, examples, options, details
 justz help --browse           # pick interactively (fzf if installed)
 ```
 

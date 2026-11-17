@@ -64,12 +64,11 @@
       <button type="button" role="tab" aria-controls="term">check</button>
       <button type="button" role="tab" aria-controls="term">lint</button>
     </div>
-    <p class="sub">Bare <code>jz</code> runs the default recipe, like <code>just</code>: here it calls <code>justz help</code>. Bare <code>jzh</code> shows the help and runs nothing.</p>
-    <p class="sub">With a command registry, a bare name such as <code>clean</code> finds its group, <code>tool</code>; without one, type <code>jz tool clean</code>.</p>
+    <p class="sub"><code>jz</code> runs a command, and <code>jzh &lt;command&gt;</code> shows its help. Commands can sit in groups: <code>jz clean</code> found <code>clean</code> in the group <code>tool</code>, and its first line says so. <code>jz</code> and <code>jzh</code> are short forms of <code>justz</code>: see <a href="#type">How you type it</a>.</p>
   </section>
 
   <section id="why" class="reveal">
-    <h2>One source of truth</h2>
+    <h2>Why</h2>
     <p class="sect-lede"><code>just --list</code> is fine for a dozen recipes. Past that, two things get hard.</p>
     <div class="cols">
       <article class="card spot">
@@ -81,16 +80,17 @@
         <p>The help text, the docs and the recipes slowly disagree, and nobody notices until someone is misled.</p>
       </article>
     </div>
-    <p class="note">The help, the completion and the checks all read the same data, so they cannot disagree.</p>
+    <p class="note"><code>justz</code> fixes both. The help you read and the tab completion come from the same data, and <code>justz check</code> fails when that data and the recipes disagree.</p>
   </section>
 
   <section id="start" class="reveal">
     <h2>Quickstart</h2>
     <ol class="steps">
+      <li><code>brew install igorlino/tap/justz</code><span>more options: <a href="https://github.com/igorlino/justz/blob/main/docs/installation.md">Installation</a></span></li>
       <li><code>justz setup</code><span>check this machine; adds <code>jz</code> and <code>jzh</code> if your install did not</span></li>
-      <li><code>jzh</code><span>what can this project do?</span></li>
-      <li><code>jzh tool clean</code><span>one command: usage, examples, options</span></li>
-      <li><code>jz tool clean</code><span>run it: here, <code>clean</code> in the group <code>tool</code></span></li>
+      <li><code>jzh</code><span>in your project: what can it do?</span></li>
+      <li><code>jzh &lt;command&gt;</code><span>one command: what it does and how to call it</span></li>
+      <li><code>jz &lt;command&gt;</code><span>run it</span></li>
       <li><code>justz check</code><span>is it documented, and does the doc still match?</span></li>
     </ol>
     <p class="note">To document a project's commands, ask an agent that has the <a href="#agents"><code>justfile-authoring</code> skill</a>: it reads the recipes and writes the documentation. Without an agent, <code>justz init</code> scaffolds a new project, and you add the commands by hand. Where the documentation lives, and what that needs: <a href="https://github.com/igorlino/justz/blob/main/docs/variants.md">Variants</a>.</p>
@@ -100,8 +100,9 @@
     <h2>How you type it</h2>
     <p class="sect-lede">You keep typing <code>just</code>. The short forms are there when you want them.</p>
     <div class="grid">
-      <article class="card spot"><code>just</code><p>Your justfile's own recipes. <code>justz init --variant rich</code> writes <code>just</code>, <code>just help</code> and <code>just check</code> so that they call <code>justz</code>.</p></article>
-      <article class="card spot"><code>jz</code> <code>jzh</code><p>Shortcuts for the project around the current directory, from any subdirectory. <code>justz setup</code> adds them; Homebrew installs them.</p></article>
+      <article class="card spot"><code>just</code><p>Your justfile's own recipes, such as <code>just help</code> and <code>just check</code>, when it defines them. A justfile from <code>justz init</code> does, by default.</p></article>
+      <article class="card spot"><code>jzh</code><p>The help of the project around the current directory, from any subdirectory. It runs nothing.</p></article>
+      <article class="card spot"><code>jz</code><p>Runs a command of that project. With no command, it runs the default recipe, like <code>just</code>. In a project with a <a href="https://github.com/igorlino/justz/blob/main/docs/variants.md">command registry</a>, a bare name finds its group: <code>jz clean</code> for <code>tool clean</code>. <code>justz setup</code> adds <code>jz</code> and <code>jzh</code>; Homebrew installs them.</p></article>
       <article class="card spot"><code>tz</code> <code>tzh</code><p>A <a href="https://github.com/igorlino/justz/blob/main/docs/shims.md">shim</a> pinned to one project, under a name you choose, from any directory. Added with <code>justz shim add</code>.</p></article>
       <article class="card spot"><code>justz</code><p>The CLI itself. <code>justz help</code> and <code>justz check</code> work in any project with a justfile, with no setup.</p></article>
     </div>
@@ -117,13 +118,13 @@
       <a class="card spot" href="https://github.com/igorlino/justz/blob/main/docs/commands.md"><code>justz completions</code><p>Tab completion for zsh and bash, from the same data as the help.</p></a>
       <a class="card spot" href="https://github.com/igorlino/justz/blob/main/docs/shims.md"><code>justz setup</code><p>Check the machine and add the <code>jz</code> and <code>jzh</code> shortcuts. It never takes a name that another command on your PATH has.</p></a>
       <a class="card spot" href="https://github.com/igorlino/justz/blob/main/docs/shims.md"><code>justz shim add</code><p>Run a project's commands from any directory, safely, under a short name.</p></a>
-      <a class="card spot" href="https://github.com/igorlino/justz/blob/main/docs/registry.md"><code>justz fmt</code> <code>justz schema</code><p>Keep the command registry in one stable order, with editor completion and type checks for <code>commands.json</code>.</p></a>
+      <a class="card spot" href="https://github.com/igorlino/justz/blob/main/docs/registry.md"><code>justz fmt</code> <code>justz schema</code><p>Keep the command registry in one stable order, with editor completion and type checks for the registry file, <code>commands.json</code>.</p></a>
     </div>
   </section>
 
   <section id="agents" class="reveal">
     <h2>Built for agents</h2>
-    <p class="sect-lede">An agent should not have to guess. Stable exit codes, JSON with <code>--json</code>, and safety tags one call away.</p>
+    <p class="sect-lede">An agent should not have to guess. Stable exit codes, JSON with <code>--json</code>, and everything a project documents about a command one call away, safety tags included.</p>
     <div class="split">
       <div class="term static">
         <div class="bar"><i></i><i></i><i></i><span>justz help tool clean -j</span></div>
@@ -131,7 +132,7 @@
       </div>
       <div class="side">
         <h3>Two skills</h3>
-        <p><code>justz-cli</code> teaches an agent to use <code>justz</code>. <code>justfile-authoring</code> teaches it to write a justfile it can discover.</p>
+        <p><code>justz-cli</code> teaches an agent to use <code>justz</code> in any project. <code>justfile-authoring</code> teaches it to document a justfile for you: it reads the recipes and writes the documentation.</p>
         <div class="install" data-copy="npx skills add igorlino/justz">
           <span class="prompt">$</span>
           <code>npx skills add igorlino/justz</code>
@@ -143,10 +144,10 @@
   </section>
 
   <section id="principles" class="reveal">
-    <h2>Design principles</h2>
+    <h2>What you can rely on</h2>
     <ul class="pills">
       <li class="spot"><b>One binary.</b> No <code>jq</code>, <code>awk</code>, Python or Node.</li>
-      <li class="spot"><b>Reads <code>just</code> the supported way</b> through its JSON dump.</li>
+      <li class="spot"><b>Keeps working as <code>just</code> evolves.</b> It reads a justfile only through the JSON that <code>just</code> prints.</li>
       <li class="spot"><b>Stays out of your secrets.</b> Never reads, stores or injects credentials.</li>
       <li class="spot"><b>Safe output.</b> Escape sequences in descriptions never reach your terminal.</li>
       <li class="spot"><b>Verified releases.</b> SHA256 checksums and provenance attestations.</li>
