@@ -12,6 +12,7 @@ What changed in each release of `justz`, for people who use it. The format follo
 
 ### Changed
 
+- The website keeps its section links on a phone, has a control that pauses the demo, no longer moves the page when the demo changes, and announces a copied command to a screen reader. It serves `llms.txt` at its root.
 - The installation page and the install script name `justz setup` as the step after an install, as the README does. The quickstart of the README and of the website shows `jzh <command>` and `jz <command>`, and the website's starts with the install.
 
 ### Fixed
