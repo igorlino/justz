@@ -27,14 +27,50 @@ func FromDump(dumpJSON []byte, name string) (*Project, error) {
 		return nil, err
 	}
 	headings := map[string]string{}
+	params := map[string][]generate.Arg{} // by "command", or "group command"
 	for _, c := range parsed.Core {
 		headings[c.Name] = c.Heading
+		params[c.Name] = c.AllArgs
+	}
+	for _, m := range parsed.Modules {
+		for _, c := range m.Commands {
+			params[m.Name+" "+c.Name] = c.AllArgs
+		}
 	}
 	if p.Core != nil {
 		for i := range p.Core.Commands {
-			p.Core.Commands[i].Heading = headings[p.Core.Commands[i].Name]
+			c := &p.Core.Commands[i]
+			c.Heading = headings[c.Name]
+			c.Args = withUndocumented(c.Args, params[c.Name])
+		}
+	}
+	for _, g := range p.Groups {
+		for i := range g.Commands {
+			c := &g.Commands[i]
+			c.Args = withUndocumented(c.Args, params[g.Key+" "+c.Name])
 		}
 	}
 	p.sanitize()
 	return p, nil
+}
+
+// withUndocumented lists every parameter of a recipe, in the order of the
+// recipe: the documented ones as they are, the others with an empty
+// description. A justfile is the only source here, so a parameter left out
+// would look like a command that takes nothing, and one out of place would
+// swap two positional arguments.
+func withUndocumented(args []Arg, all []generate.Arg) []Arg {
+	documented := map[string]Arg{}
+	for _, a := range args {
+		documented[a.Name] = a
+	}
+	out := make([]Arg, 0, len(all))
+	for _, a := range all {
+		if d, ok := documented[a.Name]; ok {
+			out = append(out, d)
+		} else {
+			out = append(out, Arg{Name: a.Name})
+		}
+	}
+	return out
 }

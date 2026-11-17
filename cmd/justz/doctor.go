@@ -23,7 +23,24 @@ type doctorReport struct {
 	Checks  []check `json:"checks"`
 }
 
+const doctorUsage = `Usage: justz doctor [--json]
+
+Check that justz can do its job on this machine: just is on the PATH and new
+enough, and each jz and jzh shortcut is the command your shell finds.
+
+It changes nothing. To add the shortcuts, run: justz setup
+
+Exit codes: 0 every check passed (a warning does not fail), 1 a check failed,
+2 usage error.
+`
+
 func runDoctor(args []string, e env) int {
+	for _, a := range args {
+		if a == "--help" || a == "-h" {
+			fmt.Fprint(e.stdout, doctorUsage)
+			return 0
+		}
+	}
 	asJSON, err := parseJSONFlag(args)
 	if err != nil {
 		fmt.Fprintf(e.stderr, "justz doctor: %v\n", err)

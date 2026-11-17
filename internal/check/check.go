@@ -422,7 +422,7 @@ func registryRules(in Input, items []item) []Finding {
 			out = append(out, Finding{Rule: RuleRegistryMissing, Severity: Error, Subject: subject, Message: "missing from the registry", Fix: "add it to commands.json (or regenerate the overlay with: justz generate)"})
 			continue
 		}
-		if it.R.Doc != nil && e.HasDesc && strings.TrimSpace(*it.R.Doc) != "" && strings.TrimSpace(textsafe.Line(*it.R.Doc)) != strings.TrimSpace(e.Desc) {
+		if it.R.Doc != nil && e.HasDesc && strings.TrimSpace(*it.R.Doc) != "" && strings.TrimSpace(textsafe.Line(docFor(in.Variant, *it.R.Doc))) != strings.TrimSpace(e.Desc) {
 			f := Finding{Rule: RuleRegistryDesc, Severity: Error, Subject: subject,
 				Message: fmt.Sprintf("[doc] diverges from the registry description\n      justfile: %s\n      registry: %s", textsafe.Line(*it.R.Doc), e.Desc),
 				Fix:     descDivergesFix(in.Variant)}
@@ -508,6 +508,17 @@ func sortFindings(f []Finding) {
 		}
 		return f[i].Subject < f[j].Subject
 	})
+}
+
+// docFor is the part of a [doc] that the registry description must equal. The
+// overlay of local-rich is generated, and justz generate keeps the first line
+// of a [doc] as the description: the lines after it hold the example. A fresh
+// overlay must pass, so only that line is compared there.
+func docFor(variant, doc string) string {
+	if variant == "local-rich" {
+		return strings.SplitN(doc, "\n", 2)[0]
+	}
+	return doc
 }
 
 // descDivergesFix says how to make a [doc] and a registry description the same.

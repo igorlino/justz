@@ -118,3 +118,19 @@ func TestCurrentVersionPrefersStampedVersion(t *testing.T) {
 		t.Errorf("currentVersion() = %q, want %q", got, "1.2.3")
 	}
 }
+
+func TestDoctorHelp(t *testing.T) {
+	for _, flag := range []string{"--help", "-h"} {
+		e, out, errOut := testEnv(true)
+		if code := run([]string{"doctor", flag}, e); code != 0 || !strings.Contains(out.String(), "Usage: justz doctor [--json]") || errOut.Len() != 0 {
+			t.Errorf("doctor %s: exit %d, stdout %q, stderr %q", flag, code, out.String(), errOut.String())
+		}
+	}
+}
+
+func TestUsageListsEveryExitCode(t *testing.T) {
+	e, out, _ := testEnv(true)
+	if code := run([]string{"--help"}, e); code != 0 || !strings.Contains(out.String(), "3  no match (resolve only)") {
+		t.Errorf("exit %d:\n%s", code, out.String())
+	}
+}

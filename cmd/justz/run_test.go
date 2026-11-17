@@ -458,3 +458,62 @@ func TestJzhHelpsFromASubdirectory(t *testing.T) {
 		t.Errorf("jzh -j: code %d, out %q", code, r.out.String())
 	}
 }
+
+// No match is a result: with --json it is a document, also in a project that
+// has no registry at all.
+func TestResolveJSONWithoutARegistry(t *testing.T) {
+	t.Chdir(gitProject(t))
+	r := newRuntimeEnv("build")
+	code := run([]string{"resolve", "--json", "clean"}, r.env)
+	var got struct {
+		Name, Status, Reason string
+		Matches              []any
+	}
+	if err := json.Unmarshal(r.out.Bytes(), &got); err != nil {
+		t.Fatalf("not JSON: %v\nstdout %q stderr %q", err, r.out.String(), r.errOut.String())
+	}
+	if code != 3 || got.Name != "clean" || got.Status != "none" || got.Reason != "no-registry" || got.Matches == nil || len(got.Matches) != 0 {
+		t.Errorf("exit %d, document %+v", code, got)
+	}
+
+	r = newRuntimeEnv("build")
+	if code := run([]string{"resolve", "clean"}, r.env); code != 3 || r.out.Len() != 0 || !strings.Contains(r.errOut.String(), "no commands.json") {
+		t.Errorf("text: exit %d, stdout %q, stderr %q", code, r.out.String(), r.errOut.String())
+	}
+}
+
+// jz --help is the help of just, which does not know the shim: one line on
+// stderr says what the shim adds, and the arguments still go to just.
+func TestShortcutHelpSaysWhatItAdds(t *testing.T) {
+	t.Chdir(registryProject(t))
+	r := newRuntimeEnv("build")
+	var got []string
+	r.env.execJust = func(args []string) int { got = args; return 0 }
+	if code := run([]string{"--local", "jz", "--help"}, r.env); code != 0 {
+		t.Fatalf("exit %d, stderr %q", code, r.errOut.String())
+	}
+	if len(got) != 3 || got[2] != "--help" {
+		t.Errorf("just should get --help: %v", got)
+	}
+	if !strings.Contains(r.errOut.String(), "jz runs just for") || !strings.Contains(r.errOut.String(), "jz --which NAME") {
+		t.Errorf("stderr: %q", r.errOut.String())
+	}
+}
+
+// Without a registry a bare name finds nothing, so the line does not promise
+// it. -h is the same flag, and JUSTZ_QUIET silences the line.
+func TestShortcutHelpWithoutARegistry(t *testing.T) {
+	t.Chdir(gitProject(t))
+	r := newRuntimeEnv("build")
+	r.env.execJust = func(args []string) int { return 0 }
+	if code := run([]string{"--local", "jz", "-h"}, r.env); code != 0 || !strings.Contains(r.errOut.String(), "jz runs just for") || strings.Contains(r.errOut.String(), "--which") {
+		t.Errorf("exit %d, stderr %q", code, r.errOut.String())
+	}
+
+	t.Setenv("JUSTZ_QUIET", "1")
+	r = newRuntimeEnv("build")
+	r.env.execJust = func(args []string) int { return 0 }
+	if code := run([]string{"--local", "jz", "--help"}, r.env); code != 0 || r.errOut.Len() != 0 {
+		t.Errorf("quiet: exit %d, stderr %q", code, r.errOut.String())
+	}
+}

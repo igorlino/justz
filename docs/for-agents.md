@@ -33,6 +33,7 @@ The skills never install `justz`. They check for it and tell you how to install 
 | Exit codes | `0` success, `1` a check failed or an error, `2` usage error, `3` (`resolve` only) no match. |
 | JSON | `check`, `lint`, `assess`, `doctor`, `resolve`, `setup` and every `shim` command accept `--json`. `help` uses `-j`. `fmt`, `generate`, `completions`, `init` and `schema` do not. |
 | JSON failures | A failed check or no match still prints its JSON document. An operational or usage error prints a plain message on stderr. |
+| `help` lookups | Words that match no group or command exit `2`, with a message on stderr. Words that match several exit `2` and list them; with `-j` the list is a JSON array. |
 | Evolution | Fields may be added. They are not renamed or removed. Ignore unknown fields. |
 | Terminal safety | Text from a registry or justfile has control characters replaced by U+FFFD, in text and in JSON. The output of `just` and of recipes passes through unchanged. |
 | Secrets | `justz` never reads, stores or injects credentials. |
@@ -56,6 +57,29 @@ Parse the JSON. Do not scrape the text tables, and do not read `commands.json` o
    **Absence never means safe.** A command with no tags is unknown, not harmless. A tag you do not know is unknown, not an error.
 5. **Run it** with `just <group> <command> ...` (or a shim such as `tz <group> <command>`).
 6. **Verify your own changes.** After editing a justfile or registry: `justz check --json`, and `justz lint --json` for advice.
+
+## One call for every command
+
+`justz help -j --expanded` adds `commands` to the overview: every command of the project, the core ones first.
+
+| Field | Meaning |
+|---|---|
+| `path` | What a zoom takes and what `just` runs: `build`, or `tool clean`. |
+| `extra` | `true` for an entry that is documented but does not run as `just <path>`. Left out otherwise. |
+| `desc` | The one-line description. Empty when the recipe has none. |
+| `hasDetail` | The zoom has a `detail`. |
+| `tags` | What the command claims to touch. Left out when it declares none. |
+
+Use it to find the commands tagged `destructive` or `production` before you choose one. The zoom has the rest: `detail`, `args`, `exits` and `env`.
+
+## What the JSON cannot tell you
+
+| Field | Limit |
+|---|---|
+| `invoke` | The command as the project writes it. Its first word is `cli` in the registry, and it can be a shim that is not installed. Run `just <path>`. |
+| `args` | With a registry or a personal overlay, the arguments it documents. With neither, every parameter of the recipe, in its order: one with no help text has an empty `desc`. |
+| `desc` | Empty when the recipe has no `[doc]`. An empty `desc` and no `tags` mean undocumented, not harmless. |
+| `tags` | A claim by the author. `justz check` compares `asks-first` with the recipe's `[confirm]` and reports tags that contradict each other. It cannot verify the rest. |
 
 ## `assess --json`
 

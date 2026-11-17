@@ -220,3 +220,17 @@ func TestInitScaffoldPassesCheckWithRealJust(t *testing.T) {
 		})
 	}
 }
+
+// The hint about --name is for a name that came from the directory. A wrong
+// --variant is not about the name.
+func TestInitNameHintOnlyForAName(t *testing.T) {
+	e, _, errOut := testEnv(false)
+	if code := run([]string{"init", "--variant", "fancy", t.TempDir()}, e); code != 2 || strings.Contains(errOut.String(), "--name") {
+		t.Errorf("variant: exit %d, stderr %q", code, errOut.String())
+	}
+	bad := filepath.Join(t.TempDir(), "it's")
+	e, _, errOut = testEnv(false)
+	if code := run([]string{"init", bad}, e); code != 2 || !strings.Contains(errOut.String(), "pass --name") {
+		t.Errorf("name: exit %d, stderr %q", code, errOut.String())
+	}
+}

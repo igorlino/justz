@@ -116,6 +116,10 @@ func (p *printer) descLines(indent int, desc string) []string {
 // compactRow is a row of the summary: a name, a hash and a description.
 func (p *printer) compactRow(name, desc string) {
 	const indent = 4 + compactName + 3
+	if strings.TrimSpace(desc) == "" {
+		p.line("    %s", p.s.green(name))
+		return
+	}
 	lines := p.descLines(indent, desc)
 	p.line("    %s %s %s", p.s.green(pad(name, compactName)), p.s.dim("#"), lines[0])
 	for _, l := range lines[1:] {
@@ -126,6 +130,10 @@ func (p *printer) compactRow(name, desc string) {
 // fullRow is a row of the expanded view. With the wide layout and an example,
 // the example goes in a third column.
 func (p *printer) fullRow(name, desc, example string) {
+	if strings.TrimSpace(desc) == "" && (example == "" || !p.o.wide()) {
+		p.line("    %s", p.s.green(name))
+		return
+	}
 	if p.o.wide() && example != "" {
 		p.line("    %s %s %s %s", p.s.green(pad(name, fullName)), p.s.dim("#"), pad(desc, exampleDesc), p.s.dim(example))
 		return

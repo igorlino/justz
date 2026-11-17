@@ -32,6 +32,8 @@ const (
 	ReasonGroup   = "group"            // the name is a group, which is a namespace
 	ReasonCore    = "core"             // a core command runs without its group
 	ReasonExtra   = "documented-extra" // documented but not runnable by bare name
+	// ReasonNoRegistry: the project has no registry, so no name has a group.
+	ReasonNoRegistry = "no-registry"
 )
 
 // Match is one group and command.

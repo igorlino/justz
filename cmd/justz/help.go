@@ -18,16 +18,20 @@ import (
 
 const helpUsage = `Usage: justz help [flags] [group] [command]
 
-Show the commands of the current project, rendered from its command registry
-(commands.json) or the personal overlay (.just-local-rich.json).
+Show the commands of the current project. They are read from its command
+registry (commands.json), else from the personal overlay
+(.just-local-rich.json), else from the justfile itself.
 
   (no words)         A compact summary: core commands, then each group
   --expanded         The full reference: every group with its commands
   <group>            One group: its usage, commands, examples
   [group] <command>  One command: how to invoke it, examples, options, details
   --wide, -w         Add example columns (on by default from 100 columns)
-  --json, -j         Print the same information as JSON for tools and agents
-  --browse, -b       Pick a group or command (fzf if installed, else a numbered menu)
+  --json, -j         Print the same information as JSON for tools and agents.
+                     With --expanded and no words: every command of the
+                     project, with its description and tags, in one document
+  --browse, -b       Pick a group or command (fzf if installed, else a
+                     numbered menu)
 
 --browse never prompts without a terminal: it prints the list of groups instead.
 A group or command can be given by an exact name, or by a unique start of it
@@ -37,7 +41,8 @@ and is listed.
 Colors are used only on a terminal, and never when NO_COLOR is set. The width
 comes from COLUMNS, then the terminal, then 80.
 
-Exit codes: 0 done, 1 error, 2 usage error.
+Exit codes: 0 done, 1 error, 2 usage error, or no group or command matches
+the words (several matches are listed).
 `
 
 func runHelp(args []string, e env) int {
@@ -78,7 +83,7 @@ func runHelpAt(dir, helpCmd string, args []string, e env) int {
 	terms = strings.Fields(strings.Join(terms, " "))
 	if len(terms) > 2 {
 		fmt.Fprintf(e.stderr, "%s: expected [group] <term>, got %d words\n%s", helpCmd, len(terms), helpUsage)
-		return 1
+		return 2
 	}
 
 	proj, err := loadHelpProject(e, dir)
@@ -91,6 +96,9 @@ func runHelpAt(dir, helpCmd string, args []string, e env) int {
 		return browse(proj, opts, asJSON, e)
 	}
 	if asJSON {
+		if expanded && len(terms) == 0 {
+			return printJSON(e, help.InventoryJSON(proj))
+		}
 		return zoomJSON(proj, terms, e)
 	}
 	if len(terms) > 0 {

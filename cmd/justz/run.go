@@ -72,6 +72,16 @@ func execShim(label, justfile string, soft bool, rest []string, e env) int {
 
 	justArgs := append([]string{"--justfile", justfile}, rest...)
 
+	// The help of just says nothing about the shim, so say what it adds first.
+	// A bare name finds its group only where a registry has groups.
+	if len(rest) == 1 && (rest[0] == "--help" || rest[0] == "-h") && os.Getenv("JUSTZ_QUIET") != "1" {
+		adds := "Every argument goes to just."
+		if proj, err := loadProject(e, justfile); err == nil && proj.Registry != nil {
+			adds = fmt.Sprintf("A bare command name finds its group (%s --which NAME shows what it runs), and every other argument goes to just.", label)
+		}
+		fmt.Fprintf(e.stderr, "%s runs just for %s. %s The help of just follows.\n\n", label, justfile, adds)
+	}
+
 	// Only a plain word in first place can be a bare command name.
 	if len(rest) > 0 && rest[0] != "" && rest[0][0] != '-' {
 		if proj, err := loadProject(e, justfile); err == nil && proj.Registry != nil {

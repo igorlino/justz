@@ -47,8 +47,9 @@ Add --json to a command to get machine-readable output.
 
 Exit codes:
   0  success
-  1  a check failed
+  1  a check failed, or an error
   2  usage error
+  3  no match (resolve only)
 `
 
 // env holds everything a command needs from the outside world, so tests can

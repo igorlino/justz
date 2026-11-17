@@ -15,9 +15,10 @@ A group or command can be an exact name or a unique prefix. An ambiguous name ex
 
 | Field | Content | How to use it |
 |---|---|---|
-| `desc` | One line: what the command does. | |
+| `desc` | One line: what the command does. Empty when the recipe has no `[doc]`. | |
+| `invoke` | The command as the project writes it. Its first word can be a shim that is not installed. | Do not run it. Run `just <path>`. |
 | `detail` | Facts the `desc` leaves out: what the command needs, what it changes. | Read it when the group listing says `hasDetail: true`. |
-| `args` | Argument and flag rows. | |
+| `args` | Argument and flag rows. In a project with no registry and no overlay, every parameter is listed, with an empty `desc` for one that has no help text (not in 0.9.0 or earlier). | An empty array on 0.9.0 or earlier, or with an overlay, is not proof that the command takes nothing: check `just --usage <recipe>`. |
 | `exits` | An object from exit code to meaning. | Know which codes are expected and what to do on each. |
 | `env` | Rows of `name`, `desc`, and optionally `required` and `default`. | Set a `required` variable around the command. It is not a flag. |
 | `tags` | An array of free strings. | Read it before running the command: `justz help <group> <command> -j \| jq .tags`. |
@@ -26,6 +27,8 @@ A group or command can be an exact name or a unique prefix. An ambiguous name ex
 The text zoom prints the same as **Details**, **Options**, **Exit codes**, **Environment**, a **Tags** line and a **See also** line. `detail` is not in the array printed for an ambiguous name.
 
 `justz help <group> -j` lists the commands of a group. Each has `hasDetail`, so you know which zooms are worth a call.
+
+`justz help -j --expanded` adds `commands` to the overview (not in 0.9.0 or earlier): every command of the project with its `path`, `desc`, `hasDetail` and `tags`. Use it to find what is tagged `destructive` or `production` in one call. An entry with `"extra": true` is documented but does not run as `just <path>`. When the field is absent, the `justz` is older: zoom into each group.
 
 ## `desc` plus `detail` is the text of a command
 
