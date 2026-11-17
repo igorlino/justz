@@ -441,7 +441,7 @@ if (( $+functions[_just_rich_complete_help_term] )); then ... else print "skippe
 
 ## 14. Reusing a Forgiving Lookup to Run Things
 
-**Found in:** the design of the bare-name shortcut `jz <name>`, caught in review before it shipped
+**Found in:** a bare-name shortcut (`jz <name>`) that reused the help lookup to run a command, caught in review
 
 **Why it's wrong:**
 - `justz help [group] [term]` accepts exact names, then unique prefixes. That is right for reading help
@@ -455,7 +455,7 @@ if (( $+functions[_just_rich_complete_help_term] )); then ... else print "skippe
 
 ## 15. Trusting commands.json Over the Justfile
 
-**Found in:** the same `jz` design
+**Found in:** a bare-name shortcut that rewrote a command from `commands.json` alone
 
 **Why it's wrong:**
 - `commands.json` documents recipes; it is not the list of what runs, and `extra` entries are not recipes
@@ -469,7 +469,7 @@ if (( $+functions[_just_rich_complete_help_term] )); then ... else print "skippe
 
 ## 16. Bare-Name Shortcuts in Scripts
 
-**Found in:** the `jz <name>` shortcut (`jz git` for `just tool git`)
+**Found in:** scripts that call a bare-name shortcut (`jz git` for `just tool git`)
 
 **Why it's wrong:**
 - Adding a command to a second group turns every existing `jz <name>` into an ambiguity error, with no change to the callers

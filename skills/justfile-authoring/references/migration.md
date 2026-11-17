@@ -2,7 +2,7 @@
 
 ## A repo with the legacy bash help system → `justz`
 
-Older versions of this skill scaffolded `rich` repos with a vendored `scripts/lib/help.sh` (about 1,200 lines of bash, needing `jq`), completion scripts sourced from the skill, a `jz` script, and a `just/common.just` with `_check-doc`. `justz` replaces all of it, reads the same `commands.json`, and removes the per-repo copy that had to stay byte-identical. The registry does not change.
+A `rich` repo from before `justz` has a vendored `scripts/lib/help.sh` (about 1,200 lines of bash, needing `jq`), completion scripts sourced from the skill, a `jz` script, and a `just/common.just` with `_check-doc`. `justz` replaces all of it, reads the same `commands.json`, and removes the per-repo copy that had to stay byte-identical. The registry does not change.
 
 Do this as one reviewed change:
 

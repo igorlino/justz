@@ -117,10 +117,11 @@ func runHelpAt(dir, helpCmd string, args []string, e env) int {
 // itself through just --dump.
 func loadHelpProject(e env, cwd string) (*help.Project, error) {
 	path, err := registry.Discover(cwd)
+	fromOverlay := false
 	if err != nil {
 		overlay := filepath.Join(projectRoot(cwd), ".just-local-rich.json")
 		if fileExists(overlay) {
-			path = overlay
+			path, fromOverlay = overlay, true
 		} else {
 			return nativeProject(e, cwd)
 		}
@@ -133,7 +134,18 @@ func loadHelpProject(e env, cwd string) (*help.Project, error) {
 	if err != nil {
 		return nil, fmt.Errorf("%s is not valid JSON: %v", path, err)
 	}
-	return help.FromRegistry(doc, filepath.Base(projectRootOf(path)))
+	proj, err := help.FromRegistry(doc, filepath.Base(projectRootOf(path)))
+	if err != nil || !fromOverlay {
+		return proj, err
+	}
+	// The overlay is a copy of what the justfile says, so the justfile decides
+	// whether a group lists itself when run with no command.
+	var dump string
+	if justfile, ferr := shim.FindJustfile(cwd); ferr == nil {
+		dump, _ = e.runCmd("just", "--justfile", justfile, "--dump", "--dump-format", "json")
+	}
+	proj.CheckDispatchers([]byte(dump))
+	return proj, nil
 }
 
 // nativeProject reads a project that has no registry from its justfile.

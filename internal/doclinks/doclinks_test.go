@@ -16,7 +16,7 @@ var link = regexp.MustCompile(`\]\(([^)#\s]+)`)
 
 func TestRelativeLinksResolve(t *testing.T) {
 	root := filepath.Join("..", "..")
-	files := []string{"README.md", "AGENTS.md", "CHANGELOG.md", "SECURITY.md"}
+	files := []string{"README.md", "AGENTS.md", "CHANGELOG.md", "SECURITY.md", "CONTRIBUTING.md"}
 	for _, dir := range []string{"docs", "skills"} {
 		err := filepath.WalkDir(filepath.Join(root, dir), func(p string, d os.DirEntry, err error) error {
 			if err != nil {

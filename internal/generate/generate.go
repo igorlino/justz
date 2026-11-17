@@ -15,6 +15,7 @@ import (
 type dump struct {
 	Recipes map[string]recipe `json:"recipes"`
 	Modules map[string]dump   `json:"modules"`
+	First   *string           `json:"first"` // the recipe a bare call runs
 }
 
 type recipe struct {
@@ -66,6 +67,10 @@ type Module struct {
 	Name      string
 	Commands  []Command
 	HasNested bool // the module has nested modules, which are not read
+	// Dispatcher is true when a bare `just <module>` is known to run a recipe
+	// named default or _default, which by convention lists the module. It is
+	// false when a bare call runs a command, and when the dump does not say.
+	Dispatcher bool
 }
 
 // Parsed is the content of a justfile dump: the root recipes and the
@@ -89,10 +94,14 @@ func Parse(dumpJSON []byte) (*Parsed, error) {
 	sort.Strings(names)
 	for _, n := range names {
 		m := d.Modules[n]
-		p.Modules = append(p.Modules, Module{Name: n, Commands: commandsOf(m.Recipes), HasNested: len(m.Modules) > 0})
+		p.Modules = append(p.Modules, Module{Name: n, Commands: commandsOf(m.Recipes), HasNested: len(m.Modules) > 0, Dispatcher: m.First != nil && IsDispatcherName(*m.First)})
 	}
 	return p, nil
 }
+
+// IsDispatcherName reports whether a recipe with this name is the dispatcher
+// of its file: the recipe a bare call is meant to run, which lists the others.
+func IsDispatcherName(name string) bool { return name == "default" || name == "_default" }
 
 func commandsOf(recipes map[string]recipe) []Command {
 	var out []Command

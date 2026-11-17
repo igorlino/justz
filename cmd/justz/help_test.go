@@ -300,8 +300,9 @@ func TestHelpNativeProject(t *testing.T) {
 		t.Fatalf("exit %d, stderr %q", code, r.errOut.String())
 	}
 	out := r.out.String()
-	// [group] attributes become headings; recipes keep their own path.
-	for _, want := range []string{"  core\n", "  deploy\n", "Compile the project", "Deploy to an environment", "  Commands  (run without args"} {
+	// [group] attributes become headings; recipes keep their own path. The
+	// module of the fixture has no default recipe, so its heading has no hint.
+	for _, want := range []string{"  core\n", "  deploy\n", "Compile the project", "Deploy to an environment", "  Commands\n"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("native summary should contain %q:\n%s", want, out)
 		}
@@ -509,5 +510,67 @@ func TestHelpJSONInventoryEdges(t *testing.T) {
 	r = helpEnv(false, 80)
 	if code := run([]string{"help", "-j", "--expanded"}, r.env); code != 0 || !strings.Contains(r.out.String(), `"commands": []`) {
 		t.Errorf("empty project: exit %d\n%s", code, r.out.String())
+	}
+}
+
+// The summary invites the reader to run a group with no arguments. That is
+// only true where every module has a default recipe: without one, just runs
+// the first recipe of the module, so the hint is left out. It is also left
+// out when the dump does not say what a bare call runs.
+func TestHelpNativeHintNeedsADispatcher(t *testing.T) {
+	t.Chdir(gitProject(t))
+	module := func(first string) string {
+		if first != "" {
+			first = `"first": "` + first + `", `
+		}
+		return `{` + first + `"modules": {}, "recipes": {
+		  "_default": {"private": true, "doc": null, "attributes": [], "parameters": []},
+		  "clean": {"private": false, "doc": "Remove output", "attributes": [], "parameters": []}}}`
+	}
+	summary := func(modules string) string {
+		r := helpEnv(false, 100)
+		r.runCmd = func(name string, args ...string) (string, error) {
+			return `{"recipes": {}, "modules": {` + modules + `}}`, nil
+		}
+		if code := run([]string{"help"}, r.env); code != 0 {
+			t.Fatalf("exit %d, stderr %q", code, r.errOut.String())
+		}
+		return r.out.String()
+	}
+	const hint = "Commands  (run without args to see sub-commands)"
+	if out := summary(`"tool": ` + module("_default")); !strings.Contains(out, hint) {
+		t.Errorf("a module with a dispatcher keeps the hint:\n%s", out)
+	}
+	for name, modules := range map[string]string{
+		"a bare call runs clean":       `"tool": ` + module("clean"),
+		"one of two has no dispatcher": `"a": ` + module("_default") + `, "b": ` + module("clean"),
+		"the dump does not say":        `"tool": ` + module(""),
+	} {
+		if out := summary(modules); strings.Contains(out, "run without args") || !strings.Contains(out, "  Commands\n") {
+			t.Errorf("%s, so there is no hint:\n%s", name, out)
+		}
+	}
+}
+
+// The overlay is generated from the justfile, so the same rule holds for it.
+func TestHelpOverlayHintNeedsADispatcher(t *testing.T) {
+	dir := gitProject(t)
+	writeFile(t, filepath.Join(dir, ".just-local-rich.json"), `{"groups":{"tool":{"commands":{"clean":{"desc":"Remove output"}}}}}`)
+	t.Chdir(dir)
+	summary := func(first string) string {
+		r := helpEnv(false, 100)
+		r.runCmd = func(name string, args ...string) (string, error) {
+			return `{"recipes": {}, "modules": {"tool": {"first": "` + first + `", "modules": {}, "recipes": {}}}}`, nil
+		}
+		if code := run([]string{"help"}, r.env); code != 0 {
+			t.Fatalf("exit %d, stderr %q", code, r.errOut.String())
+		}
+		return r.out.String()
+	}
+	if out := summary("_default"); !strings.Contains(out, "run without args to see sub-commands") {
+		t.Errorf("a module with a dispatcher keeps the hint:\n%s", out)
+	}
+	if out := summary("clean"); strings.Contains(out, "run without args") {
+		t.Errorf("a bare call would run clean, so there is no hint:\n%s", out)
 	}
 }

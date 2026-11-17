@@ -25,4 +25,4 @@ justz never reads, stores or injects credentials, so a bug that makes it do so i
 
 ## Verifying releases
 
-Releases include SHA256 checksums and build provenance attestations. Once the first release is out, you can check an artifact with `gh attestation verify <file> --repo igorlino/justz`.
+Releases include SHA256 checksums and build provenance attestations. Check an artifact with `gh attestation verify <file> --repo igorlino/justz`.
