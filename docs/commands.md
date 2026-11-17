@@ -22,7 +22,9 @@ Run `justz --help` for the list and `justz <command> --help` for the full text o
 | `justz help [group] <command>` | One command: how to invoke it, examples, options, **Details**, **Exit codes**, **Environment**, **Tags**, **See also**. |
 | `justz help --browse` | Pick a group or command (fzf if installed, else a numbered menu). Without a terminal it prints the groups instead of prompting. |
 | `justz help ... -j` | The same information as JSON. A group listing carries `hasDetail` per command. |
+| `justz help -j --expanded` | Every command of the project in one document, each with its `path`, `desc`, `hasDetail` and `tags`. |
 | `justz resolve <name>` | Print the group path a bare name stands for (`git` is `tool git`). Needs a registry. Exit `0` one match, `2` several, `3` none. |
+| `justz resolve --json <name>` | The same as a document: `name`, `status`, `matches`, and a `reason` when nothing matches. In a project with no registry the reason is `no-registry`. |
 
 ## Check
 

@@ -50,6 +50,15 @@ justz shim add --name tz           # or choose the name (required when there is 
 
 `justz shim add` never overwrites a file in the shim directory that it did not write.
 
+## What a shortcut prints
+
+`jz` and a shim print on stderr, never on stdout, so the output of `just` and of a recipe is unchanged.
+
+| When | It prints | Silence it |
+|---|---|---|
+| A bare name found its group | `jz: tool clean` | `JUSTZ_QUIET=1` |
+| `jz --help` | one line that says what the shortcut adds, then the help of `just` | `JUSTZ_QUIET=1` |
+
 ## Maintain
 
 ```sh

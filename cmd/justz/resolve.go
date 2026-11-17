@@ -14,7 +14,8 @@ Print the group path that a bare command name stands for in this project, for
 example "git" for "tool git". Only exact names resolve; a prefix never does.
 
 Nothing resolves when the name is a real recipe of the justfile, a group, a
-core command (those run without a group), or a documented extra.
+core command (those run without a group), or a documented extra, or when the
+project has no registry. With --json the document says why, in reason.
 
 Exit codes: 0 exactly one match (printed), 2 several matches (listed), 3 no
 match, 1 an error, usage errors are 2.
@@ -73,6 +74,13 @@ func resolveIn(e env, justfile, name string, asJSON bool, who string) int {
 		return 1
 	}
 	if proj.Registry == nil {
+		// No match is a result, not an error: with --json it is a document too.
+		if asJSON {
+			if c := printJSON(e, resolveOutput{Name: name, Status: "none", Matches: []resolve.Match{}, Reason: resolve.ReasonNoRegistry}); c != 0 {
+				return c
+			}
+			return 3
+		}
 		fmt.Fprintf(e.stderr, "%s: this project has no commands.json, so there are no groups to resolve against\n", who)
 		return 3
 	}

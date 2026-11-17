@@ -373,3 +373,22 @@ func TestPrivateDefaultHasNoFinding(t *testing.T) {
 		t.Errorf("findings = %v", rules(res))
 	}
 }
+
+// justz generate keeps the first line of a [doc] as the description and reads
+// the example from a later line. A fresh overlay must pass, so local-rich
+// compares that first line. A committed registry is compared with the whole
+// [doc], because there the example belongs in the registry.
+func TestOverlayComparesTheFirstLineOfADoc(t *testing.T) {
+	dump := dumpOf(t, map[string]any{"test": rc("Run the tests\nexample: just test -w | Watch", grp("core"))}, nil)
+	src := `{"groups":{"core":{"commands":{"test":{"desc":"Run the tests"}}}}}`
+	if res := run(t, Input{Dump: dump, Variant: "local-rich", Registry: parse(t, src), RegistrySource: []byte(src)}); has(res, RuleRegistryDesc, "just test") {
+		t.Errorf("a generated overlay is reported as out of date: %v", res.Findings)
+	}
+	if res := run(t, Input{Dump: dump, Variant: "rich", Registry: parse(t, src), RegistrySource: []byte(src)}); !has(res, RuleRegistryDesc, "just test") {
+		t.Errorf("a registry should still be compared with the whole [doc]: %v", rules(res))
+	}
+	other := `{"groups":{"core":{"commands":{"test":{"desc":"Something else"}}}}}`
+	if res := run(t, Input{Dump: dump, Variant: "local-rich", Registry: parse(t, other), RegistrySource: []byte(other)}); !has(res, RuleRegistryDesc, "just test") {
+		t.Errorf("an overlay with another first line is out of date: %v", rules(res))
+	}
+}

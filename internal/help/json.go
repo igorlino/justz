@@ -3,6 +3,7 @@ package help
 import (
 	"bytes"
 	"encoding/json"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -15,6 +16,21 @@ type OverviewNode struct {
 	CLI    string         `json:"cli"`
 	Groups []OverviewItem `json:"groups"`
 	Core   []string       `json:"core"`
+	// Commands is every command of the project, with --expanded only: enough
+	// to choose one, and to see what it claims to touch, in a single call.
+	Commands *[]InventoryItem `json:"commands,omitempty"`
+}
+
+// InventoryItem is one command of the expanded overview. Path is what a zoom
+// takes: a core command is its name alone.
+type InventoryItem struct {
+	Path      string   `json:"path"`
+	Desc      string   `json:"desc"`
+	HasDetail bool     `json:"hasDetail"`
+	Tags      []string `json:"tags,omitempty"`
+	// Extra is true for an entry that is documented but does not run as
+	// just <path>.
+	Extra bool `json:"extra,omitempty"`
 }
 
 // OverviewItem is one group of the overview.
@@ -83,6 +99,37 @@ func OverviewJSON(proj *Project) OverviewNode {
 			n.Core = append(n.Core, c.Name)
 		}
 	}
+	return n
+}
+
+// InventoryJSON is the overview with every command of the project: the core
+// commands first, then each group in order, each sorted by path. The
+// documented extras of a group are listed too, and marked. The list is always
+// there, also when it is empty, so a reader can tell it from an older justz.
+func InventoryJSON(proj *Project) OverviewNode {
+	n := OverviewJSON(proj)
+	all := []InventoryItem{}
+	add := func(prefix string, g *Group) {
+		var items []InventoryItem
+		item := func(c Command, extra bool) {
+			items = append(items, InventoryItem{Path: prefix + c.Name, Desc: c.Desc, HasDetail: strings.TrimSpace(c.Detail) != "", Tags: c.Tags, Extra: extra})
+		}
+		for _, c := range g.Commands {
+			item(c, false)
+		}
+		for _, c := range g.Extra {
+			item(c, true)
+		}
+		sort.Slice(items, func(i, j int) bool { return items[i].Path < items[j].Path })
+		all = append(all, items...)
+	}
+	if proj.Core != nil {
+		add("", proj.Core)
+	}
+	for _, g := range proj.Groups {
+		add(g.Key+" ", g)
+	}
+	n.Commands = &all
 	return n
 }
 

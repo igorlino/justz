@@ -28,7 +28,8 @@ counts, as justz check leaves it out, and assess advises renaming it _default.
 (justz check reports it as the warning default-public, which fails
 check --strict.)
 It also advises when a registry exists and a default recipe does not run
-justz help (shim names such as tz are not recognized), since detail kept in the registry is then not shown. Advice is not a rule.
+justz help (shim names such as tz are not recognized), since detail kept in
+the registry is then not shown. Advice is not a rule.
 
 Exit codes: 0 done, 1 error, 2 usage error.
 `

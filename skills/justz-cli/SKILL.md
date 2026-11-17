@@ -62,7 +62,7 @@ justz check --json                      # 6. after editing a justfile or registr
 | Is the machine ready? | `justz doctor`, `justz setup` (`--dry-run`) | yes |
 | Global shims | `justz shim add [path]`, `shim list`, `shim doctor`, `shim remove <name>` | yes |
 
-`doctor` and `shim list` have no `--help` of their own: use `justz --help` and `justz shim --help`. `core` is not a group to zoom into: zoom into its commands with `justz help core <command>`.
+`shim list` has no `--help` of its own: use `justz shim --help`. `core` is not a group to zoom into: zoom into its commands with `justz help core <command>`.
 
 ## Exit codes
 

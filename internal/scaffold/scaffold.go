@@ -4,6 +4,7 @@
 package scaffold
 
 import (
+	"errors"
 	"fmt"
 	"path"
 	"regexp"
@@ -71,10 +72,13 @@ const (
 	richCheckDesc = "Check the documentation against the justfile and the registry order"
 )
 
+// ErrName is the error of a project name that cannot be used.
+var ErrName = errors.New("project name")
+
 // Validate reports the first problem with the options.
 func (o Options) Validate() error {
 	if !namePattern.MatchString(o.Name) {
-		return fmt.Errorf("project name %q: use letters, digits, spaces, dot, dash and underscore, starting with a letter or digit", o.Name)
+		return fmt.Errorf("%w %q: use letters, digits, spaces, dot, dash and underscore, starting with a letter or digit", ErrName, o.Name)
 	}
 	if o.Variant != Native && o.Variant != Rich {
 		return fmt.Errorf("variant %q: use %s or %s", o.Variant, Native, Rich)

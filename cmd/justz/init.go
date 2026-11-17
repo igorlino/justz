@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -114,7 +115,7 @@ func runInit(args []string, e env) int {
 	files, err := scaffold.Build(opts)
 	if err != nil {
 		fmt.Fprintf(e.stderr, "justz init: %v\n", err)
-		if !nameGiven {
+		if !nameGiven && errors.Is(err, scaffold.ErrName) {
 			fmt.Fprintln(e.stderr, "justz init: the name defaults to the directory name; pass --name to choose another")
 		}
 		return 2

@@ -104,7 +104,7 @@ func TestArgumentKinds(t *testing.T) {
 		{Name: "v", Kind: "singular", Short: s("v"), Flag: true, Help: s("Verbose")},
 		{Name: "n", Kind: "singular", Long: s("count"), Help: s("How many")},
 		{Name: "undocumented", Kind: "singular"},
-	})
+	}, false)
 	var names []string
 	for _, a := range args {
 		names = append(names, a.Name)
@@ -164,5 +164,19 @@ func TestParseAcceptsPlainStringAttributes(t *testing.T) {
 	}
 	if len(p.Core) != 1 || p.Core[0].Heading != "build" {
 		t.Errorf("heading = %+v", p.Core)
+	}
+}
+
+// With all set, a parameter that has no help text is listed too, with an
+// empty description: the native help shows it, the overlay does not.
+func TestArgSpecsCanListEveryParameter(t *testing.T) {
+	s := func(v string) *string { return &v }
+	params := []parameter{{Name: "env", Kind: "singular"}, {Name: "tag", Kind: "singular", Help: s("Release tag")}}
+	if got := argSpecs(params, false); len(got) != 1 || got[0].Name != "<tag>" {
+		t.Errorf("documented only = %+v", got)
+	}
+	got := argSpecs(params, true)
+	if len(got) != 2 || got[0] != (Arg{Name: "<env>"}) || got[1] != (Arg{Name: "<tag>", Desc: "Release tag"}) {
+		t.Errorf("every parameter = %+v", got)
 	}
 }

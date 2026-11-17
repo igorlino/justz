@@ -348,8 +348,10 @@ func CommandView(proj *Project, g *Group, c *Command, o Options) string {
 	p.b.WriteByte('\n')
 	p.line("  %s", p.s.boldCyan(inv))
 	p.line("  %s", p.s.dim(strings.Repeat("─", w-4)))
-	for _, l := range wrap(w-4, c.Desc) {
-		p.line("  %s", l)
+	if strings.TrimSpace(c.Desc) != "" {
+		for _, l := range wrap(w-4, c.Desc) {
+			p.line("  %s", l)
+		}
 	}
 	if len(c.Tags) > 0 {
 		for i, l := range wrap(w-4, "Tags: "+strings.Join(c.Tags, ", ")) {
@@ -391,6 +393,10 @@ func CommandView(proj *Project, g *Group, c *Command, o Options) string {
 		}
 		for _, a := range c.Args {
 			lines := wrap(dw, argDescription(a))
+			if strings.TrimSpace(lines[0]) == "" {
+				p.line("    %s", p.s.cyan(a.Name))
+				continue
+			}
 			p.line("    %s%s", p.s.cyan(pad(a.Name, col)), p.s.dim(lines[0]))
 			for _, l := range lines[1:] {
 				p.line("    %s%s", strings.Repeat(" ", col), p.s.dim(l))

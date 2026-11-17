@@ -55,6 +55,10 @@ type Command struct {
 	Example string
 	Heading string // the recipe's [group] attribute, a display heading only
 	Args    []Arg
+	// AllArgs is every parameter, in the order of the recipe: one without help
+	// text has an empty Desc. The overlay keeps only Args; the help of a
+	// native project shows them all, so that no parameter is hidden.
+	AllArgs []Arg
 }
 
 // Module is a top-level module and its public recipes.
@@ -97,7 +101,7 @@ func commandsOf(recipes map[string]recipe) []Command {
 			continue
 		}
 		desc, example := parseDoc(r.Doc)
-		out = append(out, Command{Name: name, Desc: desc, Example: example, Heading: heading(r), Args: argSpecs(r.Parameters)})
+		out = append(out, Command{Name: name, Desc: desc, Example: example, Heading: heading(r), Args: argSpecs(r.Parameters, false), AllArgs: argSpecs(r.Parameters, true)})
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
 	return out
@@ -194,14 +198,14 @@ func parseDoc(doc *string) (desc, example string) {
 	return desc, example
 }
 
-// argSpecs lists the parameters that have help text. A parameter with a
-// short or long name is an option: it shows its names and, when it takes a
-// value, a placeholder. A parameter with a fixed value is a flag and takes
-// none. Other parameters are positional.
-func argSpecs(params []parameter) []Arg {
+// argSpecs lists the parameters that have help text, or every parameter when
+// all is true. A parameter with a short or long name is an option: it shows
+// its names and, when it takes a value, a placeholder. A parameter with a
+// fixed value is a flag and takes none. Other parameters are positional.
+func argSpecs(params []parameter, all bool) []Arg {
 	var args []Arg
 	for _, p := range params {
-		if p.Help == nil {
+		if p.Help == nil && !all {
 			continue
 		}
 		var name string
@@ -224,7 +228,11 @@ func argSpecs(params []parameter) []Arg {
 		default:
 			name = "<" + p.Name + ">"
 		}
-		args = append(args, Arg{Name: name, Desc: *p.Help})
+		desc := ""
+		if p.Help != nil {
+			desc = *p.Help
+		}
+		args = append(args, Arg{Name: name, Desc: desc})
 	}
 	return args
 }
