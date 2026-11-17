@@ -21,7 +21,6 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2307090d'/%3E%3Ctext x='16' y='23' font-family='monospace' font-size='20' font-weight='700' text-anchor='middle' fill='%2338f5b0'%3Ez%3C/text%3E%3C/svg%3E">
 <script>try{var t=localStorage.getItem("theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="style.css">
-<noscript><style>.reveal{opacity:1;transform:none}</style></noscript>
 </head>
 <body>
 <canvas id="bg" aria-hidden="true"></canvas>
@@ -32,12 +31,15 @@
   <nav>
     <a href="#why">Why</a>
     <a href="#start">Quickstart</a>
-    <a href="#features">Features</a>
+    <a href="#type">How you type it</a>
+    <a href="#features">What you get</a>
     <a href="#agents">Agents</a>
     <a href="#docs">Docs</a>
-    <button type="button" class="theme" aria-label="Switch theme"></button>
-    <a class="btn small" href="https://github.com/igorlino/justz">GitHub</a>
   </nav>
+  <div class="tools">
+    <button type="button" class="theme" aria-label="Switch theme" hidden></button>
+    <a class="btn small" href="https://github.com/igorlino/justz">GitHub</a>
+  </div>
 </header>
 
 <main id="top">
@@ -53,17 +55,18 @@
     </div>
     <p class="sub"><a href="https://github.com/igorlino/justz/blob/main/docs/installation.md">Other install methods</a> · <a href="https://github.com/igorlino/justz/releases/latest">Latest release</a> · needs <code>just</code> 1.37.0 or newer</p>
 
-    <div class="term" id="term" role="img" aria-label="Terminal demo: jz runs the default recipe, here the command list; jzh clean shows the help of one command; jz clean runs it; justz check reports a documentation drift; justz lint gives advice on the recipes">
-      <div class="bar"><i></i><i></i><i></i><span id="term-title">jz</span></div>
+    <div class="term" id="term" role="tabpanel" tabindex="0" aria-labelledby="tab-0" hidden>
+      <div class="bar" aria-hidden="true"><i></i><i></i><i></i><span id="term-title">jz</span></div>
       <pre id="term-body"></pre>
     </div>
-    <div class="tabs" id="tabs" role="tablist" aria-label="Demo command">
-      <button type="button" role="tab" aria-controls="term" class="on">jz</button>
-      <button type="button" role="tab" aria-controls="term">jzh clean</button>
-      <button type="button" role="tab" aria-controls="term">jz clean</button>
-      <button type="button" role="tab" aria-controls="term">check</button>
-      <button type="button" role="tab" aria-controls="term">lint</button>
+    <div class="tabs" id="tabs" role="tablist" aria-label="Demo command" hidden>
+      <button type="button" role="tab" id="tab-0" aria-controls="term" aria-selected="true" class="on">jz</button>
+      <button type="button" role="tab" id="tab-1" aria-controls="term" aria-selected="false">jzh clean</button>
+      <button type="button" role="tab" id="tab-2" aria-controls="term" aria-selected="false">jz clean</button>
+      <button type="button" role="tab" id="tab-3" aria-controls="term" aria-selected="false">justz check</button>
+      <button type="button" role="tab" id="tab-4" aria-controls="term" aria-selected="false">justz lint</button>
     </div>
+    <div class="demo-ctl"><button type="button" id="demo-pause" hidden>Pause the demo</button></div>
     <p class="sub"><code>jz</code> runs a command, and <code>jzh &lt;command&gt;</code> shows its help. Commands can sit in groups: <code>jz clean</code> found <code>clean</code> in the group <code>tool</code>, and its first line says so. <code>jz</code> and <code>jzh</code> are short forms of <code>justz</code>: see <a href="#type">How you type it</a>.</p>
   </section>
 
@@ -99,10 +102,10 @@
   <section id="type" class="reveal">
     <h2>How you type it</h2>
     <p class="sect-lede">You keep typing <code>just</code>. The short forms are there when you want them.</p>
-    <div class="grid">
+    <div class="grid five">
       <article class="card spot"><code>just</code><p>Your justfile's own recipes, such as <code>just help</code> and <code>just check</code>, when it defines them. A justfile from <code>justz init</code> does, by default.</p></article>
-      <article class="card spot"><code>jzh</code><p>The help of the project around the current directory, from any subdirectory. It runs nothing.</p></article>
-      <article class="card spot"><code>jz</code><p>Runs a command of that project. With no command, it runs the default recipe, like <code>just</code>. In a project with a <a href="https://github.com/igorlino/justz/blob/main/docs/variants.md">command registry</a>, a bare name finds its group: <code>jz clean</code> for <code>tool clean</code>. <code>justz setup</code> adds <code>jz</code> and <code>jzh</code>; Homebrew installs them.</p></article>
+      <article class="card spot"><code>jzh</code><p>The help of the project around the current directory, from any subdirectory. It runs nothing. <code>justz setup</code> adds <code>jz</code> and <code>jzh</code>; Homebrew installs them.</p></article>
+      <article class="card spot"><code>jz</code><p>Runs a command of that project. With no command, it runs the default recipe, like <code>just</code>. In a project with a <a href="https://github.com/igorlino/justz/blob/main/docs/variants.md">command registry</a>, a bare name finds its group: <code>jz clean</code> for <code>tool clean</code>.</p></article>
       <article class="card spot"><code>tz</code> <code>tzh</code><p>A <a href="https://github.com/igorlino/justz/blob/main/docs/shims.md">shim</a> pinned to one project, under a name you choose, from any directory. Added with <code>justz shim add</code>.</p></article>
       <article class="card spot"><code>justz</code><p>The CLI itself. <code>justz help</code> and <code>justz check</code> work in any project with a justfile, with no setup.</p></article>
     </div>
@@ -126,7 +129,7 @@
     <h2>Built for agents</h2>
     <p class="sect-lede">An agent should not have to guess. Stable exit codes, JSON with <code>--json</code>, and everything a project documents about a command one call away, safety tags included.</p>
     <div class="split">
-      <div class="term static">
+      <div class="term static" hidden>
         <div class="bar"><i></i><i></i><i></i><span>justz help tool clean -j</span></div>
 <pre id="json-body"></pre>
       </div>
@@ -143,7 +146,7 @@
     </div>
   </section>
 
-  <section id="principles" class="reveal">
+  <section id="rely" class="reveal">
     <h2>What you can rely on</h2>
     <ul class="pills">
       <li class="spot"><b>One binary.</b> No <code>jq</code>, <code>awk</code>, Python or Node.</li>
@@ -155,7 +158,7 @@
   </section>
 
   <section id="docs" class="reveal">
-    <h2>Read more</h2>
+    <h2>Documentation</h2>
     <div class="links">
       <a href="https://github.com/igorlino/justz/blob/main/docs/getting-started.md">Getting started</a>
       <a href="https://github.com/igorlino/justz/blob/main/docs/installation.md">Installation</a>
@@ -177,6 +180,8 @@
   <span>justz · <a href="https://github.com/igorlino/justz/blob/main/LICENSE">MIT</a> · an independent open source project, not backed by any company</span>
   <span><a href="https://github.com/igorlino/justz/releases">Releases</a> · <a href="https://github.com/igorlino/justz/issues">Issues</a> · <a href="https://github.com/igorlino/justz/blob/main/SECURITY.md">Security</a></span>
 </footer>
+
+<p id="copy-status" class="sr-only" role="status"></p>
 
 <script src="demo.js"></script>
 <script src="player.js"></script>

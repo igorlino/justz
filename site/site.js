@@ -3,6 +3,10 @@
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
 
+  // The sections fade in on scroll. They are hidden only from here on, so a
+  // page whose script did not load shows everything.
+  document.documentElement.classList.add("js");
+
   // Mouse-follow glow and per-card spotlight.
   addEventListener("pointermove", function (e) {
     document.documentElement.style.setProperty("--mx", e.clientX + "px");
@@ -24,13 +28,21 @@
 
   // Copy buttons.
   $$(".install").forEach(function (box) {
-    var btn = $("button", box);
+    var btn = $("button", box), status = $("#copy-status");
+    // The button has an aria-label, so its text is not announced: say the
+    // result in the status line, which a screen reader reads.
+    var reset;
+    var say = function (text, ms) {
+      btn.textContent = text; status.textContent = text + ": " + box.dataset.copy;
+      clearTimeout(reset);
+      reset = setTimeout(function () { btn.textContent = "Copy"; status.textContent = ""; }, ms);
+    };
     btn.addEventListener("click", function () {
-      var done = function () { btn.textContent = "Copied"; setTimeout(function () { btn.textContent = "Copy"; }, 1500); };
+      var done = function () { say("Copied", 1500); };
       var fail = function () {
         var r = document.createRange(); r.selectNodeContents($("code", box));
         var sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
-        btn.textContent = "Press Ctrl+C"; setTimeout(function () { btn.textContent = "Copy"; }, 2500);
+        say("Press Ctrl+C", 2500);
       };
       if (navigator.clipboard) navigator.clipboard.writeText(box.dataset.copy).then(done, fail); else fail();
     });
@@ -67,6 +79,7 @@
   }
   // Theme toggle: dark by default, the OS preference when unset, the visitor's pick when stored.
   var root = document.documentElement, tbtn = $(".theme");
+  tbtn.hidden = false;
   function theme() { return root.dataset.theme || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark"); }
   function sync() { tbtn.textContent = theme() === "light" ? "\u263E" : "\u2600"; tbtn.setAttribute("aria-label", "Switch to " + (theme() === "light" ? "dark" : "light") + " theme"); colors(); if (reduce) frame(); }
   try { var saved = localStorage.getItem("theme"); if (saved) root.dataset.theme = saved; } catch (e) {}
