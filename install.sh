@@ -108,4 +108,4 @@ case ":$PATH:" in
     *) say "Note: $install_dir is not on your PATH. Add it, for example:"
        say "  export PATH=\"$install_dir:\$PATH\"" ;;
 esac
-say "Run 'justz doctor' to check your setup."
+say "Run 'justz setup' to check this machine and add the jz and jzh shortcuts."

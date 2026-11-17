@@ -10,6 +10,10 @@ What changed in each release of `justz`, for people who use it. The format follo
 - `justz doctor --help`.
 - `jz --help`, and the same for a shim, says on stderr what the shortcut adds, before the help of `just`. `JUSTZ_QUIET=1` silences it.
 
+### Changed
+
+- The installation page and the install script name `justz setup` as the step after an install, as the README does. The quickstart of the README and of the website shows `jzh <command>` and `jz <command>`, and the website's starts with the install.
+
 ### Fixed
 
 - In a project with no registry and no overlay, `justz help` shows every parameter of a recipe, in its order, not only those with help text. `args` in `help -j` has them too, with an empty `desc`.

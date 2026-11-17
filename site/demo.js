@@ -6,7 +6,7 @@ window.JUSTZ_DEMOS = [
   },
   {
     "cmd": "jzh clean",
-    "out": "\n  demo tool clean\n  ────────────────────────────────────────────────────────────────────────────\n  Remove build output and caches\n  Tags: destructive, idempotent\n\n  Details\n    Deletes the dist directory and the build cache. The next build starts from\n    nothing."
+    "out": "\n  just tool clean\n  ────────────────────────────────────────────────────────────────────────────\n  Remove build output and caches\n  Tags: destructive, idempotent\n\n  Details\n    Deletes the dist directory and the build cache. The next build starts from\n    nothing."
   },
   {
     "cmd": "jz clean",
@@ -18,10 +18,10 @@ window.JUSTZ_DEMOS = [
   },
   {
     "cmd": "justz lint",
-    "out": "justz lint: 2 warnings (5 recipes linted)\n\n  warning module tool: a bare just tool runs clean, which is not a dispatcher  [module-dispatcher-missing]\n          fix: add a default recipe first in the module (and no [default] on another recipe) that runs justz help tool (see the justfile-authoring skill)\n  warning module tool: sets no shell, so its recipes run with just's default (sh -cu), without pipefail  [module-shell-unset]\n          fix: import a shared settings file with a set shell line (justz init writes just/preamble.just), or add set shell := ['bash', '-eu', '-o', 'pipefail', '-c']"
+    "out": "justz lint: 1 warning (6 recipes linted)\n\n  warning module tool: sets no shell, so its recipes run with just's default (sh -cu), without pipefail  [module-shell-unset]\n          fix: import a shared settings file with a set shell line (justz init writes just/preamble.just), or add set shell := ['bash', '-eu', '-o', 'pipefail', '-c']"
   },
   {
     "cmd": "justz help tool clean -j",
-    "out": "{\n  \"path\": \"tool clean\",\n  \"invoke\": \"demo tool clean\",\n  \"desc\": \"Remove build output and caches\",\n  \"detail\": \"Deletes the dist directory and the build cache. The next build starts from nothing.\",\n  \"tags\": [\n    \"destructive\",\n    \"idempotent\"\n  ],\n  \"args\": [],\n  \"examples\": []\n}"
+    "out": "{\n  \"path\": \"tool clean\",\n  \"invoke\": \"just tool clean\",\n  \"desc\": \"Remove build output and caches\",\n  \"detail\": \"Deletes the dist directory and the build cache. The next build starts from nothing.\",\n  \"tags\": [\n    \"destructive\",\n    \"idempotent\"\n  ],\n  \"args\": [],\n  \"examples\": []\n}"
   }
 ];
