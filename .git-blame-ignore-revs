@@ -1,0 +1,5 @@
+# Commits that only reformat files. git blame skips them on GitHub, and locally after:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# style(docs): apply rumdl fmt to every Markdown file
+0b734174b9ab96178d866b9c2309e6f8f22de039
