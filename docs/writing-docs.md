@@ -20,6 +20,7 @@ Every fact has one page that owns it. Other pages link to that page; they do not
 | The one-sentence description of `justz` | the README, then the title, description and headline of `site/index.html`, and the first paragraph of `llms.txt` | |
 | A page for users added to `docs/` | the Documentation table of the README, the same list on the website, and `llms.txt` | |
 | Who can contribute, and how | `CONTRIBUTING.md` | restate the policy in the README |
+| A Markdown style rule | `.rumdl.toml`, then [Markdown style](#markdown-style) | |
 | Anything a user will notice | `CHANGELOG.md`, under Unreleased | |
 
 The README changes only when the pitch, the quickstart or the list of pages changes. It is a front page: what `justz` is, why, how to start, where to read more. The website in `site/` is a second front page with the same pitch and quickstart: change both in the same PR.
@@ -34,6 +35,28 @@ The README changes only when the pitch, the quickstart or the list of pages chan
 - **A skill is self-contained.** A skill is installed without this repository, so `SKILL.md` links only to its own `references/`, or to a full URL. Keep `SKILL.md` an entry point: a quick start, short rules and tables. Long material goes in `references/`.
 - **The top of a page is what people see.** GitHub, skills.sh and package listings show the first lines and cut the rest. Put the one-sentence answer first.
 
+## Markdown style
+
+[rumdl](https://github.com/rvben/rumdl) checks every Markdown file with the rules in `.rumdl.toml`.
+`just md-lint` reports the findings, and `just ci` runs it.
+`just md-fix` applies the fixes; read its diff before you commit it.
+
+| Choice | Why |
+| --- | --- |
+| One sentence per line, no width limit | A word change is a one-line diff, and tables and pasted output need no wrapping |
+| Code blocks are not reflowed | They hold real output of the binary |
+| Compact tables (`\| a \| b \|`) | Editing one cell does not re-pad the whole table |
+| The `gfm` flavor | The docs are read on GitHub |
+| Only one opt-in rule, MD060 (tables) | The others are off in rumdl for reasons that hold here, see [its opt-in rules](https://github.com/rvben/rumdl/blob/main/docs/rules.md#opt-in-rules) |
+
+When a finding is wrong, put the exception where it applies:
+
+| Scope | Where |
+| --- | --- |
+| The whole repository | `.rumdl.toml`, with a comment that says why |
+| A file of another format, such as a GitHub template | `[per-file-ignores]` in `.rumdl.toml` |
+| One line | `<!-- rumdl-disable-next-line MDxxx -->` above it |
+
 ## What the tests enforce
 
 `internal/doclinks` runs with `just test`:
@@ -43,7 +66,7 @@ The README changes only when the pitch, the quickstart or the list of pages chan
 | `TestRelativeLinksResolve` | a relative link in the README, `docs/` or `skills/` points at a file that does not exist |
 | `TestEveryCommandIsDocumented` | a command of the CLI is not in [commands.md](commands.md) or in the `justz-cli` skill |
 | `TestEveryRuleIsDocumented` | a `check` or `lint` rule is not in [checks.md](checks.md) |
-| `TestReadmeBudget` | the README is over 150 lines, or has a bullet over 40 words |
+| `TestReadmeBudget` | the README is over 1150 words, or has a bullet over 40 words |
 | `TestSkillBudget` | a `SKILL.md` is over 500 lines or 3000 words |
 
 A failing budget means the text is in the wrong place. Move it to the page that owns it; do not raise the limit.

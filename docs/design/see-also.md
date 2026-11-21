@@ -19,7 +19,7 @@ An optional array of strings `seeAlso` on a command, each the key of another com
 
 **Keys only.** A relation word ("mirrors", "alias for") was considered and left out. The word is prose, so it cannot be checked or sorted, and it grows into a vocabulary the schema would have to fix. A reader who wants to say how two commands relate says it in `detail`, next to a field that now names the same command in a form tools can follow. An object form can be added later without breaking this one, because a schema that accepts strings today can accept strings or objects tomorrow.
 
-**The key form is `group.command`**, the form `check` already uses as the subject of a finding (`tool.clean`). A top-level command has the group `core`: `core.build`. The key is matched as a whole against the group key, a dot and the command key, so a group or command key with a dot in it still resolves, and nothing parses the string. The match is exact: it is case and whitespace sensitive, and `Tool.clean` or `tool.clean ` is not `tool.clean`. A command in `extra` can be named too: it is documented, it is in the registry, and a reader may need to find it.
+**The key form is `group.command`**, the form `check` already uses as the subject of a finding (`tool.clean`). A top-level command has the group `core`: `core.build`. The key is matched as a whole against the group key, a dot and the command key, so a group or command key with a dot in it still resolves, and nothing parses the string. The match is exact: it is case and whitespace sensitive, and `Tool.clean`, or `tool.clean` with a trailing space, is not `tool.clean`. A command in `extra` can be named too: it is documented, it is in the registry, and a reader may need to find it.
 
 ## Where it shows
 

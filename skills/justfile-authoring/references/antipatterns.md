@@ -62,7 +62,7 @@ $ just test --watch my-component
 - Makes recipes hard to use; users confused about argument order
 - Fragile: works sometimes, breaks other times
 
-**✅ Fix — Option 1: Use flags with `"$@"` instead**
+**✅ Fix — Option 1: Use flags with `"$@"` instead:**
 ```just
 set positional-arguments
 
@@ -80,7 +80,7 @@ test *ARGS:
     ./run-tests "$COMPONENT"
 ```
 
-**✅ Fix — Option 2: Keep it simple**
+**✅ Fix — Option 2: Keep it simple:**
 ```just
 set positional-arguments
 

@@ -1,0 +1,24 @@
+# Markdown lint policy for this repository: run `just md-lint`, fix with `just md-fix`.
+# docs/writing-docs.md explains each choice.
+
+[global]
+# The docs are read on GitHub.
+flavor = "gfm"
+# Tables keep one format. The other opt-in rules stay off: see docs/writing-docs.md.
+extend-enable = ["MD060"]
+
+[MD013]
+# One sentence per line instead of a width limit: a word change is a one-line diff.
+line-length = 0
+reflow = true
+reflow-mode = "sentence-per-line"
+# Code blocks hold real output of the binary; they stay as printed.
+code-blocks = false
+
+[MD060]
+# Compact tables: editing one cell does not re-pad the whole table.
+style = "compact"
+
+[per-file-ignores]
+# A GitHub template that starts with an HTML comment for the contributor.
+".github/pull_request_template.md" = ["MD041"]
