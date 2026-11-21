@@ -1,16 +1,20 @@
 # Checks and lint rules
 
-`justz check` is about **documentation**: does every command have a description, and does it still match the recipes? `justz lint` is about the **recipes**: antipatterns visible in the structure of the justfile. Neither runs a recipe or edits your justfile.
+`justz check` is about **documentation**: does every command have a description, and does it still match the recipes?
+`justz lint` is about the **recipes**: antipatterns visible in the structure of the justfile.
+Neither runs a recipe or edits your justfile.
 
 | | `check` | `lint` |
-|---|---|---|
+| --- | --- | --- |
 | Findings | errors and warnings | warnings only |
 | Exit `1` | on an error; on a warning with `--strict` | only with `--strict` |
 | Use it | in pre-commit and CI | when you want advice |
 
-Flags for both: `--json`, `--strict`, `--rule <name>` (repeat or comma-separate). `--rule` is for reading, not for gating CI: the counts and the exit code follow the shown findings, so it can hide errors and exit `0`.
+Flags for both: `--json`, `--strict`, `--rule <name>` (repeat or comma-separate).
+`--rule` is for reading, not for gating CI: the counts and the exit code follow the shown findings, so it can hide errors and exit `0`.
 
-Text output prints a fix once per rule. JSON keeps the fix on every finding.
+Text output prints a fix once per rule.
+JSON keeps the fix on every finding.
 
 ## Silence one rule on one recipe
 
@@ -20,14 +24,15 @@ build:
     ...
 ```
 
-Needs `just` 1.42.0 or newer. An unknown rule name in `justz-ignore` is reported by `lint` as `ignore-unknown-rule`.
+Needs `just` 1.42.0 or newer.
+An unknown rule name in `justz-ignore` is reported by `lint` as `ignore-unknown-rule`.
 
 ## `check` rules
 
 ### Errors
 
 | Rule | Fires when |
-|---|---|
+| --- | --- |
 | `doc-missing` | a recipe has no documentation |
 | `group-missing` | a recipe has no `[group]` |
 | `variadic-interpolation` | a variadic parameter is interpolated with `{{ }}`, which splits on whitespace (use `set positional-arguments` and `"$@"`) |
@@ -49,7 +54,7 @@ The four `example-*` rules are warnings for the `core` group.
 ### Warnings (fail only with `--strict`)
 
 | Rule | Fires when |
-|---|---|
+| --- | --- |
 | `example-flag-unknown` | an example uses a flag the recipe does not declare |
 | `doc-multiline-comment` | a recipe doc is a comment block; `just` uses only the last line. Add `[doc(...)]` |
 | `registry-desc-long` | a registry `desc` is over 120 characters |
@@ -66,7 +71,7 @@ The four `example-*` rules are warnings for the `core` group.
 ## `lint` rules
 
 | Rule | Fires when |
-|---|---|
+| --- | --- |
 | `recipe-long` | a recipe body is over 40 lines. The message counts the `{{ }}` interpolations, which decides whether moving it to a script is mechanical. |
 | `module-shell-unset` | a module with linewise recipes sets no shell, so they run with `sh -cu` and no `pipefail`. Set a shell in the module. |
 | `module-dispatcher-missing` | a module has no `default` recipe, so a bare `just <module>` runs a command |
@@ -75,6 +80,7 @@ The four `example-*` rules are warnings for the `core` group.
 | `secret-interpolated` | a secret-like name inside `{{ }}` in a linewise recipe: the value is in the shell's command line |
 | `ignore-unknown-rule` | a `justz-ignore` value is not a rule |
 
-The secret rules read names only. They never read, print or store a value.
+The secret rules read names only.
+They never read, print or store a value.
 
 The authoritative list for your version is `justz check --help` and `justz lint --help`.

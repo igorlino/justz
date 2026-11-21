@@ -2,7 +2,8 @@
 
 ## Requirements
 
-`justz` needs [`just`](https://github.com/casey/just) 1.37.0 or newer on your PATH. Install a current one with:
+`justz` needs [`just`](https://github.com/casey/just) 1.37.0 or newer on your PATH.
+Install a current one with:
 
 ```sh
 brew install just
@@ -12,7 +13,8 @@ curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -
 cargo install just
 ```
 
-An older `just` fails with `Unknown attribute` errors (Ubuntu's package is 1.21.0). `justz doctor` warns about it.
+An older `just` fails with `Unknown attribute` errors (Ubuntu's package is 1.21.0).
+`justz doctor` warns about it.
 
 ## Install justz
 
@@ -22,7 +24,8 @@ An older `just` fails with `Unknown attribute` errors (Ubuntu's package is 1.21.
 brew install igorlino/tap/justz
 ```
 
-**Install script** (macOS, Linux, WSL2). It verifies the SHA256 of the download before installing anything, installs into `~/.local/bin` and never uses `sudo`:
+**Install script** (macOS, Linux, WSL2).
+It verifies the SHA256 of the download before installing anything, installs into `~/.local/bin` and never uses `sudo`:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/igorlino/justz/main/install.sh | sh
@@ -34,13 +37,18 @@ curl -fsSL https://raw.githubusercontent.com/igorlino/justz/main/install.sh | sh
 go install github.com/igorlino/justz/cmd/justz@latest
 ```
 
-**Windows**: `winget install igorlino.justz` is coming. Until then, download the `.zip` from the [releases page](https://github.com/igorlino/justz/releases).
+**Windows**: `winget install igorlino.justz` is coming.
+Until then, download the `.zip` from the [releases page](https://github.com/igorlino/justz/releases).
 
-Then run `justz setup`. It checks the machine and adds the `jz` and `jzh` shortcuts. Homebrew is the only install that brings them. To check again later and change nothing, run `justz doctor`.
+Then run `justz setup`.
+It checks the machine and adds the `jz` and `jzh` shortcuts.
+Homebrew is the only install that brings them.
+To check again later and change nothing, run `justz doctor`.
 
 ## Verify a download
 
-Releases include SHA256 checksums and build provenance attestations. Archives are `.tar.gz`, and `.zip` for Windows:
+Releases include SHA256 checksums and build provenance attestations.
+Archives are `.tar.gz`, and `.zip` for Windows:
 
 ```sh
 gh attestation verify justz-<version>-<os>-<arch>.tar.gz --repo igorlino/justz
@@ -51,7 +59,7 @@ gh attestation verify justz-<version>-<os>-<arch>.tar.gz --repo igorlino/justz
 `justz check`, `help` and `lint` were run on the `justz init` output (native and rich, with modules) against `just` 1.21.0 to 1.46.0.
 
 | `just` version | What happens |
-|---|---|
+| --- | --- |
 | up to 1.31.0 | cannot parse `mod` |
 | 1.32.0 | rejects `[group]` on a module |
 | 1.33.0 to 1.36.0 | parses, but leaves the `doc` of a `[doc]` recipe out of the JSON dump, so `check` reports a false `doc-missing` |
@@ -61,4 +69,6 @@ gh attestation verify justz-<version>-<os>-<arch>.tar.gz --repo igorlino/justz
 
 ## Update and uninstall
 
-Update with the same method you installed with (`brew upgrade justz`, re-run the script, `go install ...@latest`). Uninstall by removing the binary. Shims live in their own directory; remove them first with `justz shim remove <name>`.
+Update with the same method you installed with (`brew upgrade justz`, re-run the script, `go install ...@latest`).
+Uninstall by removing the binary.
+Shims live in their own directory; remove them first with `justz shim remove <name>`.

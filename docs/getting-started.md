@@ -1,6 +1,7 @@
 # Getting started
 
-In about ten minutes you go from nothing to a project whose commands are discoverable, checked on every commit and completed in your shell. Each step says what you should see.
+In about ten minutes you go from nothing to a project whose commands are discoverable, checked on every commit and completed in your shell.
+Each step says what you should see.
 
 ## 1. Install and check the machine
 
@@ -9,7 +10,8 @@ brew install igorlino/tap/justz     # other ways: installation.md
 justz setup
 ```
 
-`justz setup` confirms that `just` is on your PATH and new enough (1.37.0 or newer), and adds the `jz` and `jzh` shortcuts if your install did not bring them. If it warns, see [FAQ](faq.md#unknown-attribute-errors).
+`justz setup` confirms that `just` is on your PATH and new enough (1.37.0 or newer), and adds the `jz` and `jzh` shortcuts if your install did not bring them.
+If it warns, see [FAQ](faq.md#unknown-attribute-errors).
 
 ## 2. Look at a project
 
@@ -23,7 +25,8 @@ justz help <group> <command>  # one command: how to invoke it, examples, options
 justz help --browse           # pick interactively (fzf if installed)
 ```
 
-With the shortcuts, `jzh` is `justz help` and `jz <command>` runs a command. In a project from `justz init --variant rich`, plain `just` and `just help <group> <command>` show the same help, because its recipes call `justz`.
+With the shortcuts, `jzh` is `justz help` and `jz <command>` runs a command.
+In a project from `justz init --variant rich`, plain `just` and `just help <group> <command>` show the same help, because its recipes call `justz`.
 
 A group or command can be an exact name or a unique start of it: in a project with a `tool git` command, `justz help to gi` finds it.
 
@@ -33,11 +36,16 @@ A group or command can be an exact name or a unique start of it: in a project wi
 justz check
 ```
 
-A project with no problems prints `ok: <n> public recipes checked (<variant>), no problems`. Otherwise each finding names the recipe, the rule and a fix. Errors exit `1`. Warnings fail the run only with `--strict`. What each rule means: [Checks and lint rules](checks.md).
+A project with no problems prints `ok: <n> public recipes checked (<variant>), no problems`.
+Otherwise each finding names the recipe, the rule and a fix.
+Errors exit `1`.
+Warnings fail the run only with `--strict`.
+What each rule means: [Checks and lint rules](checks.md).
 
 ## 4. Document your commands
 
-Ask an agent that has the `justfile-authoring` skill: it reads the recipes and writes the documentation, on a new project or an existing one. See [For agents](for-agents.md).
+Ask an agent that has the `justfile-authoring` skill: it reads the recipes and writes the documentation, on a new project or an existing one.
+See [For agents](for-agents.md).
 
 Without an agent, scaffold a new project:
 
@@ -46,11 +54,16 @@ justz init --module build --module test my-project
 cd my-project && justz check
 ```
 
-`init` writes a justfile, a shared `just/preamble.just`, one module per `--module` and the registry, `config/commands.json`. It never overwrites a file. Use `--dry-run` to list the files first.
+`init` writes a justfile, a shared `just/preamble.just`, one module per `--module` and the registry, `config/commands.json`.
+It never overwrites a file.
+Use `--dry-run` to list the files first.
 
-The registry lists only `help` and `check`: you add your own commands to it. For a justfile that exists, follow [From `native` to `rich`, by hand](variants.md#from-native-to-rich-by-hand).
+The registry lists only `help` and `check`: you add your own commands to it.
+For a justfile that exists, follow [From `native` to `rich`, by hand](variants.md#from-native-to-rich-by-hand).
 
-This project is `rich`, so it needs `justz` wherever its help is shown. If that is not possible, `--variant native` keeps the documentation in the justfile. What you gain and lose: [Variants](variants.md).
+This project is `rich`, so it needs `justz` wherever its help is shown.
+If that is not possible, `--variant native` keeps the documentation in the justfile.
+What you gain and lose: [Variants](variants.md).
 
 ## 5. Run the check automatically
 

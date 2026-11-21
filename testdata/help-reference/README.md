@@ -1,15 +1,18 @@
 # Reference output from the existing help tooling
 
-These files record what the bash help renderer that `justz` replaces (version 7.3.0) prints for a synthetic registry, `demo/config/commands.json`. They exist so that, when `justz help`, `check` and `resolve` are built, we can tell what changed on purpose from what changed by accident. They are not a promise to match the old output byte for byte.
+These files record what the bash help renderer that `justz` replaces (version 7.3.0) prints for a synthetic registry, `demo/config/commands.json`.
+They exist so that, when `justz help`, `check` and `resolve` are built, we can tell what changed on purpose from what changed by accident.
+They are not a promise to match the old output byte for byte.
 
-Each file in `demo/out/` is one case. The last line is `[exit N]`, the exit code.
+Each file in `demo/out/` is one case.
+The last line is `[exit N]`, the exit code.
 
 ## How they were produced
 
 The registry was copied to `config/commands.json` in a scratch project root next to the renderer at `scripts/lib/help.sh`, and each case ran in a clean environment: `env -i TERM=dumb NO_COLOR=1 COLUMNS=<width>`, with stdout and stderr captured together.
 
 | Cases | Invocation |
-|---|---|
+| --- | --- |
 | `summary-{80,100,140}` | `show_help summary` |
 | `expanded-{80,100,140}` | `show_help expanded` |
 | `expanded-wide-100` | `show_help expanded -w` |
@@ -24,6 +27,10 @@ The registry was copied to `config/commands.json` in a scratch project root next
 
 ## Things the snapshots show that we need to decide
 
-- The summary and expanded views print ANSI color codes even when the output is piped and `NO_COLOR=1` is set. The zoom views do not. `justz` should honor `NO_COLOR` and non-terminal output everywhere. Tests that compare against these files should strip ANSI codes first.
-- `--resolve build` exits 3 (no match), although `build` is both a command in `core` and a group name. The rules for exact resolution when a name is both need writing down before `justz resolve` exists.
+- The summary and expanded views print ANSI color codes even when the output is piped and `NO_COLOR=1` is set.
+  The zoom views do not.
+  `justz` should honor `NO_COLOR` and non-terminal output everywhere.
+  Tests that compare against these files should strip ANSI codes first.
+- `--resolve build` exits 3 (no match), although `build` is both a command in `core` and a group name.
+  The rules for exact resolution when a name is both need writing down before `justz resolve` exists.
 - A missing zoom target prints a hint pointing at `help -b` and exits 2.
