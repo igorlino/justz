@@ -56,6 +56,7 @@ The website in `site/` is a second front page with the same pitch and quickstart
 [rumdl](https://github.com/rvben/rumdl) checks every Markdown file with the rules in `.rumdl.toml`.
 `just md-lint` reports the findings, and `just ci` runs it.
 `just md-fix` applies the fixes; read its diff before you commit it.
+A commit that only reformats goes in `.git-blame-ignore-revs`, so `git blame` skips it.
 
 | Choice | Why |
 | --- | --- |
