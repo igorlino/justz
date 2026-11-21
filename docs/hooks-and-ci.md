@@ -1,12 +1,16 @@
 # Run `justz check` automatically
 
-`justz check` finds drift between the justfile and its documentation. These snippets run it before a commit and in CI, so that a project that drops its own runtime guard keeps the coverage. Copy the one you need.
+`justz check` finds drift between the justfile and its documentation.
+These snippets run it before a commit and in CI, so that a project that drops its own runtime guard keeps the coverage.
+Copy the one you need.
 
-`justz check` exits `1` on an error. A warning fails it only with `--strict`.
+`justz check` exits `1` on an error.
+A warning fails it only with `--strict`.
 
 ## Pre-commit framework
 
-Add the hook to `.pre-commit-config.yaml` and pin a release in `rev`. Use v0.8.0 or newer (the first release that ships this hook; v0.7.0 and earlier do not), and keep it pinned; the `justz` version in the Actions job below may stay on any existing release.
+Add the hook to `.pre-commit-config.yaml` and pin a release in `rev`.
+Use v0.8.0 or newer (the first release that ships this hook; v0.7.0 and earlier do not), and keep it pinned; the `justz` version in the Actions job below may stay on any existing release.
 
 ```yaml
 repos:
@@ -16,7 +20,9 @@ repos:
       - id: justz-check
 ```
 
-The hook (`.pre-commit-hooks.yaml` at the root of this repository) uses `language: system`, runs `justz check` with `pass_filenames: false`, and runs when the justfile, a `*.just` file or the registry (`commands.json`, `.just-local-rich.json`) is part of the commit. If `justz` is not installed, pre-commit stops with `Executable 'justz' not found` and the commit fails. The hook never passes silently.
+The hook (`.pre-commit-hooks.yaml` at the root of this repository) uses `language: system`, runs `justz check` with `pass_filenames: false`, and runs when the justfile, a `*.just` file or the registry (`commands.json`, `.just-local-rich.json`) is part of the commit.
+If `justz` is not installed, pre-commit stops with `Executable 'justz' not found` and the commit fails.
+The hook never passes silently.
 
 ## Plain git hook
 
@@ -27,11 +33,18 @@ curl -fsSL https://raw.githubusercontent.com/igorlino/justz/v0.8.0/scripts/pre-c
 chmod +x .git/hooks/pre-commit
 ```
 
-A repository with no `justfile` (`justfile`, `Justfile`, `JUSTFILE` or `.justfile` in the root) has nothing to check, so the hook prints a short note on stderr and exits `0`, before it looks for `justz`. When `justz` is not on PATH the hook prints on stderr that `justz check` did not run, and exits `1`: the commit fails. To skip instead, on a machine that has no `justz`, set `JUSTZ_HOOK_SKIP_MISSING=1`. The hook then prints a loud warning and exits `0`. Only the value `1` skips. Otherwise the hook exits with the status of `justz check`.
+A repository with no `justfile` (`justfile`, `Justfile`, `JUSTFILE` or `.justfile` in the root) has nothing to check, so the hook prints a short note on stderr and exits `0`, before it looks for `justz`.
+When `justz` is not on PATH the hook prints on stderr that `justz check` did not run, and exits `1`: the commit fails.
+To skip instead, on a machine that has no `justz`, set `JUSTZ_HOOK_SKIP_MISSING=1`.
+The hook then prints a loud warning and exits `0`.
+Only the value `1` skips.
+Otherwise the hook exits with the status of `justz check`.
 
 ## GitHub Actions
 
-This job installs `justz` with `install.sh`, which verifies the SHA256 of the download before it installs anything, and runs `justz check`. Pin the version in `JUSTZ_VERSION`: the install script and the binary then both come from that release, and a new release cannot change your CI. Pin the actions to a commit as well, as this repository does.
+This job installs `justz` with `install.sh`, which verifies the SHA256 of the download before it installs anything, and runs `justz check`.
+Pin the version in `JUSTZ_VERSION`: the install script and the binary then both come from that release, and a new release cannot change your CI.
+Pin the actions to a commit as well, as this repository does.
 
 ```yaml
 name: justz
@@ -57,4 +70,5 @@ jobs:
       - run: justz check
 ```
 
-`justz` needs `just`, which `setup-just` installs. Add `justz fmt --check` after `justz check` for a project with a registry, and `--strict` to make warnings fail.
+`justz` needs `just`, which `setup-just` installs.
+Add `justz fmt --check` after `justz check` for a project with a registry, and `--strict` to make warnings fail.

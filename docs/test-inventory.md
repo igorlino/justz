@@ -1,6 +1,8 @@
 # Inventory of the existing tests
 
-`justz` replaces a set of bash tools: a help renderer, a documentation checker, shell completion, a `jz`/`jzh` shortcut shim, and a generator and assessment script. They come with their own tests. This page lists every one of them and says what happens to it, so nothing stops being tested without a decision.
+`justz` replaces a set of bash tools: a help renderer, a documentation checker, shell completion, a `jz`/`jzh` shortcut shim, and a generator and assessment script.
+They come with their own tests.
+This page lists every one of them and says what happens to it, so nothing stops being tested without a decision.
 
 Outcomes:
 
@@ -8,12 +10,13 @@ Outcomes:
 - **Dropped**, with the reason.
 - **Replaced**, covered by something different.
 
-The suites are named by what they check, not by file name. 122 cases in total.
+The suites are named by what they check, not by file name.
+122 cases in total.
 
 ## Help renderer: 25 cases
 
 | Cases | Outcome |
-|---|---|
+| --- | --- |
 | A command found by a bare name, a unique prefix, two words, a group plus a command prefix, or a core command (6) | Becomes a justz test in M4: lookup rules for `justz help <group> <command>`. |
 | The group view equals the dispatcher view, minus color (1) | M4. |
 | Ambiguous name exits 2, no match exits 2, three words exits 1, unknown group exits 2 (4) | M4. The exit codes are kept unless the differences ledger says otherwise. |
@@ -25,7 +28,7 @@ The suites are named by what they check, not by file name. 122 cases in total.
 ## Documentation checker: 14 cases
 
 | Cases | Outcome |
-|---|---|
+| --- | --- |
 | Valid native justfile passes; valid rich justfile and registry pass (2) | M5: `justz check`. |
 | Missing `[doc]` on a submodule recipe; missing `[group]` on a top-level recipe (2) | M5. |
 | Recipe missing from the registry; stale recipe in the registry; `[doc]` differs from the registry description (3) | M5. The audit of a large repo showed this check is also needed where recipes are not documented at all. |
@@ -37,7 +40,7 @@ The suites are named by what they check, not by file name. 122 cases in total.
 ## Shell completion: 31 cases
 
 | Cases | Outcome |
-|---|---|
+| --- | --- |
 | Top level completes core recipes and groups sorted; group subcommands with descriptions; scan flags in short and long form (4) | M5: `justz completions`. |
 | Enum values complete after a flag; boolean flags offer the remaining flags; free-text flags fall back to files; positional values come first (8) | M5. |
 | `help` completion: core recipes then groups, bare names, a group's commands, its own flags (6) | M5. |
@@ -48,7 +51,7 @@ The suites are named by what they check, not by file name. 122 cases in total.
 ## Shortcut shim (`jz`, `jzh`): 51 cases
 
 | Cases | Outcome |
-|---|---|
+| --- | --- |
 | No justfile, justfile without the help script, missing or unreadable version marker, version older than the minimum, numeric version comparison (11) | **Dropped.** They guard against a vendored help script that will not exist. `justz doctor` and the minimum version in the skill take over. A missing justfile still needs a clear exit 2, which becomes a M3 test. |
 | Runs `just` in the project root, walks up to find the justfile, passes the recipe exit code through (3) | M3. |
 | Bare name runs a command without its group, echoes the resolved path, prefixes never run, ambiguous names exit 2 and list the candidates, a real root recipe wins, explicit paths and core recipes and dash-first arguments pass through, extras are not run (11) | M3: `justz run` and the shim. |
@@ -61,16 +64,19 @@ The suites are named by what they check, not by file name. 122 cases in total.
 ## Terminal smoke test and the test runner
 
 | Item | Outcome |
-|---|---|
+| --- | --- |
 | zsh pseudo-terminal completion smoke test (1 case) | M5, as an end-to-end test in a container with zsh. |
 | The runner script that executes all suites | **Replaced** by `just ci`. |
 
 ## Totals
 
-Of 122 cases: 16 are dropped because they only guard the vendored help script or its version, and the other 106 become `justz` tests in M3 to M5. The runner script is replaced by `just ci`. The generator and assessment scripts had no tests of their own, so M3 adds snapshot tests for `justz generate` and `justz assess`.
+Of 122 cases: 16 are dropped because they only guard the vendored help script or its version, and the other 106 become `justz` tests in M3 to M5.
+The runner script is replaced by `just ci`.
+The generator and assessment scripts had no tests of their own, so M3 adds snapshot tests for `justz generate` and `justz assess`.
 
 ## Findings to carry forward
 
 - Registry discovery has to walk up from a subdirectory to the project root.
 - The summary and expanded views of the old tool ignore `NO_COLOR` (see the reference snapshots).
-- Exit codes of the zoom lookups are part of the tested behavior. Keep them unless the differences ledger records a change.
+- Exit codes of the zoom lookups are part of the tested behavior.
+  Keep them unless the differences ledger records a change.

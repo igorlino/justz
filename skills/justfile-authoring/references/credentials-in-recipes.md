@@ -1,6 +1,7 @@
 # Credentials in Recipes — Security & Best Practices
 
-Use this reference when handling secrets (1Password tokens, API keys, passwords) in justfile recipes. Covers safe patterns, common anti-patterns, and integration with 1Password.
+Use this reference when handling secrets (1Password tokens, API keys, passwords) in justfile recipes.
+Covers safe patterns, common anti-patterns, and integration with 1Password.
 
 ## The Critical Anti-Pattern: File-Scope Resolution
 
@@ -16,6 +17,7 @@ helm env='sandbox':
 ```
 
 **Impact:**
+
 - `registryToken` is resolved on **every** `just` invocation
 - Even `just help` or `just --list` resolves it
 - With 1Password: **biometric prompt on every `just` command**
@@ -44,6 +46,7 @@ helm env='sandbox':
 ```
 
 **Why:**
+
 - Credential only resolved when recipe actually runs
 - User approves prompt only for commands they chose to run
 - Can be bypassed: `REGISTRY_TOKEN=... just helm production` (no prompt)
@@ -82,6 +85,7 @@ resolve_api_token() {
 ```
 
 Then in justfile:
+
 ```just
 sync:
     #!/usr/bin/env bash
@@ -93,6 +97,7 @@ sync:
 ```
 
 **Why:**
+
 - Testable: functions can be sourced and called independently
 - Discoverable: `grep resolve_` shows all available secrets
 - Maintainable: single source of truth for each secret path
@@ -112,6 +117,7 @@ DB_PASSWORD=op://Private/Database/prod-password
 ```
 
 Then in justfile:
+
 ```just
 sync:
     OP_BIOMETRIC_UNLOCK_ENABLED=true op run --env-file=.op.env -- \
@@ -123,6 +129,7 @@ migrate-db:
 ```
 
 **Why:**
+
 - Clean separation: references in `.op.env`, recipes in justfile
 - One approval covers all referenced secrets
 - Safe to commit `.op.env` (no actual secrets)
@@ -133,41 +140,49 @@ migrate-db:
 ## Safety Rules: Never Let Secrets Reach Durable Surfaces
 
 **❌ Never echo a secret:**
+
 ```bash
 echo "Token: $GITLAB_TOKEN"  # Captured in logs forever ✗
 ```
 
 **✅ Verify by length only:**
+
 ```bash
 printf '%s' "$GITLAB_TOKEN" | wc -c  # Non-zero = success ✓
 ```
 
 **❌ Never pass in argv:**
+
 ```bash
 curl --header "Authorization: $TOKEN" ...  # Visible in `ps` ✗
 ```
 
 **✅ Pass via environment or stdin:**
+
 ```bash
 curl --header "Authorization: $(cat)" < <(echo "$TOKEN") ...  # Hidden ✓
 ```
 
 **❌ Never fold stderr into logs:**
+
 ```bash
 TOKEN=$(op read 'op://...' 2>&1 | tee -a deploy.log)  # Exposes error context ✗
 ```
 
 **✅ Keep stderr on TTY or discard:**
+
 ```bash
 TOKEN=$(op read 'op://...' 2>/dev/null)  # Discarded safely ✓
 ```
 
 **❌ Never include in `set -x` output:**
+
 ```bash
 set -x  # Traces all assignments, including secrets ✗
 ```
 
 **✅ Unset before traced sections:**
+
 ```bash
 TOKEN=$(op read 'op://...')
 set +x  # Secrets resolved before tracing starts
@@ -179,12 +194,22 @@ set -x
 
 ## What `justz lint` finds (0.6.0 or newer)
 
-Two rules look at names only. They never read, print or store a value.
+Two rules look at names only.
+They never read, print or store a value.
 
-- **`secret-parameter`**: a recipe parameter with a secret-like name (`token`, `password`, `secret`, `api_key`...). `just deploy S3CR3T` puts the value in the argument list of `just` itself, and with `set positional-arguments` in the recipe's shell too. It also stays in the shell history. Read the secret inside the recipe from the environment, a mode `0600` file or the password manager instead.
-- **`secret-interpolated`**: a secret-like name inside `{{ }}` in a recipe that `just` runs line by line, including through an assignment (`tok := env('GH_TOKEN')`), a parameter default or a dependency argument. `just` replaces the text before the shell starts, so the value is in the shell's command line whatever the command is. Use the shell's own variable (`$GH_TOKEN`) so `just` does not put the value in the command line. What the shell then does with it is up to the command you run: a `curl -H "Authorization: $GH_TOKEN"` still shows it in `curl`'s arguments. Shebang and `[script]` recipes are not reported: their text goes to a temporary file.
+- **`secret-parameter`**: a recipe parameter with a secret-like name (`token`, `password`, `secret`, `api_key`...).
+  `just deploy S3CR3T` puts the value in the argument list of `just` itself, and with `set positional-arguments` in the recipe's shell too.
+  It also stays in the shell history.
+  Read the secret inside the recipe from the environment, a mode `0600` file or the password manager instead.
+- **`secret-interpolated`**: a secret-like name inside `{{ }}` in a recipe that `just` runs line by line, including through an assignment (`tok := env('GH_TOKEN')`), a parameter default or a dependency argument.
+  `just` replaces the text before the shell starts, so the value is in the shell's command line whatever the command is.
+  Use the shell's own variable (`$GH_TOKEN`) so `just` does not put the value in the command line.
+  What the shell then does with it is up to the command you run: a `curl -H "Authorization: $GH_TOKEN"` still shows it in `curl`'s arguments.
+  Shebang and `[script]` recipes are not reported: their text goes to a temporary file.
 
-What they do not see: a secret in the shell text itself (`curl -H "Authorization: Bearer $TOKEN"`, `docker run -e`, `sshpass -p`), a secret read through a backtick or `shell()`, a computed `env` name, and names such as `GH_PAT` or `DATABASE_URL` that no name list can tell from a plain value. The rule "Never pass in argv" above still applies to those. Silence a wrong finding on one recipe with `[metadata('justz-ignore', 'secret-parameter')]` (or `secret-interpolated`), not to make the run pass.
+What they do not see: a secret in the shell text itself (`curl -H "Authorization: Bearer $TOKEN"`, `docker run -e`, `sshpass -p`), a secret read through a backtick or `shell()`, a computed `env` name, and names such as `GH_PAT` or `DATABASE_URL` that no name list can tell from a plain value.
+The rule "Never pass in argv" above still applies to those.
+Silence a wrong finding on one recipe with `[metadata('justz-ignore', 'secret-parameter')]` (or `secret-interpolated`), not to make the run pass.
 
 ---
 
@@ -225,7 +250,8 @@ REGISTRY_TOKEN=$(resolve_registry_token)
 ### Debugging "no active session" Errors
 
 See `biometric-1password` skill → references → diagnostics.md
-```
+
+```text
 
 ### Centralized Documentation
 

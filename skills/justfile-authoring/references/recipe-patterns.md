@@ -6,7 +6,8 @@ Use this reference when designing recipes to understand common patterns that imp
 
 **Pattern:** Forward flags to the underlying tool.
 
-When a recipe wraps a tool that has its own flags, forward them instead of consuming them. This preserves the tool's own namespace and lets users discover flags via `tool --help` rather than duplicating them in recipe docs.
+When a recipe wraps a tool that has its own flags, forward them instead of consuming them.
+This preserves the tool's own namespace and lets users discover flags via `tool --help` rather than duplicating them in recipe docs.
 
 ```just
 set positional-arguments
@@ -29,11 +30,13 @@ build *ARGS:
 ```
 
 **Why:**
+
 - Users can discover flags from the underlying tool
 - Recipe stays simple and maintainable
 - Avoids duplication in help text
 
-**Key rule:** Always set `set positional-arguments` and iterate `"$@"` (never `{{ ARGS }}`, which splits arguments on whitespace). Also ignore a leading `--` separator in option loops so callers who type `just <ns> <cmd> -- -w` out of habit do not get `Unknown argument: --`.
+**Key rule:** Always set `set positional-arguments` and iterate `"$@"` (never `{{ ARGS }}`, which splits arguments on whitespace).
+Also ignore a leading `--` separator in option loops so callers who type `just <ns> <cmd> -- -w` out of habit do not get `Unknown argument: --`.
 
 ---
 
@@ -59,10 +62,12 @@ _check-deps:
 ```
 
 **Annotations:**
+
 - `[private]` — Hidden from `just --list` and help (preferred, more explicit)
 - `_prefix` — By convention, hidden from help (legacy, still works)
 
 **Why:**
+
 - Keeps help/discoverability clean
 - Signals intent: "This is for internal implementation"
 - Prevents accidental public API surface
@@ -85,12 +90,14 @@ lint-check *flags:
 ```
 
 **Usage:**
+
 ```bash
 just lint-check                                            # Uses default image
 LINTER_IMAGE=myregistry.com/image:1.4.2 just lint-check   # Override for one run
 ```
 
 **Why:**
+
 - Users can adapt without forking your justfile
 - Encourages one-time overrides over permanent edits
 - Clear in the justfile what can be overridden
@@ -139,6 +146,7 @@ done
 ```
 
 **Called both ways:**
+
 ```bash
 # Direct call (by users or in CI)
 ./scripts/cidaas/find-account.sh --user-id tony@example.com
@@ -148,6 +156,7 @@ just cidaas find-account-by-email tony@example.com
 ```
 
 **Pros:**
+
 - ✅ Self-documenting: `./script.sh --help` works
 - ✅ Portable: runs in CI/automation without `just`
 - ✅ Professional: shows the tool is maintained
@@ -175,25 +184,30 @@ done
 ```
 
 **Called only via justfile:**
+
 ```just
 validate:
     ./scripts/validate/check-todos.sh
 ```
 
 **Decision: Add usage() if:**
+
 - Script might be called directly by users
 - Script is complex (>20 lines)
 - Script might be reused elsewhere in the future
 - Script is in a public scripts/ directory (not internal)
 
 **Skip usage() if:**
+
 - Script is truly internal and focused
 - Script is simple (<10 lines)
 - Only ever called from one justfile recipe
 
-**Rule of thumb:** When in doubt, add it. The maintenance cost is low, and it makes the script more discoverable and professional.
+**Rule of thumb:** When in doubt, add it.
+The maintenance cost is low, and it makes the script more discoverable and professional.
 
 **❌ Avoid:**
+
 ```just
 complex-operation:
     #!/usr/bin/env bash
@@ -202,6 +216,7 @@ complex-operation:
 ```
 
 **✅ Do instead:**
+
 ```just
 complex-operation:
     ./scripts/operations/complex-operation.sh
@@ -213,6 +228,7 @@ set -euo pipefail
 ```
 
 **Why:**
+
 - Scripts can be parsed, linted, and tested independently
 - Recipe body stays readable
 - Easier to debug (script runs in its own context)
@@ -248,6 +264,7 @@ deploy ENVIRONMENT:
 ```
 
 **Why:**
+
 - Fast feedback (fail at argument validation, not after 5 minutes of work)
 - Clear error messages guide users to the right fix
 - Single source of truth for valid values
@@ -261,18 +278,20 @@ deploy ENVIRONMENT:
 A positional parameter declared **before** a variadic swallows the first forwarded argument.
 
 **❌ Wrong:**
+
 ```just
 test COMPONENT *FLAGS:  # COMPONENT eats the first *FLAGS value
     ./run-tests {{ COMPONENT }} {{ FLAGS }}
 ```
 
 ```bash
-$ just test my-component --watch
+just test my-component --watch
 # "my-component" gets COMPONENT ✓
 # "--watch" gets eaten by COMPONENT, not FLAGS ✗
 ```
 
 **✅ Right — use flags with `"$@"` instead:**
+
 ```just
 set positional-arguments
 
@@ -295,6 +314,7 @@ test *ARGS:
 ```
 
 Or keep it simple:
+
 ```just
 set positional-arguments
 
@@ -326,6 +346,7 @@ build *ARGS:
 ```
 
 **When to use multi-line docs:**
+
 - Recipe has non-obvious usage patterns
 - Flags or arguments need examples
 - Cross-reference related recipes
@@ -335,6 +356,7 @@ build *ARGS:
 ## Related Patterns
 
 See also:
+
 - [credentials-in-recipes.md](credentials-in-recipes.md) — Handling 1Password and other secrets safely
 - [antipatterns.md](antipatterns.md) — Common mistakes to avoid
 - [shared-mechanics.md](shared-mechanics.md) — `mod` layout and `positional-arguments`

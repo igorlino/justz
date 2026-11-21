@@ -2,15 +2,19 @@
 
 ## Supported versions
 
-justz is in early development. Only the latest release gets security fixes.
+justz is in early development.
+Only the latest release gets security fixes.
 
 ## Reporting a vulnerability
 
 Please don't open a public issue for a security problem.
 
-Use GitHub's private reporting instead: go to the [Security tab](https://github.com/igorlino/justz/security) and choose "Report a vulnerability". That sends the report to the maintainer only.
+Use GitHub's private reporting instead: go to the [Security tab](https://github.com/igorlino/justz/security) and choose "Report a vulnerability".
+That sends the report to the maintainer only.
 
-A good report says what you found, how to reproduce it, and which version you tried. I'll acknowledge it within a few days and keep you posted while it's fixed. You're welcome to be credited in the release notes if you'd like.
+A good report says what you found, how to reproduce it, and which version you tried.
+I'll acknowledge it within a few days and keep you posted while it's fixed.
+You're welcome to be credited in the release notes if you'd like.
 
 ## What counts
 
@@ -25,4 +29,5 @@ justz never reads, stores or injects credentials, so a bug that makes it do so i
 
 ## Verifying releases
 
-Releases include SHA256 checksums and build provenance attestations. Check an artifact with `gh attestation verify <file> --repo igorlino/justz`.
+Releases include SHA256 checksums and build provenance attestations.
+Check an artifact with `gh attestation verify <file> --repo igorlino/justz`.
