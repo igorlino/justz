@@ -19,6 +19,8 @@ Read [docs/for-agents.md](docs/for-agents.md): the JSON contract, the exit codes
 | Run the unit tests | `just test` |
 | Everything CI runs | `just ci` |
 | Format Go files | `just fmt` |
+| Lint the Markdown files | `just md-lint` |
+| Fix the Markdown files | `just md-fix` |
 
 Run `just ci` before you say a change is done.
 

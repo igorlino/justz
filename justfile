@@ -24,6 +24,18 @@ fmt-check:
 fmt:
     gofmt -w .
 
+[doc('Lint the Markdown files with rumdl and the rules in .rumdl.toml')]
+[group('check')]
+md-lint:
+    @command -v rumdl >/dev/null || { echo "rumdl not found: install it, see https://github.com/rvben/rumdl#installation" >&2; exit 1; }
+    rumdl check .
+
+[doc('Apply the rumdl fixes to the Markdown files (rewrites them)')]
+[group('check')]
+md-fix:
+    @command -v rumdl >/dev/null || { echo "rumdl not found: install it, see https://github.com/rvben/rumdl#installation" >&2; exit 1; }
+    rumdl fmt .
+
 [doc('Run go vet')]
 [group('check')]
 vet:
@@ -103,6 +115,6 @@ site-demo-check: build
 site-demo-check:
     @echo "site-demo-check: skipped on Windows"
 
-[doc('Everything CI runs: format check, vet, test, build, install script, hook script')]
+[doc('Everything CI runs: format check, Markdown lint, vet, test, build, install script, hook script')]
 [group('check')]
-ci: fmt-check vet test build site-demo-check test-install test-hook
+ci: fmt-check md-lint vet test build site-demo-check test-install test-hook

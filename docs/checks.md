@@ -24,7 +24,7 @@ Needs `just` 1.42.0 or newer. An unknown rule name in `justz-ignore` is reported
 
 ## `check` rules
 
-**Errors**
+### Errors
 
 | Rule | Fires when |
 |---|---|
@@ -46,7 +46,7 @@ Needs `just` 1.42.0 or newer. An unknown rule name in `justz-ignore` is reported
 
 The four `example-*` rules are warnings for the `core` group.
 
-**Warnings** (fail only with `--strict`)
+### Warnings (fail only with `--strict`)
 
 | Rule | Fires when |
 |---|---|

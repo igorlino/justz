@@ -227,4 +227,4 @@ eval "$(justz completions bash)"    # in ~/.bashrc
 
 The script is small; each Tab press asks `justz` what can come next from the registry, so what completes always matches the project you are in. It lists groups, commands, flags with descriptions (zsh), and enum values from `values`; a free-text value falls back to file completion. Run the command again after adding or removing a shim so the new names are included.
 
-Smoke-test completion in a pseudo-terminal after changing it: unit tests that stub the shell's completion function cannot see wiring faults. Include an empty-word case (`tz git ` as well as `tz git -`), because zsh hides option candidates until a `-` is typed.
+Smoke-test completion in a pseudo-terminal after changing it: unit tests that stub the shell's completion function cannot see wiring faults. Include an empty-word case (`tz git` followed by a space, as well as `tz git -`), because zsh hides option candidates until a `-` is typed.

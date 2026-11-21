@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"unicode"
 
 	"github.com/igorlino/justz/internal/check"
 	"github.com/igorlino/justz/internal/lint"
@@ -14,7 +15,7 @@ import (
 
 // The limits of docs/writing-docs.md. Raise one only with a reason in the PR.
 const (
-	maxReadmeLines      = 150
+	maxReadmeWords      = 1150
 	maxReadmeBulletWord = 40
 	maxSkillLines       = 500
 	maxSkillWords       = 3000
@@ -58,17 +59,40 @@ func TestEveryRuleIsDocumented(t *testing.T) {
 	}
 }
 
-// The README stays a front page: short, with short bullets.
+// The README stays a front page: short, with short bullets. It counts words,
+// not lines, because the Markdown style puts one sentence on each line.
 func TestReadmeBudget(t *testing.T) {
 	lines := strings.Split(strings.TrimRight(read(t, "README.md"), "\n"), "\n")
-	if len(lines) > maxReadmeLines {
-		t.Errorf("README.md has %d lines (limit %d): move the detail to a page in docs/", len(lines), maxReadmeLines)
+	if n := countWords(lines); n > maxReadmeWords {
+		t.Errorf("README.md has %d words (limit %d): move the detail to a page in docs/", n, maxReadmeWords)
 	}
-	for i, line := range lines {
-		if n := len(strings.Fields(line)); strings.HasPrefix(line, "- ") && n > maxReadmeBulletWord {
+	// A bullet goes on over the indented lines below it.
+	for i := 0; i < len(lines); i++ {
+		if !strings.HasPrefix(lines[i], "- ") {
+			continue
+		}
+		end := i + 1
+		for end < len(lines) && strings.HasPrefix(lines[end], "  ") {
+			end++
+		}
+		if n := countWords(lines[i:end]); n > maxReadmeBulletWord {
 			t.Errorf("README.md:%d: a bullet of %d words (limit %d): move the detail to a page in docs/", i+1, n, maxReadmeBulletWord)
 		}
+		i = end - 1
 	}
+}
+
+// countWords counts the words of lines: a table pipe or a list dash is not one.
+func countWords(lines []string) int {
+	n := 0
+	for _, line := range lines {
+		for _, f := range strings.Fields(line) {
+			if strings.IndexFunc(f, func(r rune) bool { return unicode.IsLetter(r) || unicode.IsDigit(r) }) >= 0 {
+				n++
+			}
+		}
+	}
+	return n
 }
 
 // A SKILL.md stays an entry point; the long material goes in references/.

@@ -4,7 +4,7 @@ Use this reference when designing recipes to understand common patterns that imp
 
 ## Variadic Arguments & Flag Forwarding
 
-**Pattern: Forward flags to the underlying tool**
+**Pattern:** Forward flags to the underlying tool.
 
 When a recipe wraps a tool that has its own flags, forward them instead of consuming them. This preserves the tool's own namespace and lets users discover flags via `tool --help` rather than duplicating them in recipe docs.
 
@@ -39,7 +39,7 @@ build *ARGS:
 
 ## Private Recipes & Implementation Details
 
-**Pattern: Mark internal recipes as private**
+**Pattern:** Mark internal recipes as private.
 
 Use `[private]` annotation or `_` prefix for recipes that are implementation details, not part of the public API.
 
@@ -71,7 +71,7 @@ _check-deps:
 
 ## Environment Variable Overrides
 
-**Pattern: Allow users to override without editing files**
+**Pattern:** Allow users to override without editing files.
 
 When your recipe needs a value that users might want to customize, use `env()` with a default to let them override via environment.
 
@@ -99,7 +99,7 @@ LINTER_IMAGE=myregistry.com/image:1.4.2 just lint-check   # Override for one run
 
 ## Script Extraction
 
-**Pattern: Keep recipe bodies short; extract complex logic to scripts**
+**Pattern:** Keep recipe bodies short; extract complex logic to scripts.
 
 If a recipe body is more than 10-15 lines, move it to a script file in `scripts/<namespace>/<recipe>.sh`.
 
@@ -222,7 +222,7 @@ set -euo pipefail
 
 ## Argument Validation
 
-**Pattern: Fail early if required arguments are missing or invalid**
+**Pattern:** Fail early if required arguments are missing or invalid.
 
 Validate arguments at the top of a recipe so the user gets immediate feedback, not a cryptic error later.
 
@@ -256,7 +256,7 @@ deploy ENVIRONMENT:
 
 ## Named Parameters vs. Positional
 
-**Rule: Positional parameters require careful ordering**
+**Rule:** Positional parameters require careful ordering.
 
 A positional parameter declared **before** a variadic swallows the first forwarded argument.
 
@@ -306,7 +306,7 @@ test *ARGS:
 
 ## Multi-Line Help with Examples
 
-**Pattern: Use multi-line `[doc]` for complex recipes**
+**Pattern:** Use multi-line `[doc]` for complex recipes.
 
 Document not just what a recipe does, but how to use it with examples.
 
