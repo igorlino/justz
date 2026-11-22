@@ -13,6 +13,7 @@ description: >
 metadata:
   author: igorlino
   domain: tooling
+  tags: "justz, just, cli, help, agents"
   version: "0.10.0"
 ---
 

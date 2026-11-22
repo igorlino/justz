@@ -13,6 +13,7 @@ description: >
 metadata:
   author: igorlino
   domain: dx
+  tags: "justfile, just, task-runner, developer-experience, credentials"
   version: "1.8.0"
   requires: "justz-cli; justz 0.5.1 or newer for the rich and local-rich variants; 0.6.0 or newer for init, lint and schema; 0.7.0 or newer for detail; 0.8.0 or newer for exits, env, tags, hasDetail and seeAlso"
 ---
@@ -184,7 +185,7 @@ A guard nobody has seen fail is a guard nobody can trust.
 - Do not declare a positional parameter ahead of a variadic; it swallows the first forwarded argument.
   Make it a flag.
 - Do not author flags without short single-letter aliases (`-x, --long`) unless the flag name is already two letters (`--id`, `--ci`, `--ui`) or there is a collision.
-  Do not alias two-letter parameters without asking.
+  Ask before aliasing a two-letter parameter.
 - Do not use long flags in examples when short aliases exist.
 - Do not write redundant examples: a bare command, or a single boolean flag the argument rows already show.
   `justz check` reports both.
