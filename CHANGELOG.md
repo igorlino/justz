@@ -10,6 +10,12 @@ Each release on the [releases page](https://github.com/igorlino/justz/releases) 
 
 - `justz check` warns about an example that gives a value with `=` to a flag declared without one, such as `-tail=200` (`example-boolean-value`).
 - `justz check` warns about tiers that do not match the groups (`registry-tiers`): a group in no tier is hidden from the summary, and a name that is not a group is dropped without a word.
+- The `justfile-authoring` skill has a procedure for reviewing a registry that already passes `justz check` (`references/reviewing-a-registry.md`).
+
+### Changed
+
+- The `justfile-authoring` skill says that a command's zoom shows only the group's examples once the group has one for it, so the `example` belongs among them too.
+- The `justfile-authoring` skill no longer recommends `-- …` examples as such: `just` forwards the `--`, which a wrapped parser such as argparse rejects (a new entry in `references/just-gotchas.md`).
 
 ## 0.10.0 - 2026-11-17
 
