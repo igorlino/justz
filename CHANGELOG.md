@@ -6,6 +6,11 @@ Each release on the [releases page](https://github.com/igorlino/justz/releases) 
 
 ## Unreleased
 
+### Added
+
+- `justz check` warns about an example that gives a value with `=` to a flag declared without one, such as `-tail=200` (`example-boolean-value`).
+- `justz check` warns about tiers that do not match the groups (`registry-tiers`): a group in no tier is hidden from the summary, and a name that is not a group is dropped without a word.
+
 ## 0.10.0 - 2026-11-17
 
 ### Added

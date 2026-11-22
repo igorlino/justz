@@ -42,6 +42,8 @@ const (
 	RuleExampleLongFlag    = "example-long-flag"
 	RuleExampleEnumUnset   = "example-enum-missing"
 	RuleExampleFlagUnknown = "example-flag-unknown"
+	RuleExampleBoolValue   = "example-boolean-value"
+	RuleTiers              = "registry-tiers"
 	RuleVolatileText       = "volatile-text"
 	RuleSeeAlso            = "registry-see-also"
 	RuleExits              = "registry-exits"
@@ -63,6 +65,7 @@ var Rules = []string{
 	RuleUnsorted, RuleExampleBare, RuleExampleSingle, RuleExampleLongFlag, RuleExampleEnumUnset,
 	RuleExampleFlagUnknown, RuleVolatileText, RuleDetailFlagNoRow, RuleDocMultiline, RuleSeeAlso, RuleExits, RuleEnv, RuleTags, RuleTagsConfirm,
 	RuleDetailLong, RuleDetailNoParagraphs, RuleDetailRestatesDesc, RuleDetailEnvNoRow,
+	RuleExampleBoolValue, RuleTiers,
 }
 
 // MaxDescLength is the length above which a registry description is a warning.
@@ -164,6 +167,7 @@ func Run(in Input) (Result, error) {
 		res.Findings = append(res.Findings, registryRules(in, items)...)
 		res.Findings = append(res.Findings, shapeRules(in.Registry)...)
 		res.Findings = append(res.Findings, exampleRules(in.Registry)...)
+		res.Findings = append(res.Findings, tiersRules(in.Registry)...)
 	}
 	cleanFindings(res.Findings)
 	sortFindings(res.Findings)

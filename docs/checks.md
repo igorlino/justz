@@ -56,6 +56,8 @@ The four `example-*` rules are warnings for the `core` group.
 | Rule | Fires when |
 | --- | --- |
 | `example-flag-unknown` | an example uses a flag the recipe does not declare |
+| `example-boolean-value` | an example gives a value with `=` to a flag whose argument row declares none, such as `-tail=200` for a `[-tail]` row. A row declares a value with a `<placeholder>`, with `=VALUE`, or with a word after the flag (`--only KIND`) |
+| `registry-tiers` | a non-core group is in no tier, so the summary hides it; a tier names a group that does not exist, so help drops it; or a group is in two tiers |
 | `doc-multiline-comment` | a recipe doc is a comment block; `just` uses only the last line. Add `[doc(...)]` |
 | `registry-desc-long` | a registry `desc` is over 120 characters |
 | `registry-tags` | a tag list has a contradiction or a duplicate |

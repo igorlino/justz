@@ -192,3 +192,32 @@ func TestGroupExamplesUnchangedWithoutExampleField(t *testing.T) {
 		t.Errorf("findings = %v, want %s", got, want)
 	}
 }
+
+const boolCmds = `{
+	"start":{"desc":"Start","args":[{"name":"[-tail]","desc":"From the end"},{"name":"[-n <lines>]","desc":"Lines"},{"name":"[--date=YYYY-MM-DD]","desc":"Day"},{"name":"[--only KIND]","desc":"Subset"},{"name":"-v, --verbose","desc":"Chatty"}]},
+	"stop":{"desc":"Stop"},"scan":{"desc":"Scan"}}`
+
+func TestExampleBooleanValueFires(t *testing.T) {
+	for _, ex := range []string{`just tool start -tail=200`, `just tool start --verbose=true -n 3`} {
+		res := exampleRun(t, boolCmds, `[{"cmd":"`+ex+`"}]`)
+		f := hasRule(res, RuleExampleBoolValue)
+		if f == nil || f.Severity != Warning || f.Subject != "tool.examples" {
+			t.Errorf("%s: %v", ex, rules(res))
+		}
+	}
+}
+
+func TestExampleBooleanValueStaysQuiet(t *testing.T) {
+	for _, ex := range []string{
+		`just tool start -tail -n 200`,
+		`just tool start -n=200`,            // <lines> declares a value
+		`just tool start --date=2026-05-12`, // =YYYY-MM-DD declares a value
+		`just tool start --only=python`,     // a bare word after the flag declares a value
+		`just tool start -- -tail=200`,      // after the terminator
+		`just tool start -tail 200`,         // 200 may be a positional argument
+	} {
+		if res := exampleRun(t, boolCmds, `[{"cmd":"`+ex+`"}]`); has(res, RuleExampleBoolValue, "") {
+			t.Errorf("%s: %v", ex, rules(res))
+		}
+	}
+}

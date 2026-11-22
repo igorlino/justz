@@ -156,6 +156,9 @@ For each recipe write a description that says what it does, not just which tool 
   A leading `NAME=value` or `env NAME=value` is read through by the flag rules, and it exempts the example from the bare-command and single-flag rules (the environment is the information the argument rows do not show).
   The per-command `example` field (a leading `…` stands for `just <command>`) goes through the same rules.
 
+- A command's `example` holds one command.
+  Put any others in the group's `examples`, each with a `desc`: the zoom of the command shows them, and each one is checked.
+
 - Run **`justz fmt`** after every edit.
   It writes the canonical order: groups (`core` first, then A to Z), commands A to Z, arguments (positional first, then flags A to Z), `env` rows by name, examples by `cmd`, `tags`, `seeAlso` and `tiers[].groups` A to Z.
   `justz fmt --check` writes nothing and exits `1` when the file is not formatted.
@@ -233,6 +236,8 @@ _default:
 | `detail-flag-no-row` | A `detail` names a flag (`--long` or `-s`) that no argument row of the command declares (a warning): add the row. A command with no rows is reported too. Silence with `[metadata('justz-ignore', 'detail-flag-no-row')]` |
 | `detail-env-no-row` | A `detail` names an environment variable that no `env` row of the command declares (a warning): add the row. A name counts when it has an underscore (`NO_COLOR`) or is written as `$NAME`, `${NAME}`, `export NAME` or `NAME=`; acronyms (`HTTP`, `JSON`), flags, paths and file names do not. A prose constant with an underscore (`UTF_8`, `SHA_256`, `READ_ONLY`) can fire, so silence it; a name under 3 characters (`$CI`) is not caught. Silence with `[metadata('justz-ignore', 'detail-env-no-row')]` |
 | `example-*` | The example rules above, on group `examples` and on each command `example`; `example-flag-unknown` is always a warning |
+| `example-boolean-value` | An example gives a value with `=` to a flag whose row declares none, such as `-tail=200` for `[-tail]` (a warning). Drop the value, or declare it in the row |
+| `registry-tiers` | A group is in no tier and so hidden from the summary, a tier names a group that does not exist, or a group is in two tiers (warnings) |
 
 Wire `justz check` and `justz fmt --check` into `check` and `ci`, then add a deliberately undocumented recipe and confirm both fail.
 

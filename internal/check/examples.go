@@ -97,6 +97,7 @@ func exampleRules(reg *orderedjson.Value) []Finding {
 			}
 			onCmd := regexp.MustCompile(`^just +` + regexp.QuoteMeta(path) + `\b`)
 			out = append(out, unknownFlags(c, path, found)...)
+			out = append(out, booleanValues(c, path, found)...)
 			for _, a := range c.Args {
 				// Long flag used in an example although a short alias exists.
 				if m := shortLong.FindStringSubmatch(a.Name); m != nil {
@@ -362,6 +363,60 @@ func shellWords(s string) []string {
 	}
 	if started || cur.Len() > 0 {
 		out = append(out, cur.String())
+	}
+	return out
+}
+
+// takesValue reports whether an argument row that names flag also declares a
+// value for it: a <placeholder> anywhere in the row, or a value written right
+// after the flag without brackets, as --date=YYYY-MM-DD or --only KIND. A comma
+// (-v, --verbose), another flag or the end of the row is no value.
+func takesValue(c registryEntry, flag string) bool {
+	for _, a := range c.Args {
+		for _, loc := range flagScan.FindAllStringIndex(a.Name, -1) {
+			if a.Name[loc[0]:loc[1]] != flag {
+				continue
+			}
+			if strings.Contains(a.Name, "<") {
+				return true
+			}
+			rest := a.Name[loc[1]:]
+			if strings.HasPrefix(rest, "=") {
+				return true
+			}
+			next := strings.TrimLeft(strings.TrimSpace(rest), "[")
+			if strings.HasPrefix(rest, " ") && next != "" && !strings.HasPrefix(next, "-") && !strings.HasPrefix(next, "]") && !strings.HasPrefix(next, "|") {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// booleanValues reports an example that gives a value with = to a flag whose
+// argument rows declare it with no value, such as -tail=200 for a [-tail] row.
+// Many CLIs reject that form (Go's flag package: invalid boolean value). Only
+// the = form is read: in -tail 200 the 200 can be a positional argument. It is
+// advice, so a warning, and it stops at a -- terminator.
+func booleanValues(c registryEntry, path string, found []example) []Finding {
+	on := regexp.MustCompile(`^just +` + regexp.QuoteMeta(path) + `(\s|$)`)
+	var out []Finding
+	for _, e := range found {
+		if !on.MatchString(e.Text) {
+			continue
+		}
+		for _, tok := range shellWords(strings.TrimPrefix(strings.TrimSpace(e.Text[len("just"):]), path)) {
+			if tok == "--" {
+				break
+			}
+			name, value, ok := strings.Cut(tok, "=")
+			if !ok || !strings.HasPrefix(name, "-") || !isBooleanFlag(c, name) || takesValue(c, name) {
+				continue
+			}
+			out = append(out, Finding{Rule: RuleExampleBoolValue, Severity: Warning, Subject: e.Subject,
+				Message: fmt.Sprintf("%q gives %s the value %q, but no argument row of %s declares a value for it", e.Raw, textsafe.Line(name), textsafe.Line(value), c.Key),
+				Fix:     "drop the value, or write the row as " + textsafe.Line(name) + " <value> if the flag takes one"})
+		}
 	}
 	return out
 }
