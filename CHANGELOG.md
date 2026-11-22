@@ -6,6 +6,8 @@ Each release on the [releases page](https://github.com/igorlino/justz/releases) 
 
 ## Unreleased
 
+## 0.11.0 - 2026-11-23
+
 ### Added
 
 - `justz check` warns about an example that gives a value with `=` to a flag declared without one, such as `-tail=200` (`example-boolean-value`).
@@ -16,6 +18,8 @@ Each release on the [releases page](https://github.com/igorlino/justz/releases) 
 
 - The `justfile-authoring` skill says that a command's zoom shows only the group's examples once the group has one for it, so the `example` belongs among them too.
 - The `justfile-authoring` skill no longer recommends `-- …` examples as such: `just` forwards the `--`, which a wrapped parser such as argparse rejects (a new entry in `references/just-gotchas.md`).
+- `justz check --strict` fails on the two new warnings, so a project that runs it in a hook or in CI can fail where it passed on 0.10.0.
+  Run `justz check` before you upgrade to see them.
 
 ## 0.10.0 - 2026-11-17
 

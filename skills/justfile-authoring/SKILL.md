@@ -14,8 +14,8 @@ metadata:
   author: igorlino
   domain: dx
   tags: "justfile, just, task-runner, developer-experience, credentials"
-  version: "1.8.0"
-  requires: "justz-cli; justz 0.5.1 or newer for the rich and local-rich variants; 0.6.0 or newer for init, lint and schema; 0.7.0 or newer for detail; 0.8.0 or newer for exits, env, tags, hasDetail and seeAlso"
+  version: "1.9.0"
+  requires: "justz-cli; justz 0.5.1 or newer for the rich and local-rich variants; 0.6.0 or newer for init, lint and schema; 0.7.0 or newer for detail; 0.8.0 or newer for exits, env, tags, hasDetail and seeAlso; 0.11.0 or newer for the registry-tiers and example-boolean-value checks"
 ---
 
 # Justfile Authoring

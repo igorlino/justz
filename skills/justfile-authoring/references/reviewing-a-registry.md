@@ -26,7 +26,7 @@ Use this procedure when asked to review, audit or improve a `commands.json` that
    Untagged is unknown, not safe; use the vocabulary in `variant-rich.md` and say `read-only` only after reading the script.
 6. **Check the summary.**
    A group label that only repeats its key tells a reader nothing; write what the group does.
-   Use tiers by purpose, or none: one tier that lists every group renders like no tiers, and `registry-tiers` reports a group that no tier lists, which the summary hides.
+   Use tiers by purpose, or none: one tier that lists every group renders like no tiers, and `registry-tiers` (0.11.0 or newer) reports a group that no tier lists, which the summary hides.
 7. **Report before changing what is the team's to decide.**
    Rank the findings by cost, fix the mechanical ones, and preview a taxonomy change (tiers, labels, renames) before writing it.
 
