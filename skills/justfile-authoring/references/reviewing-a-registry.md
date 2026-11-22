@@ -15,6 +15,8 @@ Use this procedure when asked to review, audit or improve a `commands.json` that
    Note any repository guard on the file too, such as a limit on the size of a diff, and its documented override.
 3. **Read every example as a command.**
    A command's `example` holds one command; the others belong in the group's `examples`, each with a `desc`, where each one is checked.
+   When the group has examples for a command, its zoom hides the `example`: check that it appears among them.
+   An example that puts `--` before the flags fails unless the recipe drops it, since `just` forwards it.
    `just --dry-run <ns> <cmd> <args>` checks the arity of an example, but it still evaluates backtick assignments, so skip it in a justfile where those run commands.
 4. **Check the flags of a wrapper against the tool it wraps.**
    Read the wrapped tool's `--help` and compare its flags with the argument rows and the examples.

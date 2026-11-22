@@ -149,15 +149,19 @@ For each recipe write a description that says what it does, not just which tool 
 
 - Add an `example` string (prefixed with `… `) for parameterised commands, using short flags.
 
-- Every group-level `examples` entry must add information the argument rows do not: a value-taking flag (especially enum `values`), several flags together, passthrough arguments (`-- …`), or an environment override.
+- Every group-level `examples` entry must add information the argument rows do not: a value-taking flag (especially enum `values`), several flags together, passthrough arguments, or an environment override.
   Never a bare command, and never a single boolean flag that an argument row already shows.
   `justz check` rejects both (`example-bare-command`, `example-single-flag`) and also flags long options where a short alias exists (`example-long-flag`) and an enum that no example uses (`example-enum-missing`).
   It also warns about a flag that no argument row declares (`example-flag-unknown`; silent for a command with no rows, for a variadic row and after `--`).
   A leading `NAME=value` or `env NAME=value` is read through by the flag rules, and it exempts the example from the bare-command and single-flag rules (the environment is the information the argument rows do not show).
   The per-command `example` field (a leading `…` stands for `just <command>`) goes through the same rules.
 
-- A command's `example` holds one command.
-  Put any others in the group's `examples`, each with a `desc`: the zoom of the command shows them, and each one is checked.
+- Write `-- …` in an example only when the recipe drops a leading `--` or the wrapped tool expects one.
+  `just` forwards the `--` itself, so a parser such as argparse reads the flags after it as positionals and fails.
+
+- A command's `example` holds one command: the one-line sample of the listings.
+  Put any others in the group's `examples`, each with a `desc`, where each one is checked.
+  Once the group has an example for a command, the zoom of that command shows only the group's examples, so repeat the `example` among them.
 
 - Run **`justz fmt`** after every edit.
   It writes the canonical order: groups (`core` first, then A to Z), commands A to Z, arguments (positional first, then flags A to Z), `env` rows by name, examples by `cmd`, `tags`, `seeAlso` and `tiers[].groups` A to Z.

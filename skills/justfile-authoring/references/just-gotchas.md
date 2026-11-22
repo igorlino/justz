@@ -39,6 +39,10 @@ Re-check them against `just --version` before relying on one.
   Make it a flag.
 - **`[arg('n', long='num')]`** makes `just al --num 5` work and lists the recipe as `al [OPTIONS]`.
   It is recent: set `set minimum-version` if the repo must support older `just`.
+- **`just` forwards `--` to the recipe.**
+  `just r -- --group 3` gives the recipe `"$@"` as `-- --group 3`.
+  A wrapped parser then reads `--group` as a positional: argparse fails with `unrecognized arguments: -- --group 3`.
+  Drop a leading `--` in the recipe, or write the example without it.
 - **`just FOO=bar <ns> <cmd>` cannot set a module variable.**
   On 1.59.0 it fails with `variable 'FOO' overridden on the command line but not present in justfile`; 1.58.0 ignored it silently.
   Anything a caller overrides must be an environment variable.
@@ -77,4 +81,4 @@ Re-check them against `just --version` before relying on one.
 
 ## Verified here
 
-On `just` 1.59.0: private recipes and modules, variadic argument behaviour, `[arg]` with `long=`, `[script]`, `[no-cd]`, `mod?`, module working directory and `justfile_directory()`/`source_directory()`, settings not inheriting into a module, `set fallback`, `just --dump --dump-format json`, `--groups`, `--summary`, `--show`, `--fmt --check`, the command-line override of a module variable, and top-level backtick evaluation.
+On `just` 1.59.0: private recipes and modules, variadic argument behaviour, `[arg]` with `long=`, `[script]`, `[no-cd]`, `mod?`, module working directory and `justfile_directory()`/`source_directory()`, settings not inheriting into a module, `set fallback`, `just --dump --dump-format json`, `--groups`, `--summary`, `--show`, `--fmt --check`, the command-line override of a module variable, `--` forwarded to a recipe, and top-level backtick evaluation.
