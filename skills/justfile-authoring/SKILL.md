@@ -61,6 +61,7 @@ Read before writing anything:
 - The justfile and `just/*.just`: every recipe, its parameters, and what it runs underneath.
 - Whether a help system exists: `config/commands.json`, `just/commands.json`, a `scripts/lib/help.sh`.
   If one does, this is an *improve* or *migrate* task: read `references/migration.md`.
+  To review one that already passes `justz check`, follow `references/reviewing-a-registry.md`.
 - The tools a new contributor must install.
 - Whether any recipe has a real flag surface, and whether a namespace carries a caveat that belongs to the namespace rather than to one recipe.
 
@@ -140,6 +141,8 @@ In `rich` repos also run `justz check` and `justz fmt --check`.
 Then add a deliberately undocumented recipe, confirm the check fails, and remove it.
 A guard nobody has seen fail is a guard nobody can trust.
 
+Then run the project's tests that read `commands.json` or the `just` listing, or the full suite: a test may pin a label or a `desc`.
+
 ## References
 
 | Topic | File | Use when |
@@ -150,6 +153,7 @@ A guard nobody has seen fail is a guard nobody can trust.
 | `local-rich` overlay | [references/variant-local-rich.md](references/variant-local-rich.md) | One developer wants richer help and completion on a `native` repo |
 | Shared mechanics | [references/shared-mechanics.md](references/shared-mechanics.md) | `mod` layout, argument shape, script extraction, `doctor` |
 | Migration | [references/migration.md](references/migration.md) | A legacy `help.sh` repo, or moving between shapes |
+| Reviewing a registry | [references/reviewing-a-registry.md](references/reviewing-a-registry.md) | A registry passes the checks, and you are asked whether it is true |
 | Recipe patterns | [references/recipe-patterns.md](references/recipe-patterns.md) | Variadics, private recipes, environment overrides, validation |
 | Credentials in recipes | [references/credentials-in-recipes.md](references/credentials-in-recipes.md) | 1Password tokens, file-scope anti-patterns, safe resolution |
 | Antipatterns | [references/antipatterns.md](references/antipatterns.md) | Mistakes found in real justfiles and how to fix them |
