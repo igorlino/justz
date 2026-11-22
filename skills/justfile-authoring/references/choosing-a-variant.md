@@ -84,7 +84,8 @@ From a six-month-old `rich` adoption (33 recipes, 4 namespaces) that used the ol
 - **A hard dependency was never added to `doctor`**, despite an explicit checklist item.
   Prose instructions decay; a check that fails does not.
 - **Tiers were over-built.**
-  The schema supports N tiers; that repo defines one.
+  The schema supports N tiers; that repo defines one, which renders the same as none.
+  Tiers earn their place when they sort many groups by purpose.
 - Converting to the `native` variant removed **421 lines** (734 → 313) and made the divergence structurally impossible.
   `justz check` now makes it detectable in `rich` too, which narrows the gap between the two.
 

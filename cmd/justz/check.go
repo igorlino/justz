@@ -18,7 +18,8 @@ It reads the justfile through just --dump and, when there is one, the registry
   registry-missing, registry-stale, registry-desc-diverges,
   registry-key-signature, registry-shape, registry-desc-long, registry-unsorted
   example-bare-command, example-single-flag, example-long-flag,
-  example-enum-missing, example-flag-unknown (a warning), registry-exits,
+  example-enum-missing, example-flag-unknown (a warning),
+  example-boolean-value, registry-tiers (warnings), registry-exits,
   registry-env, registry-tags (a warning), volatile-text and
   detail-flag-no-row, detail-env-no-row, detail-long, detail-no-paragraphs, detail-restates-desc,
   tags-confirm (advice, warnings), default-public (a public default recipe: a warning,
@@ -53,6 +54,11 @@ the words of the desc, for a desc of four words or more) are about the shape of
 a detail. They are warnings, so check --strict fails on them; a detail that is
 deliberately a list with no blank lines is silenced with justz-ignore. Silence either on one recipe with
 [metadata('justz-ignore', '<rule>')].
+
+example-boolean-value finds an example that gives a value with = to a flag
+whose argument row declares none, such as -tail=200 for a [-tail] row.
+registry-tiers finds a group in no tier (the summary hides it), a tier name
+that is not a group (help drops it), and a group in two tiers.
 
 Exit codes: 0 no errors, 1 errors (or warnings with --strict), 2 usage error.
 `
