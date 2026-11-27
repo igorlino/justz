@@ -1,7 +1,7 @@
 module github.com/igorlino/justz
 
-go 1.24
+go 1.26.0
 
-require golang.org/x/term v0.30.0
+require golang.org/x/term v0.48.0
 
-require golang.org/x/sys v0.31.0 // indirect
+require golang.org/x/sys v0.50.0 // indirect
